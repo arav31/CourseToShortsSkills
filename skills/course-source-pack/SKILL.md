@@ -16,7 +16,7 @@ Turn a course link or course files into a structured `source_pack.json` that lat
 3. Extract the source pack:
 
 ```bash
-python tools/stem_course.py extract "COURSE_URL" --out runs/<course-slug> --max-pages 120 --max-pdfs 80
+python tools/stem_course.py extract "COURSE_URL" --out runs/<course-slug> --max-pages 160 --max-pdfs 100
 ```
 
 For offline validation:

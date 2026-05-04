@@ -26,9 +26,10 @@ python tools/stem_course.py notes --run runs/<course>
 2. Read `source_pack.json`, `short_plan.json`, and the generated `notes.tex`.
 3. Expand `notes.tex` until it covers the whole course at learning-notes depth:
 
+- Match the supplied reference PDF style when one is provided: title page, date, short attribution block, black-and-white article layout, numbered sections/subsections, compact tables, and page numbers.
 - Start with a course map and prerequisite chain.
 - Add a key concepts and explanations table before the formula table.
-- Add a notation table and formula table.
+- Add a notation/symbols table and formula table.
 - For every major topic, include the key concept, a plain-English concept explanation, connections to nearby ideas, recognition cues, a definition, intuition, formula, worked numeric example, visual interpretation, common trap, and at least three questions.
 - Include both conceptual questions and application questions. Application questions should name a realistic context, inputs, method, and answer direction.
 - Keep topic order beginner-safe: prerequisites before dependent concepts.
@@ -49,6 +50,7 @@ Use `--pdf-engine latex` when you require true LaTeX compilation and want the co
 - Every major topic should have a key concept and a concept explanation that can be understood before seeing the formula.
 - Every abstract idea needs at least one concrete example with numbers or a small symbolic case.
 - Do not omit hard topics just because they are not good short-video hooks; keep them in notes even if they are not in the shorts queue.
+- Add a source-derived coverage checklist from the extracted course pack and expand any important source terms that are not already in the shorts plan.
 
 ## Outputs
 

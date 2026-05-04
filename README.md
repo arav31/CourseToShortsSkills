@@ -9,6 +9,10 @@ A shareable Codex skill pack for turning course links and course files into:
 - rendered vertical shorts with subtitles and real voiceover support
 - Instagram Reels series queues and optional API publishing
 
+## Requirements
+
+Install the system and Python requirements in [REQUIREMENTS.md](REQUIREMENTS.md). The important pieces are a LaTeX engine (`tectonic`, BasicTeX, or MacTeX), FFmpeg, and the packages in `requirements.txt`.
+
 ## Quick Start
 
 ```bash
@@ -66,7 +70,7 @@ Instagram cannot publish a private local MP4 directly through this API; host the
 
 ## Notes PDF
 
-`notes --compile` and `all` generate `notes.pdf`. The CLI tries `latexmk`, `pdflatex`, or `tectonic` first. If no TeX engine is installed, it uses the PyMuPDF fallback from the same generated notes data and writes `notes_compile_report.json` so you can see which engine produced the PDF.
+`notes --compile` and `all` generate `notes.pdf`. The CLI tries `latexmk`, `pdflatex`, or `tectonic` first, including common TeX install paths such as `/Library/TeX/texbin`. If no TeX engine is installed, it uses the PyMuPDF fallback from the same generated notes data and writes `notes_compile_report.json` so you can see which engine produced the PDF. The LaTeX template is now a black-and-white article-style definitions/formulas document matching the supplied reference structure: title page, numbered sections, compact tables, full topic explanations, examples, and question banks.
 
 ## Video Length
 

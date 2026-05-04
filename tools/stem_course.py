@@ -20,11 +20,25 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAX_FETCH_BYTES = 1_500_000
-DEFAULT_MAX_PAGES = 80
-DEFAULT_MAX_PDFS = 40
-DEFAULT_SHORTS = 30
+MAX_FETCH_BYTES = 25_000_000
+PDF_TEXT_PAGES = 180
+DEFAULT_MAX_PAGES = 160
+DEFAULT_MAX_PDFS = 100
+DEFAULT_SHORTS = 40
 FFMPEG = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
+EXTRA_TEX_PATHS = ["/Library/TeX/texbin", "/opt/homebrew/bin", "/usr/local/bin"]
+
+
+
+def find_executable(name: str) -> str | None:
+    found = shutil.which(name)
+    if found:
+        return found
+    for folder in EXTRA_TEX_PATHS:
+        candidate = Path(folder) / name
+        if candidate.exists() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return None
 
 
 @dataclass(frozen=True)
@@ -170,7 +184,8 @@ def pdf_text(raw: bytes) -> str:
     except Exception:
         return ""
     doc = fitz.open(stream=raw, filetype="pdf")
-    return "\n".join(page.get_text("text") for page in doc[:35])
+    page_count = min(doc.page_count, PDF_TEXT_PAGES)
+    return "\n".join(doc[i].get_text("text") for i in range(page_count))
 
 
 def title_from_url(url: str) -> str:
@@ -293,12 +308,63 @@ def choose_concepts(pack: dict[str, object], max_shorts: int) -> list[Concept]:
 
 
 def frequent_terms(text: str) -> list[str]:
-    stop = {"course", "lecture", "the", "and", "for", "with", "this", "that", "from", "have", "notes", "page", "problem", "example"}
+    stop = {
+        "course", "lecture", "lectures", "chapter", "section", "the", "and", "for", "with", "this", "that",
+        "from", "have", "notes", "page", "problem", "problems", "example", "examples", "using", "where",
+        "there", "which", "then", "than", "into", "will", "shall", "their", "about", "between", "through",
+    }
+    words = re.findall(r"\b[a-zA-Z][a-zA-Z-]{3,}\b", text.lower())
     counts: dict[str, int] = {}
-    for word in re.findall(r"\b[a-zA-Z][a-zA-Z-]{4,}\b", text.lower()):
+    for word in words:
         if word not in stop:
             counts[word] = counts.get(word, 0) + 1
-    return [w for w, _ in sorted(counts.items(), key=lambda item: item[1], reverse=True)]
+    phrase_counts: dict[str, int] = {}
+    usable = [w for w in words if w not in stop]
+    for size in (2, 3):
+        for i in range(max(0, len(usable) - size + 1)):
+            phrase = " ".join(usable[i : i + size])
+            if len(set(phrase.split())) > 1:
+                phrase_counts[phrase] = phrase_counts.get(phrase, 0) + 1
+    ranked_phrases = [p for p, n in sorted(phrase_counts.items(), key=lambda item: (item[1], len(item[0])), reverse=True) if n >= 2]
+    ranked_words = [w for w, _ in sorted(counts.items(), key=lambda item: item[1], reverse=True)]
+    out: list[str] = []
+    for term in ranked_phrases + ranked_words:
+        normalized = term.strip()
+        if normalized and all(normalized not in existing and existing not in normalized for existing in out):
+            out.append(normalized)
+    return out
+
+
+def source_text(pack: dict[str, object]) -> str:
+    return "\n".join(str(m.get("text", "")) for m in pack.get("materials", []) if isinstance(m, dict))
+
+
+def source_coverage_terms(pack: dict[str, object], shorts: list[dict[str, object]], limit: int = 80) -> list[str]:
+    existing = {str(short.get("concept", "")).lower() for short in shorts}
+    terms: list[str] = []
+    for term in frequent_terms(source_text(pack)):
+        if not term or any(term in concept or concept in term for concept in existing):
+            continue
+        if term not in terms:
+            terms.append(term)
+        if len(terms) >= limit:
+            break
+    return terms
+
+
+def source_snippets(pack: dict[str, object], term: str, limit: int = 2) -> list[str]:
+    snippets: list[str] = []
+    pattern = re.compile(r"[^.?!]*(?:" + re.escape(term) + r")[^.?!]*[.?!]", re.I)
+    for material in pack.get("materials", []):
+        if not isinstance(material, dict):
+            continue
+        for match in pattern.finditer(str(material.get("text", ""))):
+            cleaned = re.sub(r"\s+", " ", match.group(0)).strip()
+            if 40 <= len(cleaned) <= 320 and cleaned not in snippets:
+                snippets.append(cleaned)
+                if len(snippets) >= limit:
+                    return snippets
+    return snippets
 
 
 def cmd_plan(args: argparse.Namespace) -> None:
@@ -347,7 +413,8 @@ def cmd_plan(args: argparse.Namespace) -> None:
 
 def latex_escape(s: str) -> str:
     return (s.replace("\\", r"\textbackslash{}").replace("&", r"\&").replace("%", r"\%").replace("$", r"\$")
-             .replace("#", r"\#").replace("_", r"\_").replace("{", r"\{").replace("}", r"\}"))
+             .replace("#", r"\#").replace("_", r"\_").replace("^", r"\^{}").replace("~", r"\textasciitilde{}")
+             .replace("{", r"\{").replace("}", r"\}"))
 
 
 def notes_pdf_report_path(run: Path) -> Path:
@@ -375,25 +442,28 @@ def compile_notes_pdf(run: Path, plan: dict[str, object], engine: str = "auto") 
 
 def run_latex_engine(run: Path) -> dict[str, object]:
     tex = run / "notes.tex"
-    if shutil.which("latexmk"):
-        cmd = ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "notes.tex"]
+    latexmk = find_executable("latexmk")
+    if latexmk:
+        cmd = [latexmk, "-pdf", "-interaction=nonstopmode", "-halt-on-error", "notes.tex"]
         result = subprocess.run(cmd, cwd=run, text=True, capture_output=True, timeout=300)
         (run / "notes_latexmk.log").write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
         if result.returncode == 0 and (run / "notes.pdf").exists():
             return {"status": "ok", "engine": "latexmk", "pdf": "notes.pdf"}
         return {"status": "failed", "engine": "latexmk", "message": "latexmk failed; see notes_latexmk.log"}
-    if shutil.which("pdflatex"):
+    pdflatex = find_executable("pdflatex")
+    if pdflatex:
         last = None
         for i in range(2):
-            last = subprocess.run(["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
+            last = subprocess.run([pdflatex, "-interaction=nonstopmode", "-halt-on-error", "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
             (run / f"notes_pdflatex_pass_{i + 1}.log").write_text(last.stdout + "\n" + last.stderr, encoding="utf-8")
             if last.returncode != 0:
                 break
         if last and last.returncode == 0 and (run / "notes.pdf").exists():
             return {"status": "ok", "engine": "pdflatex", "pdf": "notes.pdf"}
         return {"status": "failed", "engine": "pdflatex", "message": "pdflatex failed; see notes_pdflatex_pass_*.log"}
-    if shutil.which("tectonic"):
-        result = subprocess.run(["tectonic", "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
+    tectonic = find_executable("tectonic")
+    if tectonic:
+        result = subprocess.run([tectonic, "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
         (run / "notes_tectonic.log").write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
         if result.returncode == 0 and (run / "notes.pdf").exists():
             return {"status": "ok", "engine": "tectonic", "pdf": "notes.pdf"}
@@ -468,35 +538,83 @@ def write_fallback_notes_pdf(run: Path, plan: dict[str, object], reason: str) ->
     return {"status": "ok", "engine": "pymupdf-fallback", "pdf": "notes.pdf", "message": reason}
 
 
+def latex_items(items: list[str]) -> str:
+    if not items:
+        return r"\item None recorded."
+    return "\n".join(rf"\item {latex_escape(item)}" for item in items)
+
+
+def symbol_glossary(short: dict[str, object]) -> str:
+    formula = str(short.get("formula", ""))
+    concept = str(short.get("concept", "")).lower()
+    entries: list[str] = []
+    if "A" in formula or "matrix" in concept:
+        entries.append(r"$A$: matrix or linear rule")
+    if r"\vec{x}" in formula or "x" in formula:
+        entries.append(r"$\vec{x}$ or $x$: input vector, variable, or unknown")
+    if r"\vec{v}" in formula or "vector" in concept:
+        entries.append(r"$\vec{v}$: vector being measured or transformed")
+    if "c_" in formula:
+        entries.append(r"$c_i$: scalar weights in a combination")
+    if r"\lambda" in formula or "eigen" in concept:
+        entries.append(r"$\lambda$: scalar stretch factor")
+    if "rank" in formula:
+        entries.append(r"$\operatorname{rank}(A)$: number of independent output directions")
+    if "det" in formula:
+        entries.append(r"$\det(A)$: signed area or volume scale factor")
+    if "proj" in formula or "projection" in concept:
+        entries.append(r"$\operatorname{proj}$: component kept in the chosen direction")
+    if "=" in formula:
+        entries.append(r"$=$: equality to verify by substitution or transformation")
+    if not entries:
+        entries.append("Define each symbol from the source context before applying the rule.")
+    return "; ".join(entries)
+
+
 def cmd_notes(args: argparse.Namespace) -> None:
     run = Path(args.run)
     pack = read_json(run / "source_pack.json")
     plan = read_json(run / "short_plan.json")
     title = str(plan.get("course_title") or pack.get("title") or "Course")
     materials = pack.get("materials", [])
+    shorts = plan["shorts"]
     source_inventory = "\n".join(
         rf"\item \textbf{{{latex_escape(str(m.get('kind', 'source')).upper())}}}: {latex_escape(str(m.get('title', 'Untitled')))}\\ {latex_escape(str(m.get('url', '')))}"
         for m in materials if isinstance(m, dict)
-    )
-    shorts = plan["shorts"]
+    ) or r"\item No source inventory was recorded. Re-run extraction with the course URL before treating these as complete notes."
     course_map = "\n".join(
-        rf"\item \textbf{{{short['index']}. {latex_escape(short['concept'])}}}: prerequisites -- {latex_escape(', '.join(short.get('prerequisites', [])) or 'none')}. Outcome -- {latex_escape(short['intuition'])}"
+        rf"\item \textbf{{{latex_escape(short['concept'])}}}: prerequisites -- {latex_escape(', '.join(short.get('prerequisites', [])) or 'none')}. Outcome -- {latex_escape(short['intuition'])}"
+        for short in shorts
+    )
+    definition_rows = "\n".join(
+        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_escape(short.get('key_concept', short['hook']))} & {latex_escape(short.get('concept_explanation', short['intuition']))} \\"
         for short in shorts
     )
     formula_rows = "\n".join(
-        rf"{short['index']} & {latex_escape(short['concept'])} & ${{{short['formula']}}}$ & {latex_escape(short['plain_formula'])} \\" 
+        rf"{short['index']} & {latex_escape(short['concept'])} & ${{{short['formula']}}}$ \\"
         for short in shorts
     )
-    key_concept_rows = "\n".join(
-        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_escape(short.get('key_concept', short['hook']))} & {latex_escape(short.get('concept_explanation', short['intuition']))} & {latex_escape(short.get('recognition_cue', 'Use the definition and worked example to decide when this idea applies.'))} \\"
+    symbol_rows = "\n".join(
+        rf"{short['index']} & {latex_escape(short['concept'])} & {symbol_glossary(short)} \\"
         for short in shorts
     )
+    coverage_terms = source_coverage_terms(pack, shorts)
+    coverage_items = "\n".join(rf"\item {latex_escape(term.title())}" for term in coverage_terms[:80]) or r"\item No additional source-derived terms were detected beyond the planned topics."
+    coverage_sections = []
+    for term in coverage_terms[:18]:
+        snippets = source_snippets(pack, term)
+        context = " ".join(snippets) if snippets else "This term appears in the course source pack and should be checked against the original lecture notes, assignments, or readings."
+        coverage_sections.append(rf"""
+\subsection{{{latex_escape(term.title())}}}
+\paragraph{{Source context.}} {latex_escape(context)}
+\paragraph{{Study task.}} Write the formal definition, identify the symbols used by the course, solve one small example, and add one conceptual question before relying on this topic in a video script.
+""")
     sections = []
     practice_items = []
     for short in shorts:
         ex = short["worked_example"]
         qp = short["question_prompt"]
-        prereqs = latex_escape(", ".join(short.get("prerequisites", [])) or "none")
+        prereq_items = latex_items([str(x) for x in short.get("prerequisites", [])])
         connections = short.get("concept_connections", {})
         builds_on = latex_escape(", ".join(connections.get("builds_on", short.get("prerequisites", []))) or "none")
         prepares_for = latex_escape(", ".join(connections.get("prepares_for", [])) or "later course topics")
@@ -505,27 +623,30 @@ def cmd_notes(args: argparse.Namespace) -> None:
         recognition_cue = latex_escape(short.get("recognition_cue", "Use the definition and worked example to decide when this idea applies."))
         sections.append(rf"""
 \subsection{{{latex_escape(short['concept'])}}}
-\paragraph{{Prerequisites.}} {prereqs}
+\subsubsection*{{Prerequisites}}
+\begin{{itemize}}
+{prereq_items}
+\end{{itemize}}
 
-\paragraph{{Key concept.}} {key_concept}
+\subsubsection*{{Key concept and use}}
+\textbf{{Key concept.}} {key_concept}
 
-\paragraph{{Concept explanation.}} {concept_explanation}
+\textbf{{Explanation.}} {concept_explanation}
 
-\paragraph{{Connections.}} Builds on {builds_on}. Prepares for {prepares_for}.
+\textbf{{Recognition cue.}} {recognition_cue}
 
-\paragraph{{How to recognize it.}} {recognition_cue}
+\textbf{{Connections.}} Builds on {builds_on}. Prepares for {prepares_for}.
 
 \begin{{definition}}
 {latex_escape(short['intuition'])}
 \end{{definition}}
 
-\paragraph{{Why this matters.}} {latex_escape(short['hook'])}
-
 \begin{{formula}}
 \[
 {short['formula']}
 \]
-\textbf{{Plain-language read:}} {latex_escape(short['plain_formula'])}.
+\textbf{{Plain-language read.}} {latex_escape(short['plain_formula'])}.\\
+\textbf{{Symbols.}} {symbol_glossary(short)}.
 \end{{formula}}
 
 \begin{{example}}
@@ -536,109 +657,147 @@ def cmd_notes(args: argparse.Namespace) -> None:
 \textbf{{Interpretation.}} {latex_escape(ex['takeaway'])}
 \end{{example}}
 
-\paragraph{{Visual model.}} This topic should be visualized with \texttt{{{latex_escape(short.get('visual_type', 'generic'))}}}: show the inputs, animate the rule, then highlight the resulting quantity or structure.
+\paragraph{{Visual interpretation.}} Represent this as \texttt{{{latex_escape(short.get('visual_type', 'generic'))}}}: show the input, animate the rule, label the intermediate quantity, and highlight the output.
 
-\begin{{warning}}
-{latex_escape(short['misconception'])}
-\end{{warning}}
+\paragraph{{Common trap.}} {latex_escape(short['misconception'])}
 
+\subsubsection*{{Questions}}
 \begin{{questions}}
 \item Conceptual: Explain {latex_escape(short['concept'])} without using the formula. What problem does the idea solve?
-\item Calculation: Recreate the worked example above, then change one number and predict how the answer changes.
+\item Symbol check: In the displayed formula, what does each symbol mean and what are its allowed inputs?
+\item Calculation: Recreate the worked example, then change one number and predict which part of the answer changes.
 \item Interpretation: Which part of the example is the input, which part is the rule, and which part is the output?
 \item Application: {latex_escape(qp['question'])}
 \item Error check: What mistake would someone make if they believed the common trap above?
 \end{{questions}}
 
 \paragraph{{Answers and explanations.}}
-The calculation answer follows the worked example: {latex_escape(ex['calculation'])} The key interpretation is: {latex_escape(ex['takeaway'])} For the application question, {latex_escape(qp['answer'])}
+The calculation follows the worked example: {latex_escape(ex['calculation'])} The key interpretation is: {latex_escape(ex['takeaway'])} For the application question, {latex_escape(qp['answer'])}
 """)
         practice_items.append(rf"\item \textbf{{{latex_escape(short['concept'])}.}} {latex_escape(qp['question'])} \emph{{Answer idea:}} {latex_escape(qp['answer'])}")
     tex = rf"""\documentclass[11pt]{{article}}
-\usepackage[margin=0.75in]{{geometry}}
-\usepackage{{amsmath,amssymb,amsthm,longtable,booktabs,xcolor,enumitem,hyperref}}
-\definecolor{{courseblue}}{{HTML}}{{2D9CDB}}
-\definecolor{{coursegold}}{{HTML}}{{F2C94C}}
+\usepackage[letterpaper,margin=0.95in]{{geometry}}
+\usepackage{{amsmath,amssymb,amsthm,longtable,booktabs,array}}
+\setlength{{\parskip}}{{0.35em}}
+\setlength{{\parindent}}{{0pt}}
 \newtheorem{{definition}}{{Definition}}[section]
 \newtheorem{{formula}}{{Formula}}[section]
 \newtheorem{{example}}{{Example}}[section]
-\newtheorem{{warning}}{{Common Trap}}[section]
-\newenvironment{{questions}}{{\begin{{enumerate}}[label=\textbf{{Q\arabic*.}}, leftmargin=*]}}{{\end{{enumerate}}}}
-\title{{{latex_escape(title)} Definitions, Formulas, and Worked Examples}}
-\author{{Generated by Course Shorts Skills}}
-\date{{\today}}
+\newenvironment{{questions}}{{\begin{{enumerate}}}}{{\end{{enumerate}}}}
 \begin{{document}}
-\maketitle
-\tableofcontents
+\begin{{center}}
+\vspace*{{1.35in}}
+{{\LARGE {latex_escape(title)} Definitions and Formulas\par}}
+\vspace{{0.45in}}
+{{\large \today\par}}
+\end{{center}}
+\vspace{{0.5in}}
+\begin{{flushright}}
+\begin{{minipage}}{{0.42\textwidth}}
+\small Generated as a course-wide study document: definitions, formulas, examples, applications, and checks for understanding.\\[0.4em]
+\hrule
+\vspace{{0.3em}}
+\hfill Course Shorts Skills
+\end{{minipage}}
+\end{{flushright}}
+\vfill
 \newpage
 
-\section{{How To Use These Notes}}
-Read the course map first, then work through the core concepts in order. For each topic, cover the definition, formula, worked example, common trap, and questions before moving on. The questions are designed to test conceptual understanding and practical application, not just memorization.
+\section{{Course Overview}}
+These notes are designed to be read as a course proxy: first learn the vocabulary, then the formulas, then the examples, then the questions. Each topic includes conceptual meaning, notation, a worked example, common traps, and application checks.
 
-\section{{Source Inventory}}
+\subsection{{Source Inventory}}
 \begin{{itemize}}
 {source_inventory}
 \end{{itemize}}
 
-\section{{Course Map And Prerequisite Order}}
-\begin{{enumerate}}[leftmargin=*]
+\subsection{{Prerequisite Order}}
+\begin{{enumerate}}
 {course_map}
 \end{{enumerate}}
 
-\section{{Key Concepts And Explanations}}
-This is the conceptual spine of the course. Read this table before the formulas: it explains what each idea does, how it should feel, and when to reach for it in a problem.
-
-\begin{{longtable}}{{@{{}}p{{0.06\linewidth}}p{{0.17\linewidth}}p{{0.22\linewidth}}p{{0.31\linewidth}}p{{0.18\linewidth}}@{{}}}}
+\section{{Key Concepts and Definitions}}
+\begin{{longtable}}{{@{{}}p{{0.07\linewidth}}p{{0.23\linewidth}}p{{0.28\linewidth}}p{{0.34\linewidth}}@{{}}}}
 \toprule
-No. & Concept & Key concept & Explanation & When to use it \\
+No. & Concept & Key concept & Explanation \\
 \midrule
 \endhead
-{key_concept_rows}
+{definition_rows}
 \bottomrule
 \end{{longtable}}
 
-\section{{Formula Table}}
-\begin{{longtable}}{{@{{}}p{{0.08\linewidth}}p{{0.24\linewidth}}p{{0.34\linewidth}}p{{0.26\linewidth}}@{{}}}}
+\section{{Formula Reference}}
+\begin{{longtable}}{{@{{}}p{{0.08\linewidth}}p{{0.34\linewidth}}p{{0.50\linewidth}}@{{}}}}
 \toprule
-No. & Concept & Formula & Plain read \\
+No. & Concept & Formula \\
 \midrule
 \endhead
 {formula_rows}
 \bottomrule
 \end{{longtable}}
 
-\section{{Core Concepts}}
+\section{{Notation and Symbol Meanings}}
+\begin{{longtable}}{{@{{}}p{{0.07\linewidth}}p{{0.25\linewidth}}p{{0.60\linewidth}}@{{}}}}
+\toprule
+No. & Concept & Symbols and meanings \\
+\midrule
+\endhead
+{symbol_rows}
+\bottomrule
+\end{{longtable}}
+
+\section{{Core Topics}}
 {''.join(sections)}
 
+\section{{Source-Derived Coverage Checklist}}
+The following terms were detected in the source pack beyond the main planned topics. Use this checklist to prevent gaps when turning a full course into notes and shorts.
+\begin{{itemize}}
+{coverage_items}
+\end{{itemize}}
+{''.join(coverage_sections)}
+
 \section{{Cumulative Practice Bank}}
-\begin{{enumerate}}[leftmargin=*]
+\begin{{enumerate}}
 {chr(10).join(practice_items)}
 \end{{enumerate}}
 \end{{document}}
 """
     (run / "notes.tex").write_text(tex, encoding="utf-8")
-    (run / "notes.md").write_text(markdown_notes(plan), encoding="utf-8")
+    (run / "notes.md").write_text(markdown_notes(plan, pack), encoding="utf-8")
     pdf_engine = "auto" if args.compile and args.pdf_engine == "none" else args.pdf_engine
     if args.compile or pdf_engine != "none":
         compile_notes_pdf(run, plan, pdf_engine)
     print(run / "notes.tex")
 
-def markdown_notes(plan: dict[str, object]) -> str:
-    lines = [f"# {plan.get('course_title', 'Course')} Notes\n"]
+
+def markdown_notes(plan: dict[str, object], pack: dict[str, object] | None = None) -> str:
+    lines = [f"# {plan.get('course_title', 'Course')} Definitions and Formulas\n"]
     lines.append("## Key Concepts\n")
     for short in plan["shorts"]:
         lines.append(f"- **{short['concept']}**: {short.get('concept_explanation', short['intuition'])}")
+    lines.append("\n## Formula Reference\n")
+    for short in plan["shorts"]:
+        lines.append(f"- **{short['concept']}**: `{short['plain_formula']}` — {symbol_glossary(short)}")
     lines.append("\n")
     for short in plan["shorts"]:
         ex = short["worked_example"]
+        qp = short["question_prompt"]
         lines.append(f"## {short['index']}. {short['concept']}\n")
         lines.append(f"**Key concept.** {short.get('key_concept', short['hook'])}\n")
         lines.append(f"**Concept explanation.** {short.get('concept_explanation', short['intuition'])}\n")
         lines.append(f"**How to recognize it.** {short.get('recognition_cue', 'Use the definition and worked example to decide when this idea applies.')}\n")
         lines.append(f"**Definition.** {short['intuition']}\n")
         lines.append(f"**Formula.** `{short['plain_formula']}`\n")
+        lines.append(f"**Symbols.** {symbol_glossary(short)}\n")
         lines.append(f"**Worked example.** {ex['setup']} {ex['calculation']} {ex['takeaway']}\n")
-        lines.append(f"**Question.** {short['question_prompt']['question']}\n")
+        lines.append("**Questions.** Explain the concept without the formula; define every symbol; redo the example with one changed number; identify input/rule/output; answer the application prompt.\n")
+        lines.append(f"**Application.** {qp['question']} Answer idea: {qp['answer']}\n")
+    if pack:
+        terms = source_coverage_terms(pack, plan.get("shorts", []), limit=40)
+        if terms:
+            lines.append("\n## Source-Derived Coverage Checklist\n")
+            for term in terms:
+                lines.append(f"- {term.title()}")
     return "\n".join(lines)
 
 
