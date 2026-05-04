@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Short Plan"
+  short_description: "Plan beginner-safe shorts."
+  default_prompt: "Plan a beginner-friendly sequence of shorts for this course."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Source Pack"
+  short_description: "Extract course pages and PDFs."
+  default_prompt: "Extract this course URL into a reusable course material pack."

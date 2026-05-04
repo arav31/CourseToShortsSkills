@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Instagram Series"
+  short_description: "Package Instagram Reels queues."
+  default_prompt: "Package this rendered course series for Instagram Reels."

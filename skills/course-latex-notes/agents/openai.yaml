@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course LaTeX Notes"
+  short_description: "Write formula-rich course notes."
+  default_prompt: "Generate comprehensive LaTeX course notes from this course pack."

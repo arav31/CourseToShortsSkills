@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Render Voiceover"
+  short_description: "Render shorts with voiceover."
+  default_prompt: "Render these Manim shorts with voiceover and subtitles."

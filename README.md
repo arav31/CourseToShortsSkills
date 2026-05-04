@@ -1,0 +1,64 @@
+# Course Shorts Skills
+
+A shareable Codex skill pack for turning course links and course files into:
+
+- extracted course material packs
+- comprehensive LaTeX notes with definitions, formulas, examples, and questions
+- beginner-safe short-video lesson plans
+- concept-specific Manim scenes in a 3Blue1Brown-inspired style
+- rendered vertical shorts with subtitles and real voiceover support
+- Instagram Reels series queues and optional API publishing
+
+## Quick Start
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+python tools/stem_course.py all "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" --out runs/linear-algebra --max-shorts 8
+```
+
+For real voiceover, configure one of:
+
+- `--voice-engine openai` with `OPENAI_API_KEY`
+- `--voice-engine edge-tts` with `edge-tts` installed
+- `--voice-engine say` on macOS, only if `say` produces non-empty audio on your machine
+
+`say` availability varies by Mac and sandbox, so the renderer validates audio duration and refuses empty voiceover files instead of pretending voiceover worked.
+
+## Install Skills
+
+Copy or symlink the folders in `skills/` into your Codex skills directory:
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R skills/* "${CODEX_HOME:-$HOME/.codex}/skills/"
+```
+
+Each skill can also be used in-place by telling Codex to use the skill folder from this repository.
+
+## Pipeline
+
+```bash
+python tools/stem_course.py extract COURSE_URL --out runs/course
+python tools/stem_course.py plan --run runs/course --max-shorts 12
+python tools/stem_course.py notes --run runs/course
+python tools/stem_course.py manim --run runs/course
+python tools/stem_course.py render --run runs/course --voice-engine openai
+python tools/stem_course.py queue --run runs/course --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
+python tools/stem_course.py publish --run runs/course --dry-run
+```
+
+Use `--sample linear_algebra` with `extract` or `all` for offline testing.
+
+## Instagram Publishing
+
+The publish command follows the Meta/Instagram container flow: create a Reel media container from a public `video_url`, poll processing status, then publish the container. Configure these environment variables before live publishing:
+
+```bash
+export IG_USER_ID="..."
+export META_ACCESS_TOKEN="..."
+export META_GRAPH_VERSION="v21.0"  # override if your app uses a newer supported Graph API version
+```
+
+Instagram cannot publish a private local MP4 directly through this API; host the final videos first, then create the queue with `--public-base-url`.
