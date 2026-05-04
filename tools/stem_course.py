@@ -298,25 +298,41 @@ def cmd_plan(args: argparse.Namespace) -> None:
     run = Path(args.run)
     pack = read_json(run / "source_pack.json")
     concepts = choose_concepts(pack, args.max_shorts)
+    shorts = [
+        {
+            "index": i,
+            "concept": c.name,
+            "hook": c.hook,
+            "intuition": c.intuition,
+            "formula": c.formula,
+            "plain_formula": plain_math(c.formula),
+            "prerequisites": c.prerequisites,
+            "misconception": c.misconception,
+            "worked_example": {"setup": c.example_setup, "calculation": c.example_calc, "takeaway": c.example_takeaway},
+            "question_prompt": {"question": c.application_question, "answer": c.application_answer},
+            "visual_type": c.visual_type,
+        }
+        for i, c in enumerate(concepts, start=1)
+    ]
+    for i, short in enumerate(shorts):
+        next_concepts = [s["concept"] for s in shorts[i + 1 : i + 4]]
+        short["key_concept"] = f"{short['concept']}: {short['hook']}"
+        short["concept_explanation"] = (
+            f"{short['intuition']} The worked example makes the idea testable: "
+            f"{short['worked_example']['takeaway']}"
+        )
+        short["recognition_cue"] = (
+            f"Use this concept when a problem asks you to identify the rule, structure, or quantity behind "
+            f"{short['concept'].lower()} and then check it with a concrete example."
+        )
+        short["concept_connections"] = {
+            "builds_on": short["prerequisites"],
+            "prepares_for": next_concepts,
+        }
     plan = {
         "course_title": pack.get("title", "Course"),
         "source_url": pack.get("source_url"),
-        "shorts": [
-            {
-                "index": i,
-                "concept": c.name,
-                "hook": c.hook,
-                "intuition": c.intuition,
-                "formula": c.formula,
-                "plain_formula": plain_math(c.formula),
-                "prerequisites": c.prerequisites,
-                "misconception": c.misconception,
-                "worked_example": {"setup": c.example_setup, "calculation": c.example_calc, "takeaway": c.example_takeaway},
-                "question_prompt": {"question": c.application_question, "answer": c.application_answer},
-                "visual_type": c.visual_type,
-            }
-            for i, c in enumerate(concepts, start=1)
-        ],
+        "shorts": shorts,
     }
     write_json(run / "short_plan.json", plan)
     print(run / "short_plan.json")
@@ -346,15 +362,33 @@ def cmd_notes(args: argparse.Namespace) -> None:
         rf"{short['index']} & {latex_escape(short['concept'])} & ${{{short['formula']}}}$ & {latex_escape(short['plain_formula'])} \\" 
         for short in shorts
     )
+    key_concept_rows = "\n".join(
+        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_escape(short.get('key_concept', short['hook']))} & {latex_escape(short.get('concept_explanation', short['intuition']))} & {latex_escape(short.get('recognition_cue', 'Use the definition and worked example to decide when this idea applies.'))} \\"
+        for short in shorts
+    )
     sections = []
     practice_items = []
     for short in shorts:
         ex = short["worked_example"]
         qp = short["question_prompt"]
         prereqs = latex_escape(", ".join(short.get("prerequisites", [])) or "none")
+        connections = short.get("concept_connections", {})
+        builds_on = latex_escape(", ".join(connections.get("builds_on", short.get("prerequisites", []))) or "none")
+        prepares_for = latex_escape(", ".join(connections.get("prepares_for", [])) or "later course topics")
+        key_concept = latex_escape(short.get("key_concept", short["hook"]))
+        concept_explanation = latex_escape(short.get("concept_explanation", short["intuition"]))
+        recognition_cue = latex_escape(short.get("recognition_cue", "Use the definition and worked example to decide when this idea applies."))
         sections.append(rf"""
 \subsection{{{latex_escape(short['concept'])}}}
 \paragraph{{Prerequisites.}} {prereqs}
+
+\paragraph{{Key concept.}} {key_concept}
+
+\paragraph{{Concept explanation.}} {concept_explanation}
+
+\paragraph{{Connections.}} Builds on {builds_on}. Prepares for {prepares_for}.
+
+\paragraph{{How to recognize it.}} {recognition_cue}
 
 \begin{{definition}}
 {latex_escape(short['intuition'])}
@@ -426,6 +460,18 @@ Read the course map first, then work through the core concepts in order. For eac
 {course_map}
 \end{{enumerate}}
 
+\section{{Key Concepts And Explanations}}
+This is the conceptual spine of the course. Read this table before the formulas: it explains what each idea does, how it should feel, and when to reach for it in a problem.
+
+\begin{{longtable}}{{@{{}}p{{0.06\linewidth}}p{{0.17\linewidth}}p{{0.22\linewidth}}p{{0.31\linewidth}}p{{0.18\linewidth}}@{{}}}}
+\toprule
+No. & Concept & Key concept & Explanation & When to use it \\
+\midrule
+\endhead
+{key_concept_rows}
+\bottomrule
+\end{{longtable}}
+
 \section{{Formula Table}}
 \begin{{longtable}}{{@{{}}p{{0.08\linewidth}}p{{0.24\linewidth}}p{{0.34\linewidth}}p{{0.26\linewidth}}@{{}}}}
 \toprule
@@ -453,9 +499,16 @@ No. & Concept & Formula & Plain read \\
 
 def markdown_notes(plan: dict[str, object]) -> str:
     lines = [f"# {plan.get('course_title', 'Course')} Notes\n"]
+    lines.append("## Key Concepts\n")
+    for short in plan["shorts"]:
+        lines.append(f"- **{short['concept']}**: {short.get('concept_explanation', short['intuition'])}")
+    lines.append("\n")
     for short in plan["shorts"]:
         ex = short["worked_example"]
         lines.append(f"## {short['index']}. {short['concept']}\n")
+        lines.append(f"**Key concept.** {short.get('key_concept', short['hook'])}\n")
+        lines.append(f"**Concept explanation.** {short.get('concept_explanation', short['intuition'])}\n")
+        lines.append(f"**How to recognize it.** {short.get('recognition_cue', 'Use the definition and worked example to decide when this idea applies.')}\n")
         lines.append(f"**Definition.** {short['intuition']}\n")
         lines.append(f"**Formula.** `{short['plain_formula']}`\n")
         lines.append(f"**Worked example.** {ex['setup']} {ex['calculation']} {ex['takeaway']}\n")
