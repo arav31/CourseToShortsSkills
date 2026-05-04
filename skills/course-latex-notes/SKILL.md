@@ -34,11 +34,13 @@ python tools/stem_course.py notes --run runs/<course>
 - Keep topic order beginner-safe: prerequisites before dependent concepts.
 - Use LaTeX theorem-like environments for definitions, propositions, examples, warnings, and questions.
 
-4. If `pdflatex` is available, compile:
+4. Compile a PDF artifact. The CLI tries `latexmk`, `pdflatex`, or `tectonic` first; if no TeX engine is installed, it writes `notes.pdf` through the PyMuPDF fallback and records the engine in `notes_compile_report.json`:
 
 ```bash
 python tools/stem_course.py notes --run runs/<course> --compile
 ```
+
+Use `--pdf-engine latex` when you require true LaTeX compilation and want the command to fail if no TeX engine is available. Use `--pdf-engine fallback` for a guaranteed local PDF preview from the same notes data.
 
 ## Quality Bar
 
@@ -52,4 +54,5 @@ python tools/stem_course.py notes --run runs/<course> --compile
 
 - `runs/<course>/notes.tex`
 - `runs/<course>/notes.md`
-- optionally `runs/<course>/notes.pdf`
+- `runs/<course>/notes.pdf` when compiled or generated with the fallback PDF path
+- `runs/<course>/notes_compile_report.json`

@@ -40,7 +40,7 @@ python tools/stem_course.py plan --run runs/<course> --max-shorts 30
 
 ## Shorts Standard
 
-- Target length: about 60 seconds.
+- No fixed one-minute limit; choose the length needed to explain the concept, numeric example, visual interpretation, and active-recall answer clearly.
 - Every short needs one concrete worked example.
 - Every example should be visualizable in Manim.
 - Every short needs active recall, not only passive explanation.

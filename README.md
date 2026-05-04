@@ -3,7 +3,7 @@
 A shareable Codex skill pack for turning course links and course files into:
 
 - extracted course material packs
-- comprehensive LaTeX notes with definitions, formulas, examples, and questions
+- comprehensive LaTeX notes with definitions, formulas, examples, questions, and a compiled `notes.pdf`
 - beginner-safe short-video lesson plans
 - concept-specific Manim scenes in a 3Blue1Brown-inspired style
 - rendered vertical shorts with subtitles and real voiceover support
@@ -42,7 +42,7 @@ Each skill can also be used in-place by telling Codex to use the skill folder fr
 ```bash
 python tools/stem_course.py extract COURSE_URL --out runs/course
 python tools/stem_course.py plan --run runs/course --max-shorts 12
-python tools/stem_course.py notes --run runs/course
+python tools/stem_course.py notes --run runs/course --compile
 python tools/stem_course.py manim --run runs/course
 python tools/stem_course.py render --run runs/course --voice-engine openai
 python tools/stem_course.py queue --run runs/course --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
@@ -62,3 +62,12 @@ export META_GRAPH_VERSION="v21.0"  # override if your app uses a newer supported
 ```
 
 Instagram cannot publish a private local MP4 directly through this API; host the final videos first, then create the queue with `--public-base-url`.
+
+
+## Notes PDF
+
+`notes --compile` and `all` generate `notes.pdf`. The CLI tries `latexmk`, `pdflatex`, or `tectonic` first. If no TeX engine is installed, it uses the PyMuPDF fallback from the same generated notes data and writes `notes_compile_report.json` so you can see which engine produced the PDF.
+
+## Video Length
+
+Generated Manim explainers no longer have a one-minute cap. Scripts and captions are paced for longer concept-complete videos, and matrix/vector visuals are rendered as stacked math objects instead of cramped one-line lists.

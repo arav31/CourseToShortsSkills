@@ -136,6 +136,13 @@ def plain_math(value: str) -> str:
     return re.sub(r"\s+", " ", out).strip()
 
 
+def screen_math(value: str) -> str:
+    out = plain_math(value)
+    out = re.sub(r"_([A-Za-z0-9])", r"\1 ", out)
+    out = out.replace("+", " + ").replace("-", " - ")
+    return re.sub(r"\s+", " ", out).strip()
+
+
 def fetch_bytes(url: str, accept: str = "*/*") -> tuple[bytes, str, str]:
     req = urllib.request.Request(url, headers={"User-Agent": "course-shorts-skills/0.1", "Accept": accept})
     with urllib.request.urlopen(req, timeout=15) as response:
@@ -343,6 +350,124 @@ def latex_escape(s: str) -> str:
              .replace("#", r"\#").replace("_", r"\_").replace("{", r"\{").replace("}", r"\}"))
 
 
+def notes_pdf_report_path(run: Path) -> Path:
+    return run / "notes_compile_report.json"
+
+
+def compile_notes_pdf(run: Path, plan: dict[str, object], engine: str = "auto") -> dict[str, object]:
+    report: dict[str, object] = {"requested_engine": engine, "status": "not-run"}
+    if engine in {"auto", "latex"}:
+        latex_report = run_latex_engine(run)
+        if latex_report.get("status") == "ok":
+            write_json(notes_pdf_report_path(run), latex_report)
+            return latex_report
+        report = latex_report
+        if engine == "latex":
+            write_json(notes_pdf_report_path(run), report)
+            raise SystemExit(f"LaTeX PDF compile failed: {latex_report.get('message', 'unknown error')}")
+    if engine in {"auto", "fallback"}:
+        fallback_report = write_fallback_notes_pdf(run, plan, reason=str(report.get("message", "LaTeX engine unavailable")))
+        write_json(notes_pdf_report_path(run), fallback_report)
+        return fallback_report
+    write_json(notes_pdf_report_path(run), report)
+    return report
+
+
+def run_latex_engine(run: Path) -> dict[str, object]:
+    tex = run / "notes.tex"
+    if shutil.which("latexmk"):
+        cmd = ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "notes.tex"]
+        result = subprocess.run(cmd, cwd=run, text=True, capture_output=True, timeout=300)
+        (run / "notes_latexmk.log").write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
+        if result.returncode == 0 and (run / "notes.pdf").exists():
+            return {"status": "ok", "engine": "latexmk", "pdf": "notes.pdf"}
+        return {"status": "failed", "engine": "latexmk", "message": "latexmk failed; see notes_latexmk.log"}
+    if shutil.which("pdflatex"):
+        last = None
+        for i in range(2):
+            last = subprocess.run(["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
+            (run / f"notes_pdflatex_pass_{i + 1}.log").write_text(last.stdout + "\n" + last.stderr, encoding="utf-8")
+            if last.returncode != 0:
+                break
+        if last and last.returncode == 0 and (run / "notes.pdf").exists():
+            return {"status": "ok", "engine": "pdflatex", "pdf": "notes.pdf"}
+        return {"status": "failed", "engine": "pdflatex", "message": "pdflatex failed; see notes_pdflatex_pass_*.log"}
+    if shutil.which("tectonic"):
+        result = subprocess.run(["tectonic", "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
+        (run / "notes_tectonic.log").write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
+        if result.returncode == 0 and (run / "notes.pdf").exists():
+            return {"status": "ok", "engine": "tectonic", "pdf": "notes.pdf"}
+        return {"status": "failed", "engine": "tectonic", "message": "tectonic failed; see notes_tectonic.log"}
+    return {"status": "missing-engine", "engine": None, "message": "No LaTeX engine found: install latexmk, pdflatex, or tectonic."}
+
+
+def write_fallback_notes_pdf(run: Path, plan: dict[str, object], reason: str) -> dict[str, object]:
+    try:
+        import fitz  # type: ignore
+    except Exception as exc:
+        raise SystemExit(f"Could not create notes.pdf: no LaTeX engine and PyMuPDF fallback unavailable ({exc}).")
+
+    doc = fitz.open()
+    width, height = 612, 792
+    margin = 54
+    y = margin
+
+    def add_page() -> fitz.Page:
+        nonlocal y
+        new_page = doc.new_page(width=width, height=height)
+        y = margin
+        return new_page
+
+    page = add_page()
+
+    def write_line(text: str, size: int = 10, color: tuple[float, float, float] = (0, 0, 0), leading: float = 1.35) -> None:
+        nonlocal page, y
+        wrapped = textwrap.wrap(re.sub(r"\s+", " ", text).strip(), width=max(40, int(96 - size * 2.4))) or [""]
+        for line in wrapped:
+            if y > height - margin:
+                page = add_page()
+            page.insert_text((margin, y), line, fontsize=size, fontname="helv", color=color)
+            y += size * leading
+
+    def heading(text: str, size: int = 16) -> None:
+        nonlocal page, y
+        if y > height - margin - 50:
+            page = add_page()
+        y += 8
+        write_line(text, size=size, color=(0.05, 0.19, 0.38), leading=1.45)
+        y += 3
+
+    title = str(plan.get("course_title", "Course"))
+    heading(f"{title} Notes", 22)
+    write_line("PDF generated from notes.tex data. LaTeX engine note: " + reason, 9, color=(0.45, 0.2, 0.0))
+    heading("Key Concepts And Explanations", 15)
+    for short in plan.get("shorts", []):
+        if not isinstance(short, dict):
+            continue
+        write_line(f"{short.get('index')}. {short.get('concept')}", 12, color=(0.05, 0.19, 0.38))
+        write_line(f"Key concept: {short.get('key_concept', short.get('hook', ''))}")
+        write_line(f"Explanation: {short.get('concept_explanation', short.get('intuition', ''))}")
+        write_line(f"How to recognize it: {short.get('recognition_cue', '')}")
+        y += 5
+    heading("Core Concepts", 15)
+    for short in plan.get("shorts", []):
+        if not isinstance(short, dict):
+            continue
+        ex = short.get("worked_example", {}) if isinstance(short.get("worked_example"), dict) else {}
+        qp = short.get("question_prompt", {}) if isinstance(short.get("question_prompt"), dict) else {}
+        heading(f"{short.get('index')}. {short.get('concept')}", 14)
+        write_line(f"Definition: {short.get('intuition', '')}")
+        write_line(f"Formula: {short.get('plain_formula', short.get('formula', ''))}")
+        write_line(f"Worked example: {ex.get('setup', '')} {ex.get('calculation', '')} {ex.get('takeaway', '')}")
+        write_line(f"Common trap: {short.get('misconception', '')}")
+        write_line(f"Question: {qp.get('question', '')}")
+        write_line(f"Answer idea: {qp.get('answer', '')}")
+    pdf = run / "notes.pdf"
+    doc.save(pdf)
+    doc.close()
+    return {"status": "ok", "engine": "pymupdf-fallback", "pdf": "notes.pdf", "message": reason}
+
+
 def cmd_notes(args: argparse.Namespace) -> None:
     run = Path(args.run)
     pack = read_json(run / "source_pack.json")
@@ -493,8 +618,9 @@ No. & Concept & Formula & Plain read \\
 """
     (run / "notes.tex").write_text(tex, encoding="utf-8")
     (run / "notes.md").write_text(markdown_notes(plan), encoding="utf-8")
-    if args.compile and shutil.which("pdflatex"):
-        subprocess.run(["pdflatex", "-interaction=nonstopmode", "notes.tex"], cwd=run, check=False)
+    pdf_engine = "auto" if args.compile and args.pdf_engine == "none" else args.pdf_engine
+    if args.compile or pdf_engine != "none":
+        compile_notes_pdf(run, plan, pdf_engine)
     print(run / "notes.tex")
 
 def markdown_notes(plan: dict[str, object]) -> str:
@@ -543,6 +669,12 @@ class {class_name}(Scene):
     def text_block(self, lines, font_size=25, color="#EAF2FF"):
         return VGroup(*[Text(line, font_size=font_size, color=color) for line in lines]).arrange(DOWN, buff=0.11)
 
+    def matrix_block(self, rows, font_size=30, color="#EAF2FF", bracket_color="#8FD3FF"):
+        row_groups = VGroup(*[VGroup(*[Text(str(cell), font_size=font_size, color=color) for cell in row]).arrange(RIGHT, buff=0.42) for row in rows]).arrange(DOWN, buff=0.22)
+        left = Text("[", font_size=78, color=bracket_color).stretch_to_fit_height(row_groups.height + 0.35).next_to(row_groups, LEFT, buff=0.12)
+        right = Text("]", font_size=78, color=bracket_color).stretch_to_fit_height(row_groups.height + 0.35).next_to(row_groups, RIGHT, buff=0.12)
+        return VGroup(left, row_groups, right)
+
     def construct(self):
         self.camera.background_color = "#0B1020"
         title = Text({short["concept"]!r}, font_size=48, weight="BOLD", color="#EAF2FF").to_edge(UP, buff=0.55)
@@ -551,11 +683,11 @@ class {class_name}(Scene):
 
 {textwrap.indent(visual_code, "        ")}
 
-        formula = self.text_block({wrap(plain_math(str(short["formula"])), 34, 2)!r}, font_size=30, color="#F7C948").move_to(DOWN * 4.25)
+        formula = self.text_block({wrap(screen_math(str(short["formula"])), 34, 2)!r}, font_size=30, color="#F7C948").move_to(DOWN * 4.55)
         intuition = self.text_block({wrap(str(short["intuition"]), 36, 3)!r}, font_size=24, color="#EAF2FF").move_to(DOWN * 5.35)
         self.play(Write(formula), run_time=0.9)
         self.play(FadeIn(intuition, shift=UP * 0.12), run_time=0.9)
-        self.wait(3.0)
+        self.wait(10.0)
         self.play(*[FadeOut(m) for m in self.mobjects if m not in [title, hook]], run_time=0.7)
 
         card = RoundedRectangle(width=8.0, height=6.25, corner_radius=0.18, color="#58A6FF", fill_color="#101A33", fill_opacity=0.96)
@@ -566,11 +698,11 @@ class {class_name}(Scene):
         take = self.text_block({wrap("So: " + str(takeaway), 36, 3)!r}, font_size=22, color="#7EE787").next_to(calc, DOWN, buff=0.48)
         self.play(FadeIn(card), FadeIn(label), run_time=0.8)
         self.play(LaggedStart(*[FadeIn(x, shift=UP * 0.08) for x in setup], lag_ratio=0.12), run_time=1.2)
-        self.wait(7.0)
+        self.wait(12.0)
         self.play(LaggedStart(*[FadeIn(x, shift=UP * 0.08) for x in calc], lag_ratio=0.12), run_time=1.2)
-        self.wait(8.0)
+        self.wait(14.0)
         self.play(LaggedStart(*[FadeIn(x, shift=UP * 0.08) for x in take], lag_ratio=0.12), run_time=1.0)
-        self.wait(6.0)
+        self.wait(10.0)
         self.play(FadeOut(card), FadeOut(label), FadeOut(setup), FadeOut(calc), FadeOut(take), run_time=0.7)
 
         recall = RoundedRectangle(width=8.0, height=5.7, corner_radius=0.18, color="#F7C948", fill_color="#1C1A10", fill_opacity=0.96).move_to(DOWN * 0.45)
@@ -578,11 +710,11 @@ class {class_name}(Scene):
         prompt = self.text_block({wrap("Try: " + str(question), 36, 5)!r}, font_size=22).next_to(rtitle, DOWN, buff=0.45)
         answer = self.text_block({wrap("Answer idea: " + str(short["question_prompt"]["answer"]), 36, 4)!r}, font_size=21, color="#8FD3FF").next_to(prompt, DOWN, buff=0.55)
         self.play(FadeIn(recall), FadeIn(rtitle), FadeIn(prompt), run_time=1.0)
-        self.wait(8.0)
+        self.wait(14.0)
         self.play(FadeIn(answer, shift=UP * 0.1), run_time=0.9)
-        self.wait(7.0)
+        self.wait(12.0)
         self.play(Indicate(answer), run_time=0.8)
-        self.wait(5.0)
+        self.wait(8.0)
 '''
 
 
@@ -612,12 +744,20 @@ self.play(Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.1)
 self.play(TransformFromCopy(a, three_a), TransformFromCopy(b, two_b), FadeIn(target, scale=1.4), run_time=1.4)
 self.play(FadeIn(label), Flash(target, color="#7EE787"), run_time=0.9)'''
     if kind == "matrix_vector":
-        return '''matrix = VGroup(Text("A = [[2, 1], [1, 3]]", font_size=30, color="#EAF2FF"), Text("x = [4, 2]", font_size=30, color="#EAF2FF")).arrange(DOWN, buff=0.18).move_to(UP*0.3)
-cols = VGroup(Text("4 * [2, 1]", font_size=28, color="#58A6FF"), Text("+", font_size=30), Text("2 * [1, 3]", font_size=28, color="#F7C948"), Text("=", font_size=30), Text("[10, 10]", font_size=30, color="#7EE787")).arrange(RIGHT, buff=0.16).move_to(DOWN*1.45)
-box = SurroundingRectangle(cols[-1], color="#7EE787", buff=0.16)
-self.play(FadeIn(matrix, shift=UP*0.1), run_time=1.0)
-self.play(LaggedStart(*[FadeIn(m, shift=UP*0.1) for m in cols], lag_ratio=0.18), run_time=1.4)
-self.play(Create(box), Indicate(cols[-1]), run_time=0.8)'''
+        return '''A = self.matrix_block([[2, 1], [1, 3]], font_size=28, color="#EAF2FF", bracket_color="#58A6FF")
+x = self.matrix_block([[4], [2]], font_size=28, color="#EAF2FF", bracket_color="#F7C948")
+out = self.matrix_block([[10], [10]], font_size=28, color="#7EE787", bracket_color="#7EE787")
+top = VGroup(A, Text("x", font_size=30, color="#EAF2FF"), x, Text("=", font_size=30, color="#EAF2FF"), out).arrange(RIGHT, buff=0.22).move_to(UP*0.35)
+top.scale_to_fit_width(7.25)
+col1 = self.matrix_block([[2], [1]], font_size=22, color="#58A6FF", bracket_color="#58A6FF")
+col2 = self.matrix_block([[1], [3]], font_size=22, color="#F7C948", bracket_color="#F7C948")
+combo_out = self.matrix_block([[10], [10]], font_size=22, color="#7EE787", bracket_color="#7EE787")
+combo = VGroup(Text("4", font_size=25, color="#EAF2FF"), col1, Text("+", font_size=25, color="#EAF2FF"), Text("2", font_size=25, color="#EAF2FF"), col2, Text("=", font_size=25, color="#EAF2FF"), combo_out).arrange(RIGHT, buff=0.14).move_to(DOWN*2.25)
+combo.scale_to_fit_width(6.85)
+box = SurroundingRectangle(combo[-1], color="#7EE787", buff=0.12)
+self.play(FadeIn(top, shift=UP*0.1), run_time=1.1)
+self.play(LaggedStart(*[FadeIn(m, shift=UP*0.08) for m in combo], lag_ratio=0.14), run_time=1.6)
+self.play(Create(box), Indicate(combo[-1]), run_time=0.9)'''
     if kind == "basis":
         return '''plane = NumberPlane(x_range=[-3,5,1], y_range=[-2,5,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.7}).scale(0.78).shift(DOWN*0.85)
 origin = plane.c2p(0,0)
@@ -745,13 +885,13 @@ def make_srt(short: dict[str, object]) -> str:
     ex = short["worked_example"]
     qp = short["question_prompt"]
     cues = [
-        ("00:00:00,000", "00:00:04,000", short["hook"]),
-        ("00:00:04,000", "00:00:13,000", short["intuition"]),
-        ("00:00:13,000", "00:00:20,000", short["plain_formula"]),
-        ("00:00:20,000", "00:00:34,000", f"Example: {ex['setup']} {ex['calculation']}"),
-        ("00:00:34,000", "00:00:46,000", f"Takeaway: {ex['takeaway']}"),
-        ("00:00:46,000", "00:00:55,000", f"Try this: {qp['question']}"),
-        ("00:00:55,000", "00:01:00,000", f"Answer: {qp['answer']}"),
+        ("00:00:00,000", "00:00:06,000", short["hook"]),
+        ("00:00:06,000", "00:00:20,000", short["intuition"]),
+        ("00:00:20,000", "00:00:34,000", short["plain_formula"]),
+        ("00:00:34,000", "00:01:04,000", f"Example: {ex['setup']} {ex['calculation']}"),
+        ("00:01:04,000", "00:01:22,000", f"Takeaway: {ex['takeaway']}"),
+        ("00:01:22,000", "00:01:42,000", f"Try this: {qp['question']}"),
+        ("00:01:42,000", "00:02:00,000", f"Answer: {qp['answer']}"),
     ]
     return "\n\n".join(f"{i}\n{a} --> {b}\n{textwrap.fill(str(t), width=42)}" for i, (a, b, t) in enumerate(cues, start=1)) + "\n"
 
@@ -761,19 +901,19 @@ def script_markdown(short: dict[str, object]) -> str:
     qp = short["question_prompt"]
     return f"""# Short {short['index']:02d}: {short['concept']}
 
-Target length: 60 seconds
+Target length: no fixed one-minute limit; keep going until the concept, worked example, and recall question are clear.
 
 ## Beats
 
 | Time | Beat |
 | --- | --- |
-| 0:00-0:04 | {short['hook']} |
-| 0:04-0:13 | {short['intuition']} |
-| 0:13-0:20 | Formula: `{short['plain_formula']}` |
-| 0:20-0:34 | Example: {ex['setup']} {ex['calculation']} |
-| 0:34-0:46 | Takeaway: {ex['takeaway']} |
-| 0:46-0:55 | Try this: {qp['question']} |
-| 0:55-1:00 | Answer: {qp['answer']} |
+| 0:00-0:06 | {short['hook']} |
+| 0:06-0:20 | {short['intuition']} |
+| 0:20-0:34 | Formula: `{short['plain_formula']}` |
+| 0:34-1:04 | Example: {ex['setup']} {ex['calculation']} |
+| 1:04-1:22 | Takeaway: {ex['takeaway']} |
+| 1:22-1:42 | Try this: {qp['question']} |
+| 1:42-2:00 | Answer: {qp['answer']} |
 """
 
 
@@ -991,7 +1131,7 @@ def cmd_all(args: argparse.Namespace) -> None:
     extract_args = argparse.Namespace(url=args.url, out=str(out), sample=args.sample, max_pages=args.max_pages, max_pdfs=args.max_pdfs)
     cmd_extract(extract_args)
     cmd_plan(argparse.Namespace(run=str(out), max_shorts=args.max_shorts))
-    cmd_notes(argparse.Namespace(run=str(out), compile=False))
+    cmd_notes(argparse.Namespace(run=str(out), compile=not args.no_pdf, pdf_engine=args.pdf_engine if not args.no_pdf else "none"))
     cmd_manim(argparse.Namespace(run=str(out)))
     if not args.no_render:
         cmd_render(argparse.Namespace(run=str(out), quality=args.quality, voice_engine=args.voice_engine))
@@ -1024,6 +1164,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("notes")
     p.add_argument("--run", required=True)
     p.add_argument("--compile", action="store_true")
+    p.add_argument("--pdf-engine", choices=["auto", "latex", "fallback", "none"], default="none")
     p.set_defaults(func=cmd_notes)
     p = sub.add_parser("manim")
     p.add_argument("--run", required=True)
@@ -1055,6 +1196,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--voice-engine", choices=["none", "say", "edge-tts", "openai"], default="none")
     p.add_argument("--playlist", default=None)
     p.add_argument("--public-base-url", default=None)
+    p.add_argument("--pdf-engine", choices=["auto", "latex", "fallback", "none"], default="auto")
+    p.add_argument("--no-pdf", action="store_true")
     p.add_argument("--no-render", action="store_true")
     p.set_defaults(func=cmd_all)
     return parser

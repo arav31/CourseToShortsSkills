@@ -37,7 +37,7 @@ Supported engines:
 
 ## Quality Bar
 
-- Final videos should be about one minute.
+- Final videos should not be forced to one minute; they should run as long as needed for the concept, example, and recall question.
 - Every final MP4 should have a matching script and caption file.
 - If audio is unavailable, the result is a visual-only draft, not a finished upload.
 - Check at least one rendered MP4 before publishing a batch.

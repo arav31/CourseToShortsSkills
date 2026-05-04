@@ -38,7 +38,8 @@ python tools/stem_course.py manim --run runs/<course>
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.
 - Keep vertical 9:16 composition readable on a phone.
 - Avoid tiny formulas. If a formula is long, animate it in parts.
-- Use pauses for comprehension, but keep the pacing near 60 seconds.
+- Render matrices and vectors as stacked mathematical objects, not single-line Python lists.
+- Do not force a one-minute cap; keep pacing long enough for concept, worked example, and active recall to land clearly.
 
 ## Output
 
