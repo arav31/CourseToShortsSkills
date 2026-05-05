@@ -130,6 +130,10 @@ def slugify(text: str, fallback: str = "course") -> str:
 def plain_math(value: str) -> str:
     replacements = [
         (r"\operatorname", ""),
+        (r"\{", "{"),
+        (r"\}", "}"),
+        (r"\left", ""),
+        (r"\right", ""),
         (r"\cdots", "..."),
         (r"\ldots", "..."),
         (r"\Rightarrow", "=>"),
@@ -146,6 +150,7 @@ def plain_math(value: str) -> str:
     for old, new in replacements:
         out = out.replace(old, new)
     out = out.replace("{", "").replace("}", "")
+    out = re.sub(r"\b(span|rank|det|dim|nullity|proj)(?=[A-Za-z])", r"\1 ", out)
     out = out.replace("=", " = ")
     return re.sub(r"\s+", " ", out).strip()
 
@@ -417,6 +422,320 @@ def latex_escape(s: str) -> str:
              .replace("{", r"\{").replace("}", r"\}"))
 
 
+MATRIX_LITERAL_RE = re.compile(r"\[\[[^\]]+\](?:\s*,\s*\[[^\]]+\])*\]")
+ROW_MATRIX_RE = re.compile(r"\[[^\[\],]+(?:\s+[^\[\],]+)+\]")
+TUPLE_LITERAL_RE = re.compile(r"\([^()]*,[^()]*\)")
+ASSIGNMENT_RE = re.compile(
+    r"(?<![A-Za-z0-9_])([A-Za-z](?:_?[A-Za-z0-9]+)?)\s*=\s*"
+    r"(\[\[[^\]]+\](?:\s*,\s*\[[^\]]+\])*\]|\[[^\[\]]+\]|\([^()]*,[^()]*\)|diag\([^()]+\))"
+)
+MATH_FUNCTIONS = {
+    "sin", "cos", "tan", "log", "ln", "exp", "sqrt", "rank", "det", "dim", "diag", "span", "nullity",
+    "proj", "lim", "min", "max", "argmin", "argmax", "mean", "var", "cov", "prob",
+}
+GREEK_LATEX = {
+    "alpha": r"\alpha",
+    "beta": r"\beta",
+    "gamma": r"\gamma",
+    "delta": r"\delta",
+    "epsilon": r"\epsilon",
+    "theta": r"\theta",
+    "lambda": r"\lambda",
+    "mu": r"\mu",
+    "sigma": r"\sigma",
+    "omega": r"\omega",
+}
+SYMBOL_MACROS = {
+    "lambda": r"\lambda",
+    "theta": r"\theta",
+    "mu": r"\mu",
+    "sigma": r"\sigma",
+    "Sigma": r"\Sigma",
+}
+
+
+def split_top_level_commas(text: str) -> list[str]:
+    parts: list[str] = []
+    start = 0
+    depth = 0
+    for i, char in enumerate(text):
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        elif char == "," and depth == 0:
+            parts.append(text[start:i].strip())
+            start = i + 1
+    parts.append(text[start:].strip())
+    return [part for part in parts if part]
+
+
+def matrix_rows(value: str) -> list[list[str]] | None:
+    source = value.strip()
+    if source.startswith("[[") and source.endswith("]]"):
+        row_texts = re.split(r"\]\s*,\s*\[", source[2:-2].strip())
+    elif ROW_MATRIX_RE.fullmatch(source):
+        row_texts = [source[1:-1].strip()]
+    else:
+        return None
+    rows: list[list[str]] = []
+    for row_text in row_texts:
+        cleaned = row_text.strip().strip("[]")
+        cells = split_top_level_commas(cleaned) if "," in cleaned else cleaned.split()
+        if not cells:
+            return None
+        rows.append(cells)
+    return rows or None
+
+
+def vector_items(value: str) -> list[str] | None:
+    source = value.strip()
+    if source.startswith("(") and source.endswith(")") and "," in source:
+        return split_top_level_commas(source[1:-1])
+    if source.startswith("[") and source.endswith("]") and "," in source and not source.startswith("[["):
+        return split_top_level_commas(source[1:-1])
+    return None
+
+
+def stash_latex(placeholders: dict[str, str], latex: str) -> str:
+    key = f"@@@{len(placeholders)}@@@"
+    placeholders[key] = latex
+    return key
+
+
+def latex_bmatrix(rows: list[list[str]]) -> str:
+    rendered_rows = [" & ".join(latex_math_expr(cell, tuple_style="tuple") for cell in row) for row in rows]
+    return r"\begin{bmatrix}" + r" \\ ".join(rendered_rows) + r"\end{bmatrix}"
+
+
+def latex_tuple(items: list[str]) -> str:
+    return r"\left(" + ", ".join(latex_math_expr(item, tuple_style="tuple") for item in items) + r"\right)"
+
+
+def latex_column_vector(items: list[str]) -> str:
+    return r"\begin{bmatrix}" + r" \\ ".join(latex_math_expr(item, tuple_style="tuple") for item in items) + r"\end{bmatrix}"
+
+
+def latex_value(value: str, *, vector: bool = False) -> str:
+    rows = matrix_rows(value)
+    if rows:
+        return latex_bmatrix(rows)
+    items = vector_items(value)
+    if items:
+        return latex_column_vector(items) if vector else latex_tuple(items)
+    if value.strip().lower().startswith("diag(") and value.strip().endswith(")"):
+        inner = value.strip()[5:-1]
+        return r"\operatorname{diag}\left(" + ", ".join(latex_math_expr(part, tuple_style="tuple") for part in split_top_level_commas(inner)) + r"\right)"
+    return latex_math_expr(value, tuple_style="tuple")
+
+
+def latex_variable(name: str, value: str | None = None) -> str:
+    vector = value is not None and vector_items(value) is not None
+    match = re.fullmatch(r"([A-Za-z])(?:_?([A-Za-z0-9]+))?", name.strip())
+    if vector and match:
+        base = rf"\vec{{{match.group(1)}}}"
+        if match.group(2):
+            base += rf"_{{{match.group(2)}}}"
+        return base
+    return latex_math_expr(name, tuple_style="tuple")
+
+
+def latex_math_expr(expr: str, *, tuple_style: str = "tuple") -> str:
+    work = str(expr).strip().strip(".;")
+    work = work.replace("−", "-").replace("×", "*").replace("·", r"\cdot")
+    placeholders: dict[str, str] = {}
+
+    def matrix_repl(match: re.Match[str]) -> str:
+        rows = matrix_rows(match.group(0))
+        return stash_latex(placeholders, latex_bmatrix(rows)) if rows else match.group(0)
+
+    def row_matrix_repl(match: re.Match[str]) -> str:
+        rows = matrix_rows(match.group(0))
+        return stash_latex(placeholders, latex_bmatrix(rows)) if rows else match.group(0)
+
+    def diag_repl(match: re.Match[str]) -> str:
+        parts = split_top_level_commas(match.group(1))
+        rendered = r"\operatorname{diag}\left(" + ", ".join(latex_math_expr(part, tuple_style="tuple") for part in parts) + r"\right)"
+        return stash_latex(placeholders, rendered)
+
+    def proj_repl(match: re.Match[str]) -> str:
+        sub = latex_math_expr(match.group(1), tuple_style="tuple")
+        arg = latex_math_expr(match.group(2), tuple_style="tuple")
+        return stash_latex(placeholders, rf"\operatorname{{proj}}_{{{sub}}}\left({arg}\right)")
+
+    def sqrt_repl(match: re.Match[str]) -> str:
+        return stash_latex(placeholders, r"\sqrt{" + latex_math_expr(match.group(1), tuple_style="tuple") + "}")
+
+    def tuple_repl(match: re.Match[str]) -> str:
+        items = vector_items(match.group(0))
+        if not items:
+            return match.group(0)
+        rendered = latex_column_vector(items) if tuple_style == "vector" else latex_tuple(items)
+        return stash_latex(placeholders, rendered)
+
+    work = MATRIX_LITERAL_RE.sub(matrix_repl, work)
+    work = ROW_MATRIX_RE.sub(row_matrix_repl, work)
+    work = re.sub(r"\bdiag\(([^()]*)\)", diag_repl, work)
+    work = re.sub(r"\bproj_([A-Za-z0-9]+)\(([^()]*)\)", proj_repl, work)
+    while re.search(r"\bsqrt\(([^()]*)\)", work):
+        work = re.sub(r"\bsqrt\(([^()]*)\)", sqrt_repl, work)
+    work = TUPLE_LITERAL_RE.sub(tuple_repl, work)
+
+    for word, latex in GREEK_LATEX.items():
+        work = re.sub(rf"\b{word}\b", lambda _match, value=latex: value, work, flags=re.I)
+    work = re.sub(r"\bdot\b", r"\\cdot", work, flags=re.I)
+    work = work.replace("*", r"\cdot ")
+    work = work.replace("<=", r"\le ").replace(">=", r"\ge ").replace("=>", r"\Rightarrow ")
+    work = re.sub(r"\b(rank|det|dim|nullity|span|mean|var|cov|prob)\s*\(", r"\\operatorname{\1}(", work)
+    work = re.sub(r"\b(rank|nullity)\b", r"\\operatorname{\1}", work)
+    work = re.sub(r"\b(sin|cos|tan|log|ln|exp)\s*\(", r"\\\1(", work)
+    work = re.sub(r"\b([APU])([xvb])\b", r"\1\\vec{\2}", work)
+    work = re.sub(r"\b([A-Za-z])([0-9]+)\b", r"\1_{\2}", work)
+    work = re.sub(r"\^T(?=[A-Za-z])", r"^{T}", work)
+    work = re.sub(r"\^(?!\{)([0-9]+|[A-Za-z])", r"^{\1}", work)
+
+    label = re.match(r"^([A-Za-z][A-Za-z ]{2,24})\s*=", work)
+    if label and label.group(1).lower() not in MATH_FUNCTIONS:
+        words = label.group(1).split()
+        if len(words) > 1 or len(label.group(1)) > 3:
+            work = r"\mathrm{" + " ".join(words) + "}" + work[label.end() - 1 :]
+
+    work = re.sub(r"\s+", " ", work).strip()
+    for key, value in placeholders.items():
+        work = work.replace(key, value)
+    return work
+
+
+def math_span_is_safe(core: str) -> bool:
+    if len(core) > 150:
+        return False
+    words = re.findall(r"[A-Za-z]{2,}", core)
+    allowed = MATH_FUNCTIONS | set(GREEK_LATEX) | {"frac", "vec", "hat", "operatorname"}
+    return all(word.lower() in allowed or len(word) <= 2 or re.fullmatch(r"[A-Z][a-z]?", word) for word in words)
+
+
+def latex_text_with_inline_math(text: str, *, tuple_style: str = "tuple") -> str:
+    work = str(text).strip()
+    placeholders: dict[str, str] = {}
+
+    atom = r"(?:[A-Za-z][A-Za-z0-9_]*|\d+(?:\.\d+)?[A-Za-z]?|\d+(?:\.\d+)?|\([^()]+\)|\[[^\]]+\])"
+    term = rf"{atom}(?:\s*(?:\^|_)\s*{atom})?"
+    expr = rf"{term}(?:\s*(?:\+|-|\*|/|dot)\s*{term}){{0,8}}"
+    equation_re = re.compile(rf"(?<![A-Za-z0-9_])({expr}\s*(?:=|<=|>=|<|>)\s*{expr}(?:\s*(?:=|<=|>=|<|>)\s*{expr})*)")
+
+    def store_math(latex: str) -> str:
+        return stash_latex(placeholders, rf"\({latex}\)")
+
+    def equation_repl(match: re.Match[str]) -> str:
+        core = match.group(1).strip()
+        if not math_span_is_safe(core):
+            return match.group(0)
+        return store_math(latex_math_expr(core, tuple_style=tuple_style))
+
+    work = equation_re.sub(equation_repl, work)
+    work = MATRIX_LITERAL_RE.sub(lambda m: store_math(latex_math_expr(m.group(0), tuple_style="vector")), work)
+    work = ROW_MATRIX_RE.sub(lambda m: store_math(latex_math_expr(m.group(0), tuple_style="vector")), work)
+    work = re.sub(r"\b(?:sqrt|rank|det|dim|diag)\([^()]+\)", lambda m: store_math(latex_math_expr(m.group(0), tuple_style=tuple_style)), work)
+    work = TUPLE_LITERAL_RE.sub(lambda m: store_math(latex_math_expr(m.group(0), tuple_style=tuple_style)), work)
+
+    escaped = latex_escape(work)
+    for key, value in placeholders.items():
+        escaped = escaped.replace(latex_escape(key), value)
+    return escaped
+
+
+def short_vector_context(short: dict[str, object]) -> bool:
+    haystack = " ".join(
+        str(short.get(key, ""))
+        for key in ("concept", "formula", "intuition", "hook", "visual_type")
+    ).lower()
+    return any(term in haystack for term in ("vector", "matrix", "basis", "span", "dot", "projection", "eigen", r"\vec"))
+
+
+def latex_assignment_text(text: str, *, vector_context: bool) -> str | None:
+    matches = [match for match in ASSIGNMENT_RE.finditer(text) if matrix_rows(match.group(2)) or vector_items(match.group(2)) or match.group(2).lower().startswith("diag(")]
+    if not matches:
+        return None
+    first, last = matches[0], matches[-1]
+    prefix = text[: first.start()].strip()
+    prefix = re.sub(r"(?:,|and|with|where)\s*$", "", prefix, flags=re.I).strip()
+    suffix = text[last.end() :].strip()
+    suffix = re.sub(r"^[\s,.;]*(?:and\s+)?", "", suffix, flags=re.I).strip()
+    suffix = suffix if suffix not in {".", ";", ","} else ""
+    math_parts = []
+    for match in matches:
+        var, value = match.group(1), match.group(2)
+        as_vector = vector_context and vector_items(value) is not None
+        math_parts.append(f"{latex_variable(var, value)} = {latex_value(value, vector=as_vector)}")
+    pieces: list[str] = []
+    if prefix:
+        pieces.append(latex_escape(prefix))
+    pieces.append(r"\[" + "\n" + r",\qquad ".join(math_parts) + "\n" + r"\]")
+    if suffix:
+        pieces.append(latex_text_with_inline_math(suffix, tuple_style="tuple"))
+    return "\n".join(pieces)
+
+
+def display_math_sentence(sentence: str) -> bool:
+    core = sentence.strip().rstrip(".")
+    if not core or ("=" not in core and "sqrt(" not in core and " dot " not in core.lower()):
+        return False
+    if ":" in core and "=" in core and core.index(":") < core.index("="):
+        return False
+    prose_markers = {"because", "then", "where", "when", "only", "gives", "are", "is", "so", "but", "with", "from"}
+    words = [word.lower() for word in re.findall(r"[A-Za-z]{2,}", core)]
+    if any(word in prose_markers for word in words):
+        return False
+    prose = [word for word in words if word not in MATH_FUNCTIONS and word not in GREEK_LATEX and len(word) > 2]
+    return len(prose) <= 1
+
+
+def latex_calculation_text(text: str, *, vector_context: bool) -> str:
+    rendered: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+", str(text).strip()):
+        if not sentence:
+            continue
+        if display_math_sentence(sentence):
+            tuple_style = "vector" if vector_context else "tuple"
+            rendered.append(r"\[" + "\n" + latex_math_expr(sentence, tuple_style=tuple_style) + "\n" + r"\]")
+        else:
+            rendered.append(latex_text_with_inline_math(sentence, tuple_style="tuple"))
+    return "\n".join(rendered)
+
+
+def latex_example_text(text: str, short: dict[str, object], role: str) -> str:
+    vector_context = short_vector_context(short)
+    if role == "calculation":
+        return latex_calculation_text(str(text), vector_context=vector_context)
+    assignment = latex_assignment_text(str(text), vector_context=vector_context)
+    if assignment:
+        return assignment
+    return latex_text_with_inline_math(str(text), tuple_style="tuple")
+
+
+def compact_key_concept(short: dict[str, object]) -> str:
+    concept = str(short.get("concept", "Concept"))
+    key = str(short.get("key_concept", short.get("hook", ""))).strip()
+    prefix = f"{concept}: "
+    if key.startswith(prefix):
+        key = key[len(prefix) :]
+    explanation = str(short.get("concept_explanation", short.get("intuition", ""))).strip()
+    if explanation and explanation != key:
+        return f"{key} {explanation}"
+    return key or str(short.get("intuition", ""))
+
+
+def plain_formula_read(short: dict[str, object]) -> str:
+    formula = str(short.get("formula", ""))
+    return plain_math(formula) if formula else str(short.get("plain_formula", ""))
+
+
+def latex_formula_reference(short: dict[str, object]) -> str:
+    formula = str(short.get("formula", ""))
+    plain = latex_escape(plain_formula_read(short))
+    return rf"\(\displaystyle {formula}\)\par{{\footnotesize {plain}}}"
+
+
 def notes_pdf_report_path(run: Path) -> Path:
     return run / "notes_compile_report.json"
 
@@ -544,31 +863,136 @@ def latex_items(items: list[str]) -> str:
     return "\n".join(rf"\item {latex_escape(item)}" for item in items)
 
 
+def formula_symbol_tokens(formula: str) -> list[tuple[str, str]]:
+    tokens: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    def add(key: str, latex: str) -> None:
+        if key not in seen:
+            seen.add(key)
+            tokens.append((key, latex))
+
+    for match in re.finditer(r"\\(vec|hat)\{([A-Za-z])\}(?:_\{?([A-Za-z0-9]+)\}?)?", formula):
+        macro, base, sub = match.group(1), match.group(2), match.group(3)
+        latex = rf"\{macro}{{{base}}}" + (rf"_{{{sub}}}" if sub else "")
+        add(f"{macro}:{base}:{sub or ''}", latex)
+    for macro, latex in SYMBOL_MACROS.items():
+        if rf"\{macro}" in formula:
+            add(f"macro:{macro}", latex)
+
+    stripped = re.sub(r"\\operatorname\{[^}]+\}", " ", formula)
+    stripped = re.sub(r"\\(?:vec|hat)\{[A-Za-z]\}(?:_\{?[A-Za-z0-9]+\}?)?", " ", stripped)
+    stripped = re.sub(r"\\[A-Za-z]+", " ", stripped)
+    for match in re.finditer(r"(?<![A-Za-z])([A-Za-z])(?:_\{?([A-Za-z0-9]+)\}?)?", stripped):
+        base, sub = match.group(1), match.group(2)
+        latex = base + (rf"_{{{sub}}}" if sub else "")
+        add(f"plain:{base}:{sub or ''}", latex)
+    return tokens
+
+
+def symbol_meaning(key: str, latex: str, short: dict[str, object]) -> str:
+    haystack = " ".join(str(short.get(k, "")) for k in ("concept", "formula", "intuition", "hook", "visual_type")).lower()
+    vector_match = re.search(r"\\(?:vec|hat)\{([A-Za-z])\}", latex)
+    base_match = re.search(r"([A-Za-z])", latex.replace("lambda", ""))
+    base = vector_match.group(1) if vector_match else (base_match.group(1) if base_match else latex)
+    if latex.startswith(r"\vec"):
+        if base in {"x", "b"}:
+            return "vector of unknowns, inputs, or target values"
+        if base in {"u", "v", "a", "q"}:
+            return "vector or direction used by the rule"
+        return "vector quantity with ordered components"
+    if latex == r"\lambda":
+        return "parameter; in eigenvalue topics, the stretch factor"
+    if latex == r"\theta":
+        return "angle or angular parameter"
+    if latex in {r"\mu", r"\sigma"}:
+        return "distribution parameter or course-defined constant"
+    if latex == r"\Sigma":
+        return "summation, covariance, or singular-value matrix depending on context"
+    if "_{" in latex:
+        return "indexed component, coefficient, or sequence term"
+    if base in {"A", "B", "C", "P", "Q", "R", "U", "V", "S"}:
+        if any(term in haystack for term in ("matrix", "linear", "eigen", "svd", "markov", "qr")):
+            return "matrix, linear transformation, or structured array"
+        if "probability" in haystack and base == "P":
+            return "probability or transition rule"
+        return "named quantity defined by the course context"
+    if base in {"x", "y", "z"}:
+        return "unknown, input, output, or coordinate variable"
+    if base in {"u", "v", "w"}:
+        return "vector, direction, or comparison quantity"
+    if base in {"i", "j", "k", "n", "r"}:
+        return "index, count, dimension, or rank-like value"
+    if base in {"c", "d", "a", "b"}:
+        return "coefficient, scalar, vector, or course-defined quantity"
+    if base == "t":
+        return "time or independent variable"
+    if base == "f":
+        return "function or rule"
+    return "symbol whose meaning should be checked in the source context"
+
+
+def formula_operator_entries(formula: str, short: dict[str, object]) -> list[str]:
+    entries: list[str] = []
+    operators = {
+        "rank": r"$\operatorname{rank}$: number of independent directions or constraints",
+        "det": r"$\det$: signed scale factor for area or volume",
+        "dim": r"$\dim$: dimension or number of degrees of freedom",
+        "span": r"$\operatorname{span}$: all combinations generated by listed objects",
+        "proj": r"$\operatorname{proj}$: component kept in a chosen direction or subspace",
+        "nullity": r"$\operatorname{nullity}$: number of free or invisible input directions",
+    }
+    for name, entry in operators.items():
+        if name in formula:
+            entries.append(entry)
+    if r"\frac" in formula:
+        entries.append(r"$\frac{\cdot}{\cdot}$: ratio; check numerator and denominator roles before substituting")
+    if "=" in formula:
+        entries.append(r"$=$: equality to verify by substitution, transformation, or units")
+    return entries
+
+
 def symbol_glossary(short: dict[str, object]) -> str:
     formula = str(short.get("formula", ""))
-    concept = str(short.get("concept", "")).lower()
     entries: list[str] = []
-    if "A" in formula or "matrix" in concept:
-        entries.append(r"$A$: matrix or linear rule")
-    if r"\vec{x}" in formula or "x" in formula:
-        entries.append(r"$\vec{x}$ or $x$: input vector, variable, or unknown")
-    if r"\vec{v}" in formula or "vector" in concept:
-        entries.append(r"$\vec{v}$: vector being measured or transformed")
-    if "c_" in formula:
-        entries.append(r"$c_i$: scalar weights in a combination")
-    if r"\lambda" in formula or "eigen" in concept:
-        entries.append(r"$\lambda$: scalar stretch factor")
-    if "rank" in formula:
-        entries.append(r"$\operatorname{rank}(A)$: number of independent output directions")
-    if "det" in formula:
-        entries.append(r"$\det(A)$: signed area or volume scale factor")
-    if "proj" in formula or "projection" in concept:
-        entries.append(r"$\operatorname{proj}$: component kept in the chosen direction")
-    if "=" in formula:
-        entries.append(r"$=$: equality to verify by substitution or transformation")
+    seen_latex: set[str] = set()
+    for key, latex in formula_symbol_tokens(formula):
+        if latex in seen_latex:
+            continue
+        seen_latex.add(latex)
+        entries.append(rf"${latex}$: {symbol_meaning(key, latex, short)}")
+        if len(entries) >= 8:
+            break
+    for entry in formula_operator_entries(formula, short):
+        if entry not in entries:
+            entries.append(entry)
     if not entries:
-        entries.append("Define each symbol from the source context before applying the rule.")
+        entries.append("No stable formula symbols were detected; define the course-specific quantities before applying the rule.")
     return "; ".join(entries)
+
+
+def visual_label(value: object) -> str:
+    labels = {
+        "vector_components": "vector-component diagram",
+        "linear_combination": "linear-combination diagram",
+        "matrix_vector": "matrix-vector diagram",
+        "calculus_tangent": "tangent-line diagram",
+        "calculus_area": "area-accumulation diagram",
+        "physics_force": "force diagram",
+        "physics_energy": "energy diagram",
+        "physics_wave": "wave diagram",
+        "cs_graph": "graph diagram",
+        "cs_array": "array-state diagram",
+        "state_machine": "state-transition diagram",
+        "probability": "probability diagram",
+        "chemistry_reaction": "reaction diagram",
+        "numeric_rule": "input-rule-output diagram",
+    }
+    key = str(value or "concept diagram").strip().lower()
+    if key in labels:
+        return labels[key]
+    label = re.sub(r"[_-]+", " ", key).strip()
+    return f"{label} diagram" if label and "diagram" not in label else (label or "concept diagram")
 
 
 def cmd_notes(args: argparse.Namespace) -> None:
@@ -587,11 +1011,11 @@ def cmd_notes(args: argparse.Namespace) -> None:
         for short in shorts
     )
     definition_rows = "\n".join(
-        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_escape(short.get('key_concept', short['hook']))} & {latex_escape(short.get('concept_explanation', short['intuition']))} \\"
+        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_escape(compact_key_concept(short))} \\"
         for short in shorts
     )
     formula_rows = "\n".join(
-        rf"{short['index']} & {latex_escape(short['concept'])} & ${{{short['formula']}}}$ \\"
+        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_formula_reference(short)} \\"
         for short in shorts
     )
     symbol_rows = "\n".join(
@@ -621,6 +1045,11 @@ def cmd_notes(args: argparse.Namespace) -> None:
         key_concept = latex_escape(short.get("key_concept", short["hook"]))
         concept_explanation = latex_escape(short.get("concept_explanation", short["intuition"]))
         recognition_cue = latex_escape(short.get("recognition_cue", "Use the definition and worked example to decide when this idea applies."))
+        setup_tex = latex_example_text(str(ex.get("setup", "")), short, "setup")
+        calculation_tex = latex_example_text(str(ex.get("calculation", "")), short, "calculation")
+        takeaway_tex = latex_example_text(str(ex.get("takeaway", "")), short, "takeaway")
+        answer_tex = latex_example_text(str(qp.get("answer", "")), short, "answer")
+        question_tex = latex_text_with_inline_math(str(qp.get("question", "")), tuple_style="tuple")
         sections.append(rf"""
 \subsection{{{latex_escape(short['concept'])}}}
 \subsubsection*{{Prerequisites}}
@@ -645,19 +1074,19 @@ def cmd_notes(args: argparse.Namespace) -> None:
 \[
 {short['formula']}
 \]
-\textbf{{Plain-language read.}} {latex_escape(short['plain_formula'])}.\\
+\textbf{{Plain-language read.}} {latex_escape(plain_formula_read(short))}.\\
 \textbf{{Symbols.}} {symbol_glossary(short)}.
 \end{{formula}}
 
 \begin{{example}}
-\textbf{{Setup.}} {latex_escape(ex['setup'])}
+\textbf{{Setup.}} {setup_tex}
 
-\textbf{{Calculation.}} {latex_escape(ex['calculation'])}
+\textbf{{Calculation.}} {calculation_tex}
 
-\textbf{{Interpretation.}} {latex_escape(ex['takeaway'])}
+\textbf{{Interpretation.}} {takeaway_tex}
 \end{{example}}
 
-\paragraph{{Visual interpretation.}} Represent this as \texttt{{{latex_escape(short.get('visual_type', 'generic'))}}}: show the input, animate the rule, label the intermediate quantity, and highlight the output.
+\paragraph{{Visual interpretation.}} Use a {latex_escape(visual_label(short.get('visual_type', 'concept diagram')))}: show the input, animate the rule, label the intermediate quantity, and highlight the output.
 
 \paragraph{{Common trap.}} {latex_escape(short['misconception'])}
 
@@ -667,19 +1096,21 @@ def cmd_notes(args: argparse.Namespace) -> None:
 \item Symbol check: In the displayed formula, what does each symbol mean and what are its allowed inputs?
 \item Calculation: Recreate the worked example, then change one number and predict which part of the answer changes.
 \item Interpretation: Which part of the example is the input, which part is the rule, and which part is the output?
-\item Application: {latex_escape(qp['question'])}
+\item Application: {question_tex}
 \item Error check: What mistake would someone make if they believed the common trap above?
 \end{{questions}}
 
 \paragraph{{Answers and explanations.}}
-The calculation follows the worked example: {latex_escape(ex['calculation'])} The key interpretation is: {latex_escape(ex['takeaway'])} For the application question, {latex_escape(qp['answer'])}
+The displayed calculation gives the mechanical steps. The key interpretation is: {takeaway_tex} For the application question, {answer_tex}
 """)
-        practice_items.append(rf"\item \textbf{{{latex_escape(short['concept'])}.}} {latex_escape(qp['question'])} \emph{{Answer idea:}} {latex_escape(qp['answer'])}")
+        practice_items.append(rf"\item \textbf{{{latex_escape(short['concept'])}.}} {question_tex} \emph{{Answer idea:}} {answer_tex}")
     tex = rf"""\documentclass[11pt]{{article}}
 \usepackage[letterpaper,margin=0.95in]{{geometry}}
 \usepackage{{amsmath,amssymb,amsthm,longtable,booktabs,array}}
 \setlength{{\parskip}}{{0.35em}}
 \setlength{{\parindent}}{{0pt}}
+\renewcommand{{\arraystretch}}{{1.14}}
+\newcolumntype{{L}}[1]{{>{{\raggedright\arraybackslash}}p{{#1}}}}
 \newtheorem{{definition}}{{Definition}}[section]
 \newtheorem{{formula}}{{Formula}}[section]
 \newtheorem{{example}}{{Example}}[section]
@@ -687,7 +1118,7 @@ The calculation follows the worked example: {latex_escape(ex['calculation'])} Th
 \begin{{document}}
 \begin{{center}}
 \vspace*{{1.35in}}
-{{\LARGE {latex_escape(title)} Definitions and Formulas\par}}
+{{\LARGE {latex_escape(title)} Comprehensive Notes\par}}
 \vspace{{0.45in}}
 {{\large \today\par}}
 \end{{center}}
@@ -704,7 +1135,7 @@ The calculation follows the worked example: {latex_escape(ex['calculation'])} Th
 \newpage
 
 \section{{Course Overview}}
-These notes are designed to be read as a course proxy: first learn the vocabulary, then the formulas, then the examples, then the questions. Each topic includes conceptual meaning, notation, a worked example, common traps, and application checks.
+These notes are designed to be read as a course proxy: first learn the vocabulary, then the formulas, then the examples, then the questions. Each topic includes conceptual meaning, notation, a worked example, common traps, and application checks. The reference tables are compact; the topic sections carry the deeper explanations and worked calculations.
 
 \subsection{{Source Inventory}}
 \begin{{itemize}}
@@ -717,17 +1148,20 @@ These notes are designed to be read as a course proxy: first learn the vocabular
 \end{{enumerate}}
 
 \section{{Key Concepts and Definitions}}
-\begin{{longtable}}{{@{{}}p{{0.07\linewidth}}p{{0.23\linewidth}}p{{0.28\linewidth}}p{{0.34\linewidth}}@{{}}}}
+\small
+\begin{{longtable}}{{@{{}}L{{0.07\linewidth}}L{{0.25\linewidth}}L{{0.62\linewidth}}@{{}}}}
 \toprule
-No. & Concept & Key concept & Explanation \\
+No. & Concept & Meaning and use \\
 \midrule
 \endhead
 {definition_rows}
 \bottomrule
 \end{{longtable}}
+\normalsize
 
 \section{{Formula Reference}}
-\begin{{longtable}}{{@{{}}p{{0.08\linewidth}}p{{0.34\linewidth}}p{{0.50\linewidth}}@{{}}}}
+\small
+\begin{{longtable}}{{@{{}}L{{0.08\linewidth}}L{{0.28\linewidth}}L{{0.58\linewidth}}@{{}}}}
 \toprule
 No. & Concept & Formula \\
 \midrule
@@ -735,9 +1169,11 @@ No. & Concept & Formula \\
 {formula_rows}
 \bottomrule
 \end{{longtable}}
+\normalsize
 
 \section{{Notation and Symbol Meanings}}
-\begin{{longtable}}{{@{{}}p{{0.07\linewidth}}p{{0.25\linewidth}}p{{0.60\linewidth}}@{{}}}}
+\small
+\begin{{longtable}}{{@{{}}L{{0.07\linewidth}}L{{0.25\linewidth}}L{{0.62\linewidth}}@{{}}}}
 \toprule
 No. & Concept & Symbols and meanings \\
 \midrule
@@ -745,6 +1181,7 @@ No. & Concept & Symbols and meanings \\
 {symbol_rows}
 \bottomrule
 \end{{longtable}}
+\normalsize
 
 \section{{Core Topics}}
 {''.join(sections)}
@@ -777,7 +1214,7 @@ def markdown_notes(plan: dict[str, object], pack: dict[str, object] | None = Non
         lines.append(f"- **{short['concept']}**: {short.get('concept_explanation', short['intuition'])}")
     lines.append("\n## Formula Reference\n")
     for short in plan["shorts"]:
-        lines.append(f"- **{short['concept']}**: `{short['plain_formula']}` — {symbol_glossary(short)}")
+        lines.append(f"- **{short['concept']}**: `{plain_formula_read(short)}` - {symbol_glossary(short)}")
     lines.append("\n")
     for short in plan["shorts"]:
         ex = short["worked_example"]
@@ -787,11 +1224,16 @@ def markdown_notes(plan: dict[str, object], pack: dict[str, object] | None = Non
         lines.append(f"**Concept explanation.** {short.get('concept_explanation', short['intuition'])}\n")
         lines.append(f"**How to recognize it.** {short.get('recognition_cue', 'Use the definition and worked example to decide when this idea applies.')}\n")
         lines.append(f"**Definition.** {short['intuition']}\n")
-        lines.append(f"**Formula.** `{short['plain_formula']}`\n")
+        lines.append(f"**Formula.** `{plain_formula_read(short)}`\n")
         lines.append(f"**Symbols.** {symbol_glossary(short)}\n")
-        lines.append(f"**Worked example.** {ex['setup']} {ex['calculation']} {ex['takeaway']}\n")
+        setup_md = latex_example_text(str(ex.get("setup", "")), short, "setup")
+        calculation_md = latex_example_text(str(ex.get("calculation", "")), short, "calculation")
+        takeaway_md = latex_example_text(str(ex.get("takeaway", "")), short, "takeaway")
+        question_md = latex_text_with_inline_math(str(qp.get("question", "")), tuple_style="tuple")
+        answer_md = latex_example_text(str(qp.get("answer", "")), short, "answer")
+        lines.append(f"**Worked example.**\n\nSetup: {setup_md}\n\nCalculation: {calculation_md}\n\nInterpretation: {takeaway_md}\n")
         lines.append("**Questions.** Explain the concept without the formula; define every symbol; redo the example with one changed number; identify input/rule/output; answer the application prompt.\n")
-        lines.append(f"**Application.** {qp['question']} Answer idea: {qp['answer']}\n")
+        lines.append(f"**Application.** {question_md} Answer idea: {answer_md}\n")
     if pack:
         terms = source_coverage_terms(pack, plan.get("shorts", []), limit=40)
         if terms:
@@ -802,20 +1244,673 @@ def markdown_notes(plan: dict[str, object], pack: dict[str, object] | None = Non
 
 
 def wrap(text: str, width: int = 34, lines: int = 4) -> list[str]:
-    out = textwrap.wrap(text, width=width)
+    normalized = re.sub(r"\s+", " ", text).strip()
+    out = textwrap.wrap(normalized, width=width, break_long_words=False, break_on_hyphens=False)
     if len(out) > lines:
         out = out[: lines - 1] + [out[lines - 1].rstrip(".") + "..."]
     return out or [""]
 
 
+MATRIX_LITERAL_RE = re.compile(r"\[\s*\[[^\[\]\n]+?\]\s*(?:,\s*\[[^\[\]\n]+?\]\s*)+\]")
+
+
+def screen_matrix_literal(literal: str) -> str:
+    try:
+        rows = json.loads(literal)
+    except json.JSONDecodeError:
+        return "matrix"
+    if not isinstance(rows, list) or not all(isinstance(row, list) for row in rows):
+        return "matrix"
+    row_text = ["(" + ", ".join(str(cell) for cell in row) + ")" for row in rows]
+    return "matrix with rows " + "; ".join(row_text)
+
+
+def screen_prose(text: object) -> str:
+    normalized = str(text)
+    normalized = MATRIX_LITERAL_RE.sub(lambda match: screen_matrix_literal(match.group(0)), normalized)
+    normalized = re.sub(r"\b([A-Za-z]\w*)\s*=\s*matrix with rows", r"\1 is the matrix with rows", normalized)
+    normalized = re.sub(r"\b([A-Za-z]\w*)\s*=\s*\[([^\]\n]{1,80})\]", r"\1 is the row matrix with entries \2", normalized)
+    normalized = re.sub(r"\bsqrt\(([^)]*)\)", r"square root of \1", normalized)
+    normalized = re.sub(r"([A-Za-z0-9_.]+)\s*\^\s*2\b", r"\1 squared", normalized)
+    normalized = normalized.replace("*", " times ")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    return normalized
+
+
+def numeric_literals(text: str) -> list[object]:
+    values: list[object] = []
+    pairs = {"[": "]", "(": ")"}
+    for start, opener in enumerate(text):
+        if opener not in pairs:
+            continue
+        closer = pairs[opener]
+        depth = 0
+        for end in range(start, len(text)):
+            char = text[end]
+            if char == opener:
+                depth += 1
+            elif char == closer:
+                depth -= 1
+                if depth == 0:
+                    candidate = text[start : end + 1]
+                    try:
+                        values.append(ast.literal_eval(candidate))
+                    except Exception:
+                        pass
+                    break
+    return values
+
+
+def is_number(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def numeric_vector(value: object) -> list[float] | None:
+    if isinstance(value, (list, tuple)) and value and all(is_number(item) for item in value):
+        return [float(item) for item in value]
+    return None
+
+
+def numeric_matrix(value: object) -> list[list[float]] | None:
+    if not isinstance(value, (list, tuple)) or not value:
+        return None
+    rows: list[list[float]] = []
+    width: int | None = None
+    for row in value:
+        if not isinstance(row, (list, tuple)) or not row or not all(is_number(item) for item in row):
+            return None
+        numeric_row = [float(item) for item in row]
+        width = width or len(numeric_row)
+        if len(numeric_row) != width:
+            return None
+        rows.append(numeric_row)
+    return rows
+
+
+def format_scalar(value: object) -> str:
+    try:
+        number = float(value)
+    except Exception:
+        return str(value)
+    if math.isfinite(number) and abs(number - round(number)) < 1e-9:
+        return str(int(round(number)))
+    return f"{number:.3g}"
+
+
+def display_matrix(rows: list[list[float]]) -> list[list[str]]:
+    return [[format_scalar(cell) for cell in row] for row in rows]
+
+
+def display_vector(values: list[float]) -> list[str]:
+    return [format_scalar(value) for value in values]
+
+
+def extract_numbers(text: str, limit: int = 6) -> list[str]:
+    out: list[str] = []
+    for match in re.findall(r"(?<![A-Za-z])-?\d+(?:\.\d+)?", text):
+        value = format_scalar(match)
+        if value not in out:
+            out.append(value)
+        if len(out) >= limit:
+            break
+    return out or ["2", "5", "8"]
+
+
+def short_text(short: dict[str, object]) -> str:
+    ex = short.get("worked_example", {}) if isinstance(short.get("worked_example"), dict) else {}
+    qp = short.get("question_prompt", {}) if isinstance(short.get("question_prompt"), dict) else {}
+    return " ".join(
+        str(part)
+        for part in [
+            short.get("concept", ""),
+            short.get("hook", ""),
+            short.get("intuition", ""),
+            short.get("formula", ""),
+            ex.get("setup", ""),
+            ex.get("calculation", ""),
+            ex.get("takeaway", ""),
+            qp.get("question", ""),
+            qp.get("answer", ""),
+        ]
+    )
+
+
+def matrix_vector_data(short: dict[str, object]) -> dict[str, object]:
+    text = short_text(short)
+    literals = numeric_literals(text)
+    matrices = [matrix for value in literals if (matrix := numeric_matrix(value))]
+    vectors = [vector for value in literals if (vector := numeric_vector(value))]
+    matrix = matrices[0] if matrices else [[2.0, 1.0], [1.0, 3.0]]
+    row_count = len(matrix)
+    col_count = len(matrix[0]) if matrix else 0
+    vector: list[float] | None = None
+    output: list[float] | None = None
+    for candidate in vectors:
+        if vector is None and len(candidate) == col_count:
+            vector = candidate
+            continue
+        if output is None and len(candidate) == row_count:
+            output = candidate
+    if vector is None:
+        vector = [4.0, 2.0][:col_count] or [1.0]
+    if output is None:
+        output = [sum(row[i] * vector[i] for i in range(min(len(row), len(vector)))) for row in matrix]
+    columns = [[matrix[row][col] for row in range(row_count)] for col in range(col_count)]
+    row_calcs = []
+    for row, result in zip(matrix, output):
+        terms = [f"{format_scalar(a)}*{format_scalar(b)}" for a, b in zip(row, vector)]
+        row_calcs.append(f"{' + '.join(terms)} = {format_scalar(result)}")
+    return {
+        "matrix": display_matrix(matrix),
+        "vector": display_vector(vector),
+        "output": display_vector(output),
+        "columns": [display_vector(column) for column in columns],
+        "row_calcs": row_calcs,
+    }
+
+
+def vector_example_data(short: dict[str, object]) -> dict[str, object]:
+    vectors = [vector for value in numeric_literals(short_text(short)) if (vector := numeric_vector(value))]
+    vector = vectors[0] if vectors else [3.0, 4.0]
+    if len(vector) < 2:
+        vector = [vector[0], 0.0]
+    length = math.sqrt(vector[0] * vector[0] + vector[1] * vector[1])
+    return {
+        "vector": display_vector(vector[:2]),
+        "length": format_scalar(length),
+        "x_range": [-1, max(5, int(abs(vector[0])) + 2), 1],
+        "y_range": [-1, max(5, int(abs(vector[1])) + 2), 1],
+    }
+
+
+def linear_combo_data(short: dict[str, object]) -> dict[str, object]:
+    text = short_text(short)
+    vectors = [vector for value in numeric_literals(text) if (vector := numeric_vector(value))]
+    a = vectors[0] if len(vectors) > 0 else [1.0, 0.0]
+    b = vectors[1] if len(vectors) > 1 else [1.0, 1.0]
+    target = vectors[2] if len(vectors) > 2 else [5.0, 2.0]
+    weights = [3.0, 2.0]
+    match = re.search(r"([+-]?\d+(?:\.\d+)?)\s*\*?\s*a\s*\+\s*([+-]?\d+(?:\.\d+)?)\s*\*?\s*b", text, re.I)
+    if match:
+        weights = [float(match.group(1)), float(match.group(2))]
+    return {
+        "a": display_vector(a[:2]),
+        "b": display_vector(b[:2]),
+        "target": display_vector(target[:2]),
+        "weights": display_vector(weights),
+    }
+
+
+def infer_visual_kind(short: dict[str, object]) -> str:
+    explicit = str(short.get("visual_type", "generic")).strip().lower()
+    if explicit and explicit != "generic":
+        return explicit
+    text = short_text(short).lower()
+    if any(term in text for term in ("matrix", "linear system", "ax=", "a\\vec", "row operation")):
+        return "matrix_vector"
+    if "vector" in text or "coordinate" in text:
+        return "vector_components"
+    if any(term in text for term in ("derivative", "tangent", "slope", "gradient", "rate of change")):
+        return "calculus_tangent"
+    if any(term in text for term in ("integral", "area under", "accumulation", "riemann")):
+        return "calculus_area"
+    if any(term in text for term in ("force", "newton", "acceleration", "velocity", "momentum")):
+        return "physics_force"
+    if any(term in text for term in ("energy", "work", "potential", "kinetic")):
+        return "physics_energy"
+    if any(term in text for term in ("wave", "frequency", "amplitude", "oscillation")):
+        return "physics_wave"
+    if any(term in text for term in ("graph", "tree", "network", "path", "node", "edge")):
+        return "cs_graph"
+    if any(term in text for term in ("algorithm", "array", "sort", "search", "complexity", "runtime")):
+        return "cs_array"
+    if any(term in text for term in ("state", "automaton", "transition", "markov")):
+        return "state_machine"
+    if any(term in text for term in ("probability", "bayes", "distribution", "random", "expectation")):
+        return "probability"
+    if any(term in text for term in ("reaction", "molecule", "atom", "equilibrium", "chemical")):
+        return "chemistry_reaction"
+    return "numeric_rule"
+
+
+def visual_data_for(short: dict[str, object], kind: str) -> dict[str, object]:
+    return {
+        "matrix_vector": matrix_vector_data(short),
+        "vector": vector_example_data(short),
+        "linear_combo": linear_combo_data(short),
+        "numbers": extract_numbers(short_text(short)),
+    }
+
+
+MANIM_SCENE_HELPERS = '''
+def fmt(self, value):
+    text = str(value)
+    try:
+        number = float(text)
+    except Exception:
+        return text
+    if abs(number - round(number)) < 1e-9:
+        return str(int(round(number)))
+    return f"{number:.3g}"
+
+def palette(self, index):
+    colors = ["#58A6FF", "#F7C948", "#7EE787", "#FF7B72", "#A371F7"]
+    return colors[index % len(colors)]
+
+def fit_in(self, mob, max_width=7.8, max_height=6.0):
+    if mob.width > max_width:
+        mob.scale(max_width / mob.width)
+    if mob.height > max_height:
+        mob.scale(max_height / mob.height)
+    return mob
+
+def validate_layout(self, mob, name="mobject", pad=0.24):
+    left_limit = -config.frame_width / 2 + pad
+    right_limit = config.frame_width / 2 - pad
+    bottom_limit = -config.frame_height / 2 + pad
+    top_limit = config.frame_height / 2 - pad
+    if mob.get_left()[0] < left_limit or mob.get_right()[0] > right_limit:
+        self.fit_in(mob, max_width=config.frame_width - 2 * pad, max_height=config.frame_height - 2 * pad)
+    if mob.get_bottom()[1] < bottom_limit:
+        mob.shift(UP * (bottom_limit - mob.get_bottom()[1]))
+    if mob.get_top()[1] > top_limit:
+        mob.shift(DOWN * (mob.get_top()[1] - top_limit))
+    return mob
+
+def safe_place(self, mob, y=0, max_width=7.8, max_height=6.0, top=6.15, bottom=-7.25):
+    self.fit_in(mob, max_width=max_width, max_height=max_height)
+    mob.move_to(UP * y)
+    if mob.get_top()[1] > top:
+        mob.shift(DOWN * (mob.get_top()[1] - top))
+    if mob.get_bottom()[1] < bottom:
+        mob.shift(UP * (bottom - mob.get_bottom()[1]))
+    return self.validate_layout(mob)
+
+def text_block(self, lines, font_size=25, color="#EAF2FF", max_width=7.4, line_buff=0.12):
+    group = VGroup(*[Text(str(line), font_size=font_size, color=color) for line in lines]).arrange(DOWN, buff=line_buff)
+    return self.fit_in(group, max_width=max_width, max_height=2.3)
+
+def formula_block(self, latex, plain, font_size=32, color="#F7C948", max_width=7.6):
+    try:
+        mob = MathTex(str(latex), font_size=font_size, color=color)
+    except Exception:
+        mob = Text(str(plain or latex), font_size=font_size, color=color)
+    return self.fit_in(mob, max_width=max_width, max_height=1.15)
+
+def section_label(self, text, color="#F7C948"):
+    label = Text(text, font_size=30, weight="BOLD", color=color)
+    return self.safe_place(label, y=5.7, max_width=7.6, max_height=0.65, top=6.05, bottom=5.15)
+
+def fade_all_except(self, keep=None, run_time=0.6):
+    keep = set(keep or [])
+    fading = [mob for mob in self.mobjects if mob not in keep]
+    if fading:
+        self.play(*[FadeOut(mob) for mob in fading], run_time=run_time)
+
+def matrix_block(self, rows, font_size=30, color="#EAF2FF", bracket_color="#8FD3FF", column_colors=None, cell_colors=None):
+    row_groups = VGroup()
+    cell_colors = cell_colors or {}
+    for r, row in enumerate(rows):
+        cells = VGroup()
+        for c, cell in enumerate(row):
+            cell_color = cell_colors.get((r, c))
+            if cell_color is None and column_colors:
+                cell_color = column_colors[c % len(column_colors)]
+            cells.add(Text(str(cell), font_size=font_size, color=cell_color or color))
+        row_groups.add(cells.arrange(RIGHT, buff=0.42))
+    row_groups.arrange(DOWN, buff=0.22)
+    left = Text("[", font_size=78, color=bracket_color).stretch_to_fit_height(row_groups.height + 0.35).next_to(row_groups, LEFT, buff=0.12)
+    right = Text("]", font_size=78, color=bracket_color).stretch_to_fit_height(row_groups.height + 0.35).next_to(row_groups, RIGHT, buff=0.12)
+    return VGroup(left, row_groups, right)
+
+def matrix_equation(self, data, font_size=28):
+    col_colors = [self.palette(i) for i in range(max(1, len(data.get("columns", []))))]
+    matrix = self.matrix_block(data["matrix"], font_size=font_size, bracket_color="#58A6FF", column_colors=col_colors)
+    vector = self.matrix_block([[v] for v in data["vector"]], font_size=font_size, color="#F7C948", bracket_color="#F7C948")
+    output = self.matrix_block([[v] for v in data["output"]], font_size=font_size, color="#7EE787", bracket_color="#7EE787")
+    return VGroup(matrix, Text("x", font_size=font_size + 2, color="#EAF2FF"), vector, Text("=", font_size=font_size + 2, color="#EAF2FF"), output).arrange(RIGHT, buff=0.24)
+
+def matrix_column_combo(self, data, font_size=24, include_output=True):
+    parts = VGroup()
+    columns = data.get("columns", [])
+    for i, column in enumerate(columns):
+        if i:
+            parts.add(Text("+", font_size=font_size, color="#EAF2FF"))
+        parts.add(Text(str(data["vector"][i]), font_size=font_size + 1, color="#EAF2FF"))
+        parts.add(self.matrix_block([[v] for v in column], font_size=font_size, color=self.palette(i), bracket_color=self.palette(i)))
+    if include_output:
+        parts.add(Text("=", font_size=font_size, color="#EAF2FF"))
+        parts.add(self.matrix_block([[v] for v in data["output"]], font_size=font_size, color="#7EE787", bracket_color="#7EE787"))
+    return parts.arrange(RIGHT, buff=0.14)
+
+def play_matrix_vector_intro(self, data):
+    equation = self.matrix_equation(data, font_size=30)
+    self.safe_place(equation, y=1.55, max_width=8.0, max_height=2.25, top=3.95, bottom=-0.35)
+    combo = self.matrix_column_combo(data, font_size=24)
+    self.safe_place(combo, y=-1.65, max_width=8.15, max_height=2.35, top=0.0, bottom=-3.65)
+    box = SurroundingRectangle(combo[-1], color="#7EE787", buff=0.12)
+    self.play(FadeIn(equation, shift=UP * 0.1), run_time=1.0)
+    self.play(LaggedStart(*[FadeIn(mob, shift=UP * 0.08) for mob in combo], lag_ratio=0.12), run_time=1.5)
+    self.play(Create(box), Indicate(combo[-1]), run_time=0.9)
+
+def play_matrix_vector_example(self, data, setup_lines, calc_lines, takeaway_lines):
+    setup_caption = Text("Let the matrix A act on the input vector x.", font_size=20, color="#8FD3FF")
+    setup_math = VGroup(
+        Text("A =", font_size=20, color="#EAF2FF"),
+        self.matrix_block(data["matrix"], font_size=18, bracket_color="#58A6FF", column_colors=[self.palette(i) for i in range(len(data.get("columns", [])))]),
+        Text("x =", font_size=20, color="#EAF2FF"),
+        self.matrix_block([[v] for v in data["vector"]], font_size=18, color="#F7C948", bracket_color="#F7C948"),
+    ).arrange(RIGHT, buff=0.14)
+    setup = VGroup(setup_caption, setup_math).arrange(DOWN, buff=0.14)
+    self.safe_place(setup, y=4.55, max_width=7.7, max_height=1.25, top=5.2, bottom=3.85)
+    equation = self.matrix_equation(data, font_size=27)
+    self.safe_place(equation, y=2.55, max_width=8.05, max_height=2.0, top=3.8, bottom=1.25)
+    row_group = VGroup(*[Text(line, font_size=25, color=self.palette(i)) for i, line in enumerate(data.get("row_calcs", []))]).arrange(DOWN, buff=0.22)
+    self.safe_place(row_group, y=0.0, max_width=7.8, max_height=1.45, top=0.9, bottom=-1.0)
+    combo = self.matrix_column_combo(data, font_size=23)
+    self.safe_place(combo, y=-2.55, max_width=8.1, max_height=2.15, top=-1.25, bottom=-4.0)
+    takeaway = self.text_block(takeaway_lines, font_size=23, color="#7EE787", max_width=7.4)
+    self.safe_place(takeaway, y=-5.65, max_height=1.05, top=-5.0, bottom=-6.55)
+    self.play(FadeIn(setup, shift=UP * 0.08), FadeIn(equation, shift=UP * 0.08), run_time=1.0)
+    matrix = equation[0]
+    row_box = None
+    for i, row_text in enumerate(row_group):
+        new_box = SurroundingRectangle(matrix[1][i], color=self.palette(i), buff=0.08)
+        if row_box is None:
+            row_box = new_box
+            self.play(Create(row_box), FadeIn(row_text, shift=UP * 0.08), run_time=0.75)
+        else:
+            self.play(Transform(row_box, new_box), FadeIn(row_text, shift=UP * 0.08), run_time=0.75)
+    if row_box is not None:
+        self.play(FadeOut(row_box), run_time=0.35)
+    self.play(LaggedStart(*[FadeIn(mob, shift=UP * 0.08) for mob in combo], lag_ratio=0.08), run_time=1.2)
+    self.play(Indicate(combo[-1]), FadeIn(takeaway, shift=UP * 0.08), run_time=1.0)
+
+def play_matrix_vector_recall(self, data, question_lines, answer_lines):
+    prompt = self.text_block(question_lines, font_size=22, color="#EAF2FF", max_width=7.4)
+    self.safe_place(prompt, y=4.65, max_height=1.1, top=5.1, bottom=3.8)
+    matrix = self.matrix_block(data["matrix"], font_size=24, bracket_color="#58A6FF", column_colors=[self.palette(i) for i in range(len(data.get("columns", [])))])
+    vector = self.matrix_block([[v] for v in data["vector"]], font_size=24, color="#F7C948", bracket_color="#F7C948")
+    unknown = self.matrix_block([["?"] for _ in data["output"]], font_size=24, color="#7EE787", bracket_color="#7EE787")
+    pipeline = VGroup(VGroup(Text("effects", font_size=18, color="#58A6FF"), matrix).arrange(DOWN, buff=0.12), Text("x", font_size=28), VGroup(Text("weights", font_size=18, color="#F7C948"), vector).arrange(DOWN, buff=0.12), Text("->", font_size=28), VGroup(Text("response", font_size=18, color="#7EE787"), unknown).arrange(DOWN, buff=0.12)).arrange(RIGHT, buff=0.2)
+    self.safe_place(pipeline, y=1.35, max_width=8.1, max_height=2.8, top=3.1, bottom=-0.6)
+    combo = self.matrix_column_combo(data, font_size=22)
+    self.safe_place(combo, y=-1.8, max_width=8.1, max_height=2.0, top=-0.8, bottom=-3.3)
+    answer = self.text_block(answer_lines, font_size=22, color="#7EE787", max_width=7.4)
+    self.safe_place(answer, y=-5.25, max_height=1.35, top=-4.35, bottom=-6.35)
+    self.play(FadeIn(prompt, shift=UP * 0.08), FadeIn(pipeline, shift=UP * 0.08), run_time=1.1)
+    self.play(LaggedStart(*[FadeIn(mob, shift=UP * 0.06) for mob in combo], lag_ratio=0.08), run_time=1.15)
+    self.play(Transform(unknown, self.matrix_block([[v] for v in data["output"]], font_size=24, color="#7EE787", bracket_color="#7EE787").move_to(unknown)), FadeIn(answer, shift=UP * 0.08), run_time=1.0)
+    self.play(Indicate(combo[-1]), run_time=0.8)
+
+def vector_plane_objects(self, data):
+    vx = float(data["vector"][0])
+    vy = float(data["vector"][1])
+    plane = NumberPlane(x_range=data.get("x_range", [-1, 5, 1]), y_range=data.get("y_range", [-1, 5, 1]), x_length=6.7, y_length=4.9, background_line_style={"stroke_color": "#1F3558", "stroke_width": 1, "stroke_opacity": 0.7})
+    self.safe_place(plane, y=0.9, max_width=7.3, max_height=5.0, top=3.9, bottom=-2.1)
+    origin = plane.c2p(0, 0)
+    x_end = plane.c2p(vx, 0)
+    end = plane.c2p(vx, vy)
+    x_leg = Arrow(origin, x_end, buff=0, color="#F7C948", stroke_width=7)
+    y_leg = Arrow(x_end, end, buff=0, color="#7EE787", stroke_width=7)
+    vec = Arrow(origin, end, buff=0, color="#58A6FF", stroke_width=8)
+    labels = VGroup(Text(str(data["vector"][0]), font_size=26, color="#F7C948").next_to(x_leg, DOWN), Text(str(data["vector"][1]), font_size=26, color="#7EE787").next_to(y_leg, RIGHT), Text("length " + str(data["length"]), font_size=26, color="#8FD3FF").next_to(vec, UP))
+    return plane, x_leg, y_leg, vec, labels
+
+def play_vector_intro(self, data):
+    plane, x_leg, y_leg, vec, labels = self.vector_plane_objects(data)
+    self.play(Create(plane), GrowArrow(x_leg), GrowArrow(y_leg), run_time=1.1)
+    self.play(GrowArrow(vec), FadeIn(labels), run_time=1.2)
+    self.play(Indicate(labels[2]), run_time=0.8)
+
+def play_vector_example(self, data, setup_lines, calc_lines, takeaway_lines):
+    setup = self.text_block(setup_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(setup, y=4.65, max_height=0.85, top=5.1, bottom=4.0)
+    plane, x_leg, y_leg, vec, labels = self.vector_plane_objects(data)
+    formula = Text(f"{data['vector'][0]}^2 + {data['vector'][1]}^2 -> length {data['length']}", font_size=27, color="#F7C948")
+    self.safe_place(formula, y=-3.4, max_width=7.4, max_height=0.55, top=-3.05, bottom=-3.8)
+    takeaway = self.text_block(takeaway_lines, font_size=23, color="#7EE787")
+    self.safe_place(takeaway, y=-5.45, max_height=1.0, top=-4.8, bottom=-6.3)
+    self.play(FadeIn(setup), Create(plane), GrowArrow(x_leg), GrowArrow(y_leg), run_time=1.1)
+    self.play(GrowArrow(vec), FadeIn(labels), run_time=1.0)
+    self.play(Write(formula), FadeIn(takeaway, shift=UP * 0.08), run_time=1.0)
+
+def play_vector_recall(self, data, question_lines, answer_lines):
+    prompt = self.text_block(question_lines, font_size=22)
+    self.safe_place(prompt, y=4.55, max_height=1.1, top=5.1, bottom=3.75)
+    plane, x_leg, y_leg, vec, labels = self.vector_plane_objects(data)
+    answer = self.text_block(answer_lines, font_size=22, color="#7EE787")
+    self.safe_place(answer, y=-5.1, max_height=1.4, top=-4.25, bottom=-6.3)
+    self.play(FadeIn(prompt), Create(plane), GrowArrow(x_leg), GrowArrow(y_leg), run_time=1.1)
+    self.play(GrowArrow(vec), FadeIn(labels), run_time=1.0)
+    self.play(FadeIn(answer, shift=UP * 0.08), Indicate(labels[2]), run_time=0.9)
+
+def linear_combo_objects(self, data):
+    ax, ay = [float(v) for v in data["a"]]
+    bx, by = [float(v) for v in data["b"]]
+    tx, ty = [float(v) for v in data["target"]]
+    plane = NumberPlane(x_range=[-1, max(6, int(max(abs(ax), abs(bx), abs(tx))) + 2), 1], y_range=[-1, max(5, int(max(abs(ay), abs(by), abs(ty))) + 2), 1], x_length=6.8, y_length=4.8, background_line_style={"stroke_color": "#1F3558", "stroke_width": 1, "stroke_opacity": 0.7})
+    self.safe_place(plane, y=0.8, max_width=7.3, max_height=5.0, top=3.8, bottom=-2.1)
+    origin = plane.c2p(0, 0)
+    a = Arrow(origin, plane.c2p(ax, ay), buff=0, color="#58A6FF", stroke_width=7)
+    b = Arrow(origin, plane.c2p(bx, by), buff=0, color="#F7C948", stroke_width=7)
+    first = Arrow(origin, plane.c2p(ax * float(data["weights"][0]), ay * float(data["weights"][0])), buff=0, color="#58A6FF", stroke_width=8)
+    second = Arrow(first.get_end(), plane.c2p(tx, ty), buff=0, color="#F7C948", stroke_width=8)
+    target = Dot(plane.c2p(tx, ty), radius=0.09, color="#7EE787")
+    label = Text(f"{data['weights'][0]}a + {data['weights'][1]}b = ({data['target'][0]}, {data['target'][1]})", font_size=25, color="#7EE787")
+    self.safe_place(label, y=-3.35, max_width=7.4, max_height=0.55, top=-3.05, bottom=-3.8)
+    return plane, a, b, first, second, target, label
+
+def play_linear_combo_intro(self, data):
+    plane, a, b, first, second, target, label = self.linear_combo_objects(data)
+    self.play(Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.1)
+    self.play(TransformFromCopy(a, first), TransformFromCopy(b, second), FadeIn(target, scale=1.3), run_time=1.25)
+    self.play(FadeIn(label), Flash(target, color="#7EE787"), run_time=0.9)
+
+def play_linear_combo_example(self, data, setup_lines, calc_lines, takeaway_lines):
+    setup = self.text_block(setup_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(setup, y=4.65, max_height=0.85, top=5.1, bottom=4.0)
+    plane, a, b, first, second, target, label = self.linear_combo_objects(data)
+    takeaway = self.text_block(takeaway_lines, font_size=23, color="#7EE787")
+    self.safe_place(takeaway, y=-5.45, max_height=1.0, top=-4.8, bottom=-6.3)
+    self.play(FadeIn(setup), Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.1)
+    self.play(GrowArrow(first), GrowArrow(second), FadeIn(target), run_time=1.1)
+    self.play(FadeIn(label), FadeIn(takeaway, shift=UP * 0.08), Indicate(target), run_time=1.0)
+
+def play_linear_combo_recall(self, data, question_lines, answer_lines):
+    prompt = self.text_block(question_lines, font_size=22)
+    self.safe_place(prompt, y=4.55, max_height=1.1, top=5.1, bottom=3.75)
+    plane, a, b, first, second, target, label = self.linear_combo_objects(data)
+    answer = self.text_block(answer_lines, font_size=22, color="#7EE787")
+    self.safe_place(answer, y=-5.1, max_height=1.4, top=-4.25, bottom=-6.3)
+    self.play(FadeIn(prompt), Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.1)
+    self.play(GrowArrow(first), GrowArrow(second), FadeIn(target), FadeIn(label), run_time=1.1)
+    self.play(FadeIn(answer, shift=UP * 0.08), Flash(target, color="#7EE787"), run_time=0.9)
+
+def play_calculus_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    axes = Axes(x_range=[-1, 4, 1], y_range=[0, 5, 1], x_length=6.7, y_length=4.6, tips=False).shift(DOWN * 0.1)
+    self.safe_place(axes, y=0.65, max_width=7.2, max_height=4.8, top=3.3, bottom=-2.2)
+    curve = axes.plot(lambda x: 0.45 * (x - 0.5) * (x - 0.5) + 0.8, x_range=[-0.4, 3.7], color="#F7C948", stroke_width=6)
+    if kind == "calculus_area":
+        rects = axes.get_riemann_rectangles(curve, x_range=[0.2, 3.2], dx=0.5, color="#58A6FF", fill_opacity=0.45, stroke_width=1)
+        result = self.text_block(result_lines or secondary_lines or ["accumulated area"], font_size=22, color="#7EE787")
+        self.safe_place(result, y=-5.15, max_height=1.3, top=-4.25, bottom=-6.35)
+        self.play(FadeIn(caption), Create(axes), Create(curve), run_time=1.0)
+        self.play(LaggedStart(*[FadeIn(rect, shift=UP * 0.05) for rect in rects], lag_ratio=0.05), run_time=1.2)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(rects), run_time=0.9)
+        return
+    p1 = Dot(axes.c2p(1.0, 0.45 * (1.0 - 0.5) * (1.0 - 0.5) + 0.8), color="#58A6FF")
+    p2 = Dot(axes.c2p(2.6, 0.45 * (2.6 - 0.5) * (2.6 - 0.5) + 0.8), color="#7EE787")
+    secant = Line(p1.get_center(), p2.get_center(), color="#58A6FF", stroke_width=5)
+    tangent = Line(axes.c2p(0.0, 0.55), axes.c2p(2.2, 1.55), color="#7EE787", stroke_width=5)
+    result = self.text_block(result_lines or secondary_lines or ["local slope"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.15, max_height=1.3, top=-4.25, bottom=-6.35)
+    self.play(FadeIn(caption), Create(axes), Create(curve), FadeIn(p1), FadeIn(p2), run_time=1.0)
+    self.play(Create(secant), run_time=0.7)
+    self.play(Transform(secant, tangent), FadeIn(result, shift=UP * 0.08), run_time=1.1)
+
+def play_physics_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    block = RoundedRectangle(width=1.4, height=0.9, corner_radius=0.1, color="#EAF2FF", fill_color="#101A33", fill_opacity=0.9)
+    self.safe_place(block, y=0.65, max_width=2.0, max_height=1.2, top=1.4, bottom=-0.1)
+    floor = Line(LEFT * 3.2, RIGHT * 3.2, color="#1F3558", stroke_width=4).next_to(block, DOWN, buff=0.05)
+    force = Arrow(block.get_right(), block.get_right() + RIGHT * 2.1, buff=0.05, color="#58A6FF", stroke_width=8)
+    friction = Arrow(block.get_left(), block.get_left() + LEFT * 1.2, buff=0.05, color="#FF7B72", stroke_width=6)
+    accel = Arrow(block.get_top(), block.get_top() + RIGHT * 1.4 + UP * 0.7, buff=0.05, color="#7EE787", stroke_width=7)
+    result = self.text_block(result_lines or secondary_lines or ["net change"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), FadeIn(block), Create(floor), run_time=0.9)
+    self.play(GrowArrow(force), GrowArrow(friction), run_time=0.9)
+    self.play(GrowArrow(accel), FadeIn(result, shift=UP * 0.08), Indicate(block), run_time=1.0)
+
+def play_wave_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    axes = Axes(x_range=[0, 7, 1], y_range=[-1.5, 1.5, 1], x_length=7.0, y_length=3.8, tips=False)
+    self.safe_place(axes, y=0.55, max_width=7.4, max_height=4.0, top=2.8, bottom=-2.0)
+    wave = axes.plot(lambda x: math.sin(2 * x), x_range=[0, 6.6], color="#58A6FF", stroke_width=6)
+    dot = Dot(axes.c2p(1.0, math.sin(2.0)), color="#F7C948")
+    dot2 = Dot(axes.c2p(2.2, math.sin(4.4)), color="#F7C948")
+    result = self.text_block(result_lines or secondary_lines or ["amplitude and phase move together"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), Create(axes), Create(wave), FadeIn(dot), run_time=1.0)
+    self.play(Transform(dot, dot2), FadeIn(result, shift=UP * 0.08), run_time=1.1)
+
+def play_cs_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    if kind == "cs_graph":
+        nodes = VGroup(*[Circle(radius=0.28, color=self.palette(i), fill_opacity=0.15) for i in range(5)])
+        positions = [LEFT * 2.4 + UP * 0.7, LEFT * 0.8 + UP * 1.2, RIGHT * 0.8 + UP * 0.25, LEFT * 0.4 + DOWN * 1.0, RIGHT * 2.3 + DOWN * 0.55]
+        for i, node in enumerate(nodes):
+            node.move_to(positions[i])
+            node.add(Text(chr(65 + i), font_size=20, color=self.palette(i)).move_to(node))
+        edges = VGroup(Line(nodes[0].get_center(), nodes[1].get_center(), color="#1F3558"), Line(nodes[1].get_center(), nodes[2].get_center(), color="#1F3558"), Line(nodes[1].get_center(), nodes[3].get_center(), color="#1F3558"), Line(nodes[2].get_center(), nodes[4].get_center(), color="#1F3558"))
+        graph = VGroup(edges, nodes)
+        self.safe_place(graph, y=0.4, max_width=7.0, max_height=4.0, top=2.8, bottom=-2.4)
+        path = VGroup(*[Line(nodes[i].get_center(), nodes[j].get_center(), color="#7EE787", stroke_width=6) for i, j in [(0, 1), (1, 2), (2, 4)]])
+        result = self.text_block(result_lines or secondary_lines or ["trace the reachable path"], font_size=22, color="#7EE787")
+        self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+        self.play(FadeIn(caption), Create(edges), FadeIn(nodes), run_time=1.0)
+        self.play(LaggedStart(*[Create(edge) for edge in path], lag_ratio=0.18), FadeIn(result, shift=UP * 0.08), run_time=1.2)
+        return
+    values = data.get("numbers", ["4", "1", "7", "3", "9"])
+    cells = VGroup(*[VGroup(Square(0.72, color=self.palette(i), fill_opacity=0.18), Text(str(values[i % len(values)]), font_size=22, color="#EAF2FF")) for i in range(5)]).arrange(RIGHT, buff=0.08)
+    self.safe_place(cells, y=0.75, max_width=7.4, max_height=1.2, top=1.55, bottom=0.0)
+    pointer = Triangle(color="#F7C948", fill_opacity=0.9).scale(0.18).rotate(PI).next_to(cells[0], UP, buff=0.18)
+    result = self.text_block(result_lines or secondary_lines or ["state changes one step at a time"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), FadeIn(cells), FadeIn(pointer), run_time=0.9)
+    for cell in cells[1:4]:
+        self.play(pointer.animate.next_to(cell, UP, buff=0.18), cell[0].animate.set_fill(self.palette(2), opacity=0.35), run_time=0.35)
+    self.play(FadeIn(result, shift=UP * 0.08), Indicate(cells[3]), run_time=0.8)
+
+def play_probability_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    heights = [1.0, 1.9, 2.8, 1.4]
+    bars = VGroup()
+    for i, height in enumerate(heights):
+        rect = Rectangle(width=0.62, height=height, color=self.palette(i), fill_opacity=0.45).align_to(ORIGIN, DOWN)
+        bars.add(rect)
+    bars.arrange(RIGHT, buff=0.22).move_to(ORIGIN)
+    self.safe_place(bars, y=0.5, max_width=5.2, max_height=3.2, top=2.4, bottom=-1.9)
+    brace = Brace(bars[1:3], UP, color="#F7C948")
+    result = self.text_block(result_lines or secondary_lines or ["update the mass, then compare"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), LaggedStart(*[GrowFromEdge(bar, DOWN) for bar in bars], lag_ratio=0.1), run_time=1.1)
+    self.play(GrowFromCenter(brace), bars[2].animate.set_fill("#7EE787", opacity=0.7), FadeIn(result, shift=UP * 0.08), run_time=1.0)
+
+def play_chemistry_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    left = VGroup(Circle(0.28, color="#58A6FF", fill_opacity=0.25), Circle(0.28, color="#F7C948", fill_opacity=0.25).shift(RIGHT * 0.48)).arrange(RIGHT, buff=-0.08)
+    right = VGroup(Circle(0.28, color="#58A6FF", fill_opacity=0.25), Circle(0.28, color="#F7C948", fill_opacity=0.25), Circle(0.28, color="#7EE787", fill_opacity=0.25)).arrange(RIGHT, buff=-0.08)
+    reaction = VGroup(left, Text("+", font_size=28), Circle(0.25, color="#7EE787", fill_opacity=0.25), Text("->", font_size=28), right).arrange(RIGHT, buff=0.24)
+    self.safe_place(reaction, y=0.75, max_width=7.3, max_height=1.4, top=1.7, bottom=-0.2)
+    result = self.text_block(result_lines or secondary_lines or ["rearrange pieces, conserve counts"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), FadeIn(reaction[:3]), run_time=0.9)
+    self.play(FadeIn(reaction[3:]), FadeIn(result, shift=UP * 0.08), Indicate(right), run_time=1.0)
+
+def play_numeric_rule_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    nums = data.get("numbers", ["2", "5", "8"])
+    inputs = VGroup(*[VGroup(Circle(0.26, color=self.palette(i), fill_opacity=0.18), Text(str(num), font_size=18, color="#EAF2FF")) for i, num in enumerate(nums[:3])]).arrange(DOWN, buff=0.12)
+    rule_box = RoundedRectangle(width=1.65, height=1.0, corner_radius=0.12, color="#F7C948", fill_color="#101A33", fill_opacity=0.92)
+    rule = VGroup(rule_box, Text("rule", font_size=23, color="#F7C948").move_to(rule_box))
+    outputs = VGroup(*[VGroup(Circle(0.26, color="#7EE787", fill_opacity=0.18), Text("?", font_size=18, color="#7EE787")) for _ in nums[:3]]).arrange(DOWN, buff=0.12)
+    diagram = VGroup(inputs, Text("->", font_size=28), rule, Text("->", font_size=28), outputs).arrange(RIGHT, buff=0.22)
+    self.safe_place(diagram, y=0.65, max_width=7.4, max_height=2.4, top=2.15, bottom=-1.3)
+    result = self.text_block(result_lines or secondary_lines or ["watch input, rule, output"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), FadeIn(inputs), FadeIn(rule), run_time=0.9)
+    self.play(LaggedStart(*[Transform(outputs[i][1], Text(str(nums[min(i + 1, len(nums) - 1)]), font_size=18, color="#7EE787").move_to(outputs[i][1])) for i in range(len(outputs))], lag_ratio=0.12), FadeIn(outputs), run_time=1.1)
+    self.play(FadeIn(result, shift=UP * 0.08), Indicate(rule), run_time=0.9)
+
+def play_generic_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    if kind in {"calculus_tangent", "calculus_area"}:
+        return self.play_calculus_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
+    if kind in {"physics_force", "physics_energy"}:
+        return self.play_physics_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
+    if kind == "physics_wave":
+        return self.play_wave_visual(phase, data, primary_lines, secondary_lines, result_lines)
+    if kind in {"cs_array", "cs_graph", "state_machine"}:
+        return self.play_cs_visual("cs_graph" if kind == "state_machine" else kind, phase, data, primary_lines, secondary_lines, result_lines)
+    if kind in {"probability", "markov"}:
+        return self.play_probability_visual(phase, data, primary_lines, secondary_lines, result_lines)
+    if kind == "chemistry_reaction":
+        return self.play_chemistry_visual(phase, data, primary_lines, secondary_lines, result_lines)
+    return self.play_numeric_rule_visual(phase, data, primary_lines, secondary_lines, result_lines)
+
+def play_intro_visual(self, kind, data):
+    if kind == "matrix_vector":
+        return self.play_matrix_vector_intro(data["matrix_vector"])
+    if kind == "vector_components":
+        return self.play_vector_intro(data["vector"])
+    if kind == "linear_combination":
+        return self.play_linear_combo_intro(data["linear_combo"])
+    if kind in {"basis", "subspace", "transform_grid", "systems", "least_squares", "elimination", "matrix_factor", "projection", "eigen", "svd", "area", "dimension_bar", "quadratic"}:
+        mapped = {"projection": "calculus_tangent", "area": "calculus_area", "quadratic": "calculus_tangent"}.get(kind, "numeric_rule")
+        return self.play_generic_visual(mapped, "intro", data, ["visualize the structure"], ["follow the colored objects"], ["highlight the output"])
+    return self.play_generic_visual(kind, "intro", data, ["input -> rule -> output"], ["the diagram carries the example"], ["watch the state change"])
+
+def play_example_visual(self, kind, data, setup_lines, calc_lines, takeaway_lines):
+    if kind == "matrix_vector":
+        return self.play_matrix_vector_example(data["matrix_vector"], setup_lines, calc_lines, takeaway_lines)
+    if kind == "vector_components":
+        return self.play_vector_example(data["vector"], setup_lines, calc_lines, takeaway_lines)
+    if kind == "linear_combination":
+        return self.play_linear_combo_example(data["linear_combo"], setup_lines, calc_lines, takeaway_lines)
+    mapped = {"projection": "calculus_tangent", "area": "calculus_area", "quadratic": "calculus_tangent", "markov": "probability"}.get(kind, kind)
+    return self.play_generic_visual(mapped, "example", data, setup_lines, calc_lines, takeaway_lines)
+
+def play_recall_visual(self, kind, data, question_lines, answer_lines):
+    if kind == "matrix_vector":
+        return self.play_matrix_vector_recall(data["matrix_vector"], question_lines, answer_lines)
+    if kind == "vector_components":
+        return self.play_vector_recall(data["vector"], question_lines, answer_lines)
+    if kind == "linear_combination":
+        return self.play_linear_combo_recall(data["linear_combo"], question_lines, answer_lines)
+    mapped = {"projection": "calculus_tangent", "area": "calculus_area", "quadratic": "calculus_tangent", "markov": "probability"}.get(kind, kind)
+    return self.play_generic_visual(mapped, "recall", data, question_lines, answer_lines, answer_lines)
+'''
+
+
 def manim_scene(short: dict[str, object], class_name: str) -> str:
-    visual = str(short["visual_type"])
-    setup = short["worked_example"]["setup"]
-    calc = short["worked_example"]["calculation"]
-    takeaway = short["worked_example"]["takeaway"]
-    question = short["question_prompt"]["question"]
-    visual_code = visual_template(visual)
+    visual_kind = infer_visual_kind(short)
+    setup = screen_prose(short["worked_example"]["setup"])
+    calc = screen_prose(short["worked_example"]["calculation"])
+    takeaway = screen_prose(short["worked_example"]["takeaway"])
+    question = screen_prose(short["question_prompt"]["question"])
+    answer = screen_prose(short["question_prompt"]["answer"])
+    visual_data = visual_data_for(short, visual_kind)
     return f'''from manim import *
+import math
 
 config.pixel_width = 1080
 config.pixel_height = 1920
@@ -825,197 +1920,55 @@ config.background_color = "#0B1020"
 
 
 class {class_name}(Scene):
-    def text_block(self, lines, font_size=25, color="#EAF2FF"):
-        return VGroup(*[Text(line, font_size=font_size, color=color) for line in lines]).arrange(DOWN, buff=0.11)
-
-    def matrix_block(self, rows, font_size=30, color="#EAF2FF", bracket_color="#8FD3FF"):
-        row_groups = VGroup(*[VGroup(*[Text(str(cell), font_size=font_size, color=color) for cell in row]).arrange(RIGHT, buff=0.42) for row in rows]).arrange(DOWN, buff=0.22)
-        left = Text("[", font_size=78, color=bracket_color).stretch_to_fit_height(row_groups.height + 0.35).next_to(row_groups, LEFT, buff=0.12)
-        right = Text("]", font_size=78, color=bracket_color).stretch_to_fit_height(row_groups.height + 0.35).next_to(row_groups, RIGHT, buff=0.12)
-        return VGroup(left, row_groups, right)
+{textwrap.indent(MANIM_SCENE_HELPERS, "    ")}
 
     def construct(self):
         self.camera.background_color = "#0B1020"
-        title = Text({short["concept"]!r}, font_size=48, weight="BOLD", color="#EAF2FF").to_edge(UP, buff=0.55)
-        hook = self.text_block({wrap(str(short["hook"]), 31, 3)!r}, font_size=28, color="#8FD3FF").next_to(title, DOWN, buff=0.25)
+        visual_kind = {visual_kind!r}
+        visual_data = {visual_data!r}
+        setup_lines = {wrap(setup, 44, 2)!r}
+        calc_lines = {wrap(calc, 42, 3)!r}
+        takeaway_lines = {wrap(takeaway, 40, 2)!r}
+        question_lines = {wrap(question, 40, 3)!r}
+        answer_lines = {wrap(answer, 40, 3)!r}
+
+        title = Text({short["concept"]!r}, font_size=45, weight="BOLD", color="#EAF2FF")
+        self.safe_place(title, y=7.15, max_width=8.25, max_height=0.85, top=7.55, bottom=6.55)
+        hook = self.text_block({wrap(str(short["hook"]), 34, 3)!r}, font_size=26, color="#8FD3FF", max_width=7.6).next_to(title, DOWN, buff=0.22)
+        self.fit_in(hook, max_width=7.6, max_height=1.25)
         self.play(FadeIn(title, shift=DOWN * 0.1), LaggedStart(*[FadeIn(x) for x in hook], lag_ratio=0.12), run_time=1.2)
 
-{textwrap.indent(visual_code, "        ")}
+        {visual_template(visual_kind, "intro")}
 
-        formula = self.text_block({wrap(screen_math(str(short["formula"])), 34, 2)!r}, font_size=30, color="#F7C948").move_to(DOWN * 4.55)
-        intuition = self.text_block({wrap(str(short["intuition"]), 36, 3)!r}, font_size=24, color="#EAF2FF").move_to(DOWN * 5.35)
+        formula = self.formula_block({str(short["formula"])!r}, {screen_math(str(short["formula"]))!r}, font_size=32, color="#F7C948")
+        self.safe_place(formula, y=-5.25, max_width=7.6, max_height=1.0, top=-4.7, bottom=-5.95)
+        intuition = self.text_block({wrap(str(short["intuition"]), 42, 3)!r}, font_size=23, color="#EAF2FF", max_width=7.35)
+        self.safe_place(intuition, y=-6.55, max_width=7.35, max_height=1.15, top=-5.95, bottom=-7.25)
         self.play(Write(formula), run_time=0.9)
         self.play(FadeIn(intuition, shift=UP * 0.12), run_time=0.9)
-        self.wait(10.0)
-        self.play(*[FadeOut(m) for m in self.mobjects if m not in [title, hook]], run_time=0.7)
+        self.wait(7.0)
+        self.fade_all_except([title], run_time=0.7)
+        self.play(title.animate.scale(0.72).to_edge(UP, buff=0.35), run_time=0.45)
 
-        card = RoundedRectangle(width=8.0, height=6.25, corner_radius=0.18, color="#58A6FF", fill_color="#101A33", fill_opacity=0.96)
-        card.move_to(DOWN * 0.45)
-        label = Text("Worked example", font_size=31, weight="BOLD", color="#F7C948").move_to(card.get_top() + DOWN * 0.48)
-        setup = self.text_block({wrap("Setup: " + str(setup), 36, 4)!r}, font_size=22).next_to(label, DOWN, buff=0.36)
-        calc = self.text_block({wrap("Calculate: " + str(calc), 36, 4)!r}, font_size=22, color="#8FD3FF").next_to(setup, DOWN, buff=0.48)
-        take = self.text_block({wrap("So: " + str(takeaway), 36, 3)!r}, font_size=22, color="#7EE787").next_to(calc, DOWN, buff=0.48)
-        self.play(FadeIn(card), FadeIn(label), run_time=0.8)
-        self.play(LaggedStart(*[FadeIn(x, shift=UP * 0.08) for x in setup], lag_ratio=0.12), run_time=1.2)
-        self.wait(12.0)
-        self.play(LaggedStart(*[FadeIn(x, shift=UP * 0.08) for x in calc], lag_ratio=0.12), run_time=1.2)
-        self.wait(14.0)
-        self.play(LaggedStart(*[FadeIn(x, shift=UP * 0.08) for x in take], lag_ratio=0.12), run_time=1.0)
-        self.wait(10.0)
-        self.play(FadeOut(card), FadeOut(label), FadeOut(setup), FadeOut(calc), FadeOut(take), run_time=0.7)
+        section = self.section_label("Worked example", "#F7C948")
+        self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
+        {visual_template(visual_kind, "example")}
+        self.wait(8.0)
+        self.fade_all_except([title], run_time=0.7)
 
-        recall = RoundedRectangle(width=8.0, height=5.7, corner_radius=0.18, color="#F7C948", fill_color="#1C1A10", fill_opacity=0.96).move_to(DOWN * 0.45)
-        rtitle = Text("Active recall", font_size=31, weight="BOLD", color="#F7C948").move_to(recall.get_top() + DOWN * 0.5)
-        prompt = self.text_block({wrap("Try: " + str(question), 36, 5)!r}, font_size=22).next_to(rtitle, DOWN, buff=0.45)
-        answer = self.text_block({wrap("Answer idea: " + str(short["question_prompt"]["answer"]), 36, 4)!r}, font_size=21, color="#8FD3FF").next_to(prompt, DOWN, buff=0.55)
-        self.play(FadeIn(recall), FadeIn(rtitle), FadeIn(prompt), run_time=1.0)
-        self.wait(14.0)
-        self.play(FadeIn(answer, shift=UP * 0.1), run_time=0.9)
-        self.wait(12.0)
-        self.play(Indicate(answer), run_time=0.8)
+        section = self.section_label("Active recall", "#F7C948")
+        self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
+        {visual_template(visual_kind, "recall")}
         self.wait(8.0)
 '''
 
 
-def visual_template(kind: str) -> str:
-    if kind == "vector_components":
-        return '''plane = NumberPlane(x_range=[-1,5,1], y_range=[-1,5,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.7}).scale(0.82).shift(DOWN*0.85)
-origin = plane.c2p(0,0)
-end = plane.c2p(3,4)
-vec = Arrow(origin, end, buff=0, color="#58A6FF", stroke_width=8)
-x_leg = Arrow(origin, plane.c2p(3,0), buff=0, color="#F7C948", stroke_width=7)
-y_leg = Arrow(plane.c2p(3,0), end, buff=0, color="#7EE787", stroke_width=7)
-dash = DashedLine(plane.c2p(0,4), end, color="#EAF2FF", stroke_width=3)
-labels = VGroup(Text("3", font_size=28, color="#F7C948").next_to(x_leg, DOWN), Text("4", font_size=28, color="#7EE787").next_to(y_leg, RIGHT), Text("length 5", font_size=28, color="#8FD3FF").next_to(vec, UP))
-self.play(Create(plane), GrowArrow(x_leg), GrowArrow(y_leg), run_time=1.2)
-self.play(GrowArrow(vec), Create(dash), FadeIn(labels), run_time=1.3)
-self.play(Indicate(labels[2]), run_time=0.8)'''
-    if kind == "linear_combination":
-        return '''plane = NumberPlane(x_range=[-1,6,1], y_range=[-1,4,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.7}).scale(0.8).shift(DOWN*0.85)
-origin = plane.c2p(0,0)
-a = Arrow(origin, plane.c2p(1,0), buff=0, color="#58A6FF", stroke_width=7)
-b = Arrow(origin, plane.c2p(1,1), buff=0, color="#F7C948", stroke_width=7)
-three_a = Arrow(origin, plane.c2p(3,0), buff=0, color="#58A6FF", stroke_width=8)
-two_b = Arrow(plane.c2p(3,0), plane.c2p(5,2), buff=0, color="#F7C948", stroke_width=8)
-target = Dot(plane.c2p(5,2), radius=0.09, color="#7EE787")
-label = Text("3a + 2b = (5, 2)", font_size=28, color="#7EE787").move_to(DOWN*3.0)
-self.play(Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.1)
-self.play(TransformFromCopy(a, three_a), TransformFromCopy(b, two_b), FadeIn(target, scale=1.4), run_time=1.4)
-self.play(FadeIn(label), Flash(target, color="#7EE787"), run_time=0.9)'''
-    if kind == "matrix_vector":
-        return '''A = self.matrix_block([[2, 1], [1, 3]], font_size=28, color="#EAF2FF", bracket_color="#58A6FF")
-x = self.matrix_block([[4], [2]], font_size=28, color="#EAF2FF", bracket_color="#F7C948")
-out = self.matrix_block([[10], [10]], font_size=28, color="#7EE787", bracket_color="#7EE787")
-top = VGroup(A, Text("x", font_size=30, color="#EAF2FF"), x, Text("=", font_size=30, color="#EAF2FF"), out).arrange(RIGHT, buff=0.22).move_to(UP*0.35)
-top.scale_to_fit_width(7.25)
-col1 = self.matrix_block([[2], [1]], font_size=22, color="#58A6FF", bracket_color="#58A6FF")
-col2 = self.matrix_block([[1], [3]], font_size=22, color="#F7C948", bracket_color="#F7C948")
-combo_out = self.matrix_block([[10], [10]], font_size=22, color="#7EE787", bracket_color="#7EE787")
-combo = VGroup(Text("4", font_size=25, color="#EAF2FF"), col1, Text("+", font_size=25, color="#EAF2FF"), Text("2", font_size=25, color="#EAF2FF"), col2, Text("=", font_size=25, color="#EAF2FF"), combo_out).arrange(RIGHT, buff=0.14).move_to(DOWN*2.25)
-combo.scale_to_fit_width(6.85)
-box = SurroundingRectangle(combo[-1], color="#7EE787", buff=0.12)
-self.play(FadeIn(top, shift=UP*0.1), run_time=1.1)
-self.play(LaggedStart(*[FadeIn(m, shift=UP*0.08) for m in combo], lag_ratio=0.14), run_time=1.6)
-self.play(Create(box), Indicate(combo[-1]), run_time=0.9)'''
-    if kind == "basis":
-        return '''plane = NumberPlane(x_range=[-3,5,1], y_range=[-2,5,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.7}).scale(0.78).shift(DOWN*0.85)
-origin = plane.c2p(0,0)
-e1 = Arrow(origin, plane.c2p(1,0), buff=0, color="#58A6FF", stroke_width=8)
-e2 = Arrow(origin, plane.c2p(0,1), buff=0, color="#F7C948", stroke_width=8)
-target = Arrow(origin, plane.c2p(4,3), buff=0, color="#7EE787", stroke_width=8)
-coords = Text("4e1 + 3e2", font_size=28, color="#7EE787").move_to(DOWN*3.0)
-self.play(Create(plane), GrowArrow(e1), GrowArrow(e2), run_time=1.1)
-self.play(GrowArrow(target), FadeIn(coords), run_time=1.2)
-self.play(Indicate(coords), run_time=0.8)'''
-    if kind == "subspace":
-        return '''plane = NumberPlane(x_range=[-4,4,1], y_range=[-3,3,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.65}).scale(0.8).shift(DOWN*0.8)
-line = Line(plane.c2p(-3,-1.5), plane.c2p(3,1.5), color="#58A6FF", stroke_width=7)
-reachable = VGroup(*[Dot(plane.c2p(x, 0.5*x), radius=0.05, color="#7EE787") for x in [-2,-1,0,1,2]])
-outside = Dot(plane.c2p(1,2.4), radius=0.08, color="#FF7B72")
-label = Text("reachable targets live in the span", font_size=25, color="#8FD3FF").move_to(DOWN*3.05)
-self.play(Create(plane), Create(line), run_time=1.1)
-self.play(LaggedStart(*[FadeIn(d, scale=1.4) for d in reachable], lag_ratio=0.1), FadeIn(outside), run_time=1.2)
-self.play(FadeIn(label), Indicate(line), run_time=0.9)'''
-    if kind == "transform_grid":
-        return '''plane = NumberPlane(x_range=[-4,4,1], y_range=[-3,3,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.7}).scale(0.78).shift(DOWN*0.75)
-origin = plane.c2p(0,0)
-a = Arrow(origin, plane.c2p(2.5,1.4), buff=0, color="#58A6FF", stroke_width=8)
-b = Arrow(origin, plane.c2p(0.9,2.3), buff=0, color="#F7C948", stroke_width=7)
-ghost = Arrow(origin, plane.c2p(3.4,2.6), buff=0, color="#7EE787", stroke_width=8)
-self.play(Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.3)
-self.play(TransformFromCopy(a, ghost), b.animate.set_opacity(0.55), run_time=1.2)
-self.play(Indicate(ghost), run_time=0.8)'''
-    if kind in {"systems", "least_squares"}:
-        return '''axes = Axes(x_range=[-3,5,1], y_range=[-1,6,1], x_length=6.5, y_length=4.6, tips=False).shift(DOWN*0.8)
-l1 = axes.plot(lambda x: -x + 5, x_range=[-0.5,4.8], color="#58A6FF", stroke_width=5)
-l2 = axes.plot(lambda x: 0.5*x + 2, x_range=[-0.5,4.8], color="#F7C948", stroke_width=5)
-dot = Dot(axes.c2p(2,3), color="#FF7B72", radius=0.09)
-self.play(Create(axes), Create(l1), Create(l2), run_time=1.3)
-self.play(FadeIn(dot, scale=1.4), Flash(dot, color="#FF7B72"), run_time=1.0)'''
-    if kind in {"elimination", "matrix_factor"}:
-        return '''rows = VGroup()
-for vals in [["2","1","|","7"],["1","1","|","5"]]:
-    row = VGroup(*[Text(v, font_size=30, color="#EAF2FF") for v in vals]).arrange(RIGHT, buff=0.28)
-    rows.add(row)
-rows.arrange(DOWN, buff=0.28).move_to(DOWN*0.7)
-box = SurroundingRectangle(rows[0][0], color="#F7C948", buff=0.12)
-self.play(FadeIn(rows), run_time=1.0)
-self.play(Create(box), run_time=0.5)
-self.play(rows[0].animate.set_color("#8FD3FF"), run_time=0.9)'''
-    if kind in {"projection"}:
-        return '''plane = NumberPlane(x_range=[-4,4,1], y_range=[-3,3,1], background_line_style={"stroke_color":"#1F3558","stroke_width":1,"stroke_opacity":0.6}).scale(0.78).shift(DOWN*0.8)
-origin = plane.c2p(0,0)
-line = Line(plane.c2p(-3,0), plane.c2p(3,0), color="#F7C948", stroke_width=5)
-v = Arrow(origin, plane.c2p(2.4,2.2), buff=0, color="#58A6FF", stroke_width=8)
-p = Arrow(origin, plane.c2p(2.4,0), buff=0, color="#7EE787", stroke_width=8)
-d = DashedLine(v.get_end(), p.get_end(), color="#EAF2FF")
-self.play(Create(plane), Create(line), GrowArrow(v), run_time=1.2)
-self.play(Create(d), GrowArrow(p), run_time=1.1)'''
-    if kind in {"eigen", "svd"}:
-        return '''circle = Circle(radius=1.25, color="#58A6FF", stroke_width=5).shift(DOWN*0.7)
-ellipse = Ellipse(width=3.8, height=1.45, color="#F7C948", stroke_width=5).shift(DOWN*0.7).rotate(0.35)
-arrow = Arrow(LEFT*2.8+DOWN*2.35, RIGHT*2.8+DOWN*2.35, color="#7EE787")
-label = Text("special directions survive", font_size=25, color="#8FD3FF").next_to(arrow, DOWN)
-self.play(Create(circle), run_time=0.9)
-self.play(Transform(circle, ellipse), GrowArrow(arrow), FadeIn(label), run_time=1.5)
-self.play(Indicate(circle), run_time=0.8)'''
-    if kind == "area":
-        return '''square = Square(1.6, color="#58A6FF", fill_opacity=0.18).shift(DOWN*0.7)
-para = Polygon(LEFT*1.3+DOWN*1.5, RIGHT*1.7+DOWN*1.5, RIGHT*2.4+UP*0.5, LEFT*0.6+UP*0.5, color="#F7C948", fill_opacity=0.22)
-self.play(Create(square), run_time=0.9)
-self.play(Transform(square, para), run_time=1.4)
-self.play(Indicate(square), run_time=0.8)'''
-    if kind == "dimension_bar":
-        return '''blocks = VGroup(*[Square(0.55, color="#58A6FF", fill_opacity=0.3) for _ in range(5)]).arrange(RIGHT, buff=0.12).move_to(DOWN*0.7)
-rank = Brace(VGroup(*blocks[:3]), UP, color="#F7C948")
-null = Brace(VGroup(*blocks[3:]), DOWN, color="#7EE787")
-self.play(FadeIn(blocks), GrowFromCenter(rank), GrowFromCenter(null), run_time=1.3)
-self.play(blocks[:3].animate.set_color("#F7C948"), blocks[3:].animate.set_color("#7EE787"), run_time=1.0)'''
-    if kind == "quadratic":
-        return '''axes = Axes(x_range=[-3,3,1], y_range=[0,7,1], x_length=6.2, y_length=4.2, tips=False).shift(DOWN*1.05)
-curve = axes.plot(lambda x: 0.7*x*x + 0.6, x_range=[-2.6,2.6], color="#F7C948", stroke_width=6)
-point = Dot(axes.c2p(1.5, 0.7*1.5*1.5+0.6), color="#58A6FF", radius=0.09)
-label = Text("positive in every direction", font_size=26, color="#7EE787").move_to(DOWN*3.2)
-self.play(Create(axes), Create(curve), run_time=1.2)
-self.play(FadeIn(point, scale=1.4), FadeIn(label), run_time=1.0)
-self.play(Indicate(curve), run_time=0.8)'''
-    if kind == "markov":
-        return '''left = Circle(radius=0.62, color="#58A6FF", fill_opacity=0.18).shift(LEFT*1.8+DOWN*0.8)
-right = Circle(radius=0.62, color="#F7C948", fill_opacity=0.18).shift(RIGHT*1.8+DOWN*0.8)
-labels = VGroup(Text("A", font_size=34, color="#58A6FF").move_to(left), Text("B", font_size=34, color="#F7C948").move_to(right))
-ar1 = CurvedArrow(left.get_right(), right.get_left(), angle=-0.6, color="#7EE787", stroke_width=5)
-ar2 = CurvedArrow(right.get_left(), left.get_right(), angle=-0.6, color="#FF7B72", stroke_width=5)
-nums = VGroup(Text("20%", font_size=25, color="#7EE787").next_to(ar1, UP), Text("30%", font_size=25, color="#FF7B72").next_to(ar2, DOWN), Text("[100, 0] -> [80, 20]", font_size=28, color="#EAF2FF").move_to(DOWN*3.0))
-self.play(FadeIn(left), FadeIn(right), FadeIn(labels), run_time=1.0)
-self.play(Create(ar1), Create(ar2), FadeIn(nums), run_time=1.3)
-self.play(Indicate(nums[-1]), run_time=0.8)'''
-    return '''cards = VGroup()
-for label, color in [("definition","#58A6FF"),("formula","#F7C948"),("example","#7EE787")]:
-    box = RoundedRectangle(width=5.8, height=0.8, corner_radius=0.14, color=color, fill_color="#101A33", fill_opacity=0.95)
-    cards.add(VGroup(box, Text(label, font_size=26, color=color).move_to(box)))
-cards.arrange(DOWN, buff=0.22).move_to(DOWN*0.7)
-self.play(LaggedStart(*[FadeIn(c, shift=UP*0.12) for c in cards], lag_ratio=0.15), run_time=1.3)
-self.play(Indicate(cards[2]), run_time=0.8)'''
+def visual_template(kind: str, phase: str = "intro") -> str:
+    if phase == "example":
+        return "self.play_example_visual(visual_kind, visual_data, setup_lines, calc_lines, takeaway_lines)"
+    if phase == "recall":
+        return "self.play_recall_visual(visual_kind, visual_data, question_lines, answer_lines)"
+    return "self.play_intro_visual(visual_kind, visual_data)"
 
 
 def cmd_manim(args: argparse.Namespace) -> None:
@@ -1044,13 +1997,13 @@ def make_srt(short: dict[str, object]) -> str:
     ex = short["worked_example"]
     qp = short["question_prompt"]
     cues = [
-        ("00:00:00,000", "00:00:06,000", short["hook"]),
-        ("00:00:06,000", "00:00:20,000", short["intuition"]),
-        ("00:00:20,000", "00:00:34,000", short["plain_formula"]),
-        ("00:00:34,000", "00:01:04,000", f"Example: {ex['setup']} {ex['calculation']}"),
-        ("00:01:04,000", "00:01:22,000", f"Takeaway: {ex['takeaway']}"),
-        ("00:01:22,000", "00:01:42,000", f"Try this: {qp['question']}"),
-        ("00:01:42,000", "00:02:00,000", f"Answer: {qp['answer']}"),
+        ("00:00:00,000", "00:00:06,000", screen_prose(short["hook"])),
+        ("00:00:06,000", "00:00:20,000", screen_prose(short["intuition"])),
+        ("00:00:20,000", "00:00:34,000", screen_prose(short["plain_formula"])),
+        ("00:00:34,000", "00:01:04,000", f"Example: {screen_prose(ex['setup'])} {screen_prose(ex['calculation'])}"),
+        ("00:01:04,000", "00:01:22,000", f"Takeaway: {screen_prose(ex['takeaway'])}"),
+        ("00:01:22,000", "00:01:42,000", f"Try this: {screen_prose(qp['question'])}"),
+        ("00:01:42,000", "00:02:00,000", f"Answer: {screen_prose(qp['answer'])}"),
     ]
     return "\n\n".join(f"{i}\n{a} --> {b}\n{textwrap.fill(str(t), width=42)}" for i, (a, b, t) in enumerate(cues, start=1)) + "\n"
 
@@ -1066,13 +2019,13 @@ Target length: no fixed one-minute limit; keep going until the concept, worked e
 
 | Time | Beat |
 | --- | --- |
-| 0:00-0:06 | {short['hook']} |
-| 0:06-0:20 | {short['intuition']} |
-| 0:20-0:34 | Formula: `{short['plain_formula']}` |
-| 0:34-1:04 | Example: {ex['setup']} {ex['calculation']} |
-| 1:04-1:22 | Takeaway: {ex['takeaway']} |
-| 1:22-1:42 | Try this: {qp['question']} |
-| 1:42-2:00 | Answer: {qp['answer']} |
+| 0:00-0:06 | {screen_prose(short['hook'])} |
+| 0:06-0:20 | {screen_prose(short['intuition'])} |
+| 0:20-0:34 | Formula: `{screen_prose(short['plain_formula'])}` |
+| 0:34-1:04 | Example: {screen_prose(ex['setup'])} {screen_prose(ex['calculation'])} |
+| 1:04-1:22 | Takeaway: {screen_prose(ex['takeaway'])} |
+| 1:22-1:42 | Try this: {screen_prose(qp['question'])} |
+| 1:42-2:00 | Answer: {screen_prose(qp['answer'])} |
 """
 
 

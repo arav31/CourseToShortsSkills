@@ -11,7 +11,12 @@ Create a publish queue for a course video series, then optionally publish Reels 
 
 ## Workflow
 
-1. Make sure rendering is complete and `render_report.json` shows finished videos.
+1. Make sure rendering is complete, `render_report.json` shows finished videos, and strict validation passes:
+
+```bash
+python tools/validate_course_run.py runs/<course>
+```
+
 2. Create the queue:
 
 ```bash

@@ -43,12 +43,21 @@ python tools/stem_course.py notes --run runs/<course> --compile
 
 Use `--pdf-engine latex` when you require true LaTeX compilation and want the command to fail if no TeX engine is available. Use `--pdf-engine fallback` for a guaranteed local PDF preview from the same notes data.
 
+5. Run validation before calling the notes complete:
+
+```bash
+python tools/validate_course_run.py runs/<course> --draft
+```
+
+Fix any notes-related failures, especially fallback PDF provenance, prose matrix notation, or exponent formatting.
+
 ## Quality Bar
 
 - The document should be usable as a proxy for learning, not just video metadata.
 - Every important formula should have an explanation of what each symbol means.
 - Every major topic should have a key concept and a concept explanation that can be understood before seeing the formula.
 - Every abstract idea needs at least one concrete example with numbers or a small symbolic case.
+- Worked examples must render simple STEM prose math as math where safe: matrices and vectors as LaTeX structures, powers as exponents, square roots as `\sqrt{}`, dot products as `\cdot`, and equations in inline or display math.
 - Do not omit hard topics just because they are not good short-video hooks; keep them in notes even if they are not in the shorts queue.
 - Add a source-derived coverage checklist from the extracted course pack and expand any important source terms that are not already in the shorts plan.
 

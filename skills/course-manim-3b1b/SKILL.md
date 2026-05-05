@@ -24,7 +24,13 @@ python tools/stem_course.py manim --run runs/<course>
 - `runs/<course>/scripts/`
 - `runs/<course>/captions/`
 
-4. Improve generated Manim where the course demands it. Prefer domain-specific visuals:
+4. Run the draft validator to catch missing assets, malformed captions, non-vertical scene config, sparse/static-looking scenes, and missing Manim renders:
+
+```bash
+python tools/validate_course_run.py runs/<course> --draft
+```
+
+5. Improve generated Manim where the course demands it. Prefer domain-specific visuals:
 
 - Linear algebra: number planes, vectors, bases, projections, transformed grids, eigendirections, areas.
 - Calculus: moving tangent lines, accumulated area, slope fields, Taylor approximations.
@@ -35,10 +41,13 @@ python tools/stem_course.py manim --run runs/<course>
 
 - Do not reuse the same generic animation for every short.
 - The worked example must be visible, not only narrated.
+- Setup, calculation, takeaway, and active recall should each move or transform mathematical/diagram objects; static text-only cards are a failure mode.
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.
 - Keep vertical 9:16 composition readable on a phone.
+- Use generator safe-area/layout helpers before rendering; top titles, bottom formulas, and captions must fit inside the vertical frame.
 - Avoid tiny formulas. If a formula is long, animate it in parts.
 - Render matrices and vectors as stacked mathematical objects, not single-line Python lists.
+- For non-linear-algebra topics, choose a visual family such as calculus, physics, CS, probability, chemistry, or a numeric input-rule-output diagram instead of the generic placeholder.
 - Do not force a one-minute cap; keep pacing long enough for concept, worked example, and active recall to land clearly.
 
 ## Output

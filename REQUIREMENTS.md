@@ -34,6 +34,8 @@ The CLI searches normal PATH plus `/Library/TeX/texbin`, `/opt/homebrew/bin`, an
 - `requests` and `beautifulsoup4` for web extraction helpers
 - `edge-tts` for optional local-ish voiceover
 
+The validator uses the system `ffprobe`/`ffmpeg` commands from FFmpeg for video metadata and sampled-frame checks.
+
 ## Course Coverage Requirements
 
 For a real course, extract broadly before generating notes:
@@ -59,6 +61,7 @@ The compiled `notes.pdf` should follow the attached reference style:
 - numbered sections and subsections
 - compact tables for definitions, symbols, and formulas
 - one section per major topic with prerequisites, definition, formula, worked example, common trap, questions, and answers
+- worked examples with simple prose math converted to real LaTeX where safe, including `bmatrix` displays for matrix/vector examples and real `\sqrt{}`/exponent formatting
 - a source-derived coverage checklist so non-video topics are still tracked
 
 The notes should be a course proxy, not a summary. Every important concept needs:
@@ -92,6 +95,7 @@ python tools/stem_course.py render --run runs/course --voice-engine say
 ```bash
 python -m py_compile tools/stem_course.py
 python tools/stem_course.py all --sample linear_algebra --out runs/demo --max-shorts 6 --no-render --pdf-engine latex
+python tools/validate_course_run.py runs/demo --draft
 python - <<'PY'
 import fitz
 pdf = 'runs/demo/notes.pdf'

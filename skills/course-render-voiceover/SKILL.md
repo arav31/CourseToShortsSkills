@@ -34,6 +34,11 @@ Supported engines:
 
 3. Read `runs/<course>/render_report.json`.
 4. If voiceover failed, fix the engine or credentials and rerun. Do not claim voiceover worked unless the report says `status: ok`.
+5. Run strict validation before calling videos upload-ready:
+
+```bash
+python tools/validate_course_run.py runs/<course>
+```
 
 ## Quality Bar
 

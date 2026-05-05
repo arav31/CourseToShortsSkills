@@ -49,6 +49,7 @@ python tools/stem_course.py plan --run runs/course --max-shorts 12
 python tools/stem_course.py notes --run runs/course --compile
 python tools/stem_course.py manim --run runs/course
 python tools/stem_course.py render --run runs/course --voice-engine openai
+python tools/validate_course_run.py runs/course
 python tools/stem_course.py queue --run runs/course --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
 python tools/stem_course.py publish --run runs/course --dry-run
 ```
@@ -66,6 +67,10 @@ export META_GRAPH_VERSION="v21.0"  # override if your app uses a newer supported
 ```
 
 Instagram cannot publish a private local MP4 directly through this API; host the final videos first, then create the queue with `--public-base-url`.
+
+## Validation
+
+Run `python tools/validate_course_run.py runs/<course>` before treating a course run as upload-ready. It checks notes/PDF provenance, LaTeX formatting red flags, scene/script/caption coverage, final video existence, duration, vertical orientation, blank/static sampled frames, and audio streams. Use `--draft` while iterating before final render/audio.
 
 
 ## Notes PDF
