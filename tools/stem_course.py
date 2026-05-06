@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import math
 import os
@@ -25,6 +26,7 @@ PDF_TEXT_PAGES = 180
 DEFAULT_MAX_PAGES = 160
 DEFAULT_MAX_PDFS = 100
 DEFAULT_SHORTS = 40
+MAX_CRAWL_CANDIDATES = 240
 FFMPEG = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
 EXTRA_TEX_PATHS = ["/Library/TeX/texbin", "/opt/homebrew/bin", "/usr/local/bin"]
 
@@ -88,6 +90,154 @@ LINEAR_ALGEBRA: list[Concept] = [
     Concept("Singular value decomposition", "SVD says every matrix is rotate, stretch, rotate.", "It ranks transformation directions by importance.", r"A=U\Sigma V^T", ["orthogonality", "eigenvectors"], "SVD works for non-square matrices too.", "An image matrix has singular values 10, 2, 0.5.", "Keeping only 10 gives a rank-1 approximation.", "Large singular values preserve strongest structure.", "How does SVD compress an image?", "Keep large singular values and discard small detail.", "svd"),
 ]
 
+GROUP_THEORY: list[Concept] = [
+    Concept("Groups and operations", "A group is a symmetry machine with one legal way to combine moves.", "Closure, identity, inverses, and associativity let transformations behave like algebraic objects.", r"(G,\cdot)", ["sets", "functions", "composition"], "A group is not just any set with a table; every element must have an inverse and the operation must stay inside the set.", "Let G be rotations of a square by 0, 90, 180, and 270 degrees.", "90 degrees composed with 270 degrees gives 360 degrees, the identity rotation.", "The operation keeps every result inside the same four rotations.", "Why do clock-hour rotations modulo 12 form a group under addition?", "Adding hours stays modulo 12, 0 is identity, and each hour has an additive inverse.", "group_structure"),
+    Concept("Subgroups", "A subgroup is a smaller world that still obeys all the group rules.", "A subgroup contains the identity and is closed under combining elements and taking inverses.", r"H\leq G", ["groups", "identity", "inverses"], "A subset of a group is not automatically a subgroup.", "In integers under addition, the even integers form a subgroup.", "Even + even is even, 0 is even, and the inverse of 2k is -2k.", "The subgroup test succeeds because the operation never leaves the subset.", "Why are multiples of 5 a subgroup of integers under addition?", "They contain 0, sums stay multiples of 5, and negatives stay multiples of 5.", "group_structure"),
+    Concept("Cosets and quotient groups", "Cosets are what a group looks like when you slide a subgroup around.", "A coset gH packages elements that differ by subgroup motion; normal subgroups make those packages multiply consistently.", r"gH=\{gh:h\in H\}", ["subgroups", "equivalence classes"], "Cosets are usually translated copies, not subgroups themselves.", "In integers modulo 6, take H = {0, 3}.", "The cosets are {0,3}, {1,4}, and {2,5}.", "Each coset groups numbers with the same remainder modulo H.", "How do cosets describe parity in integers?", "Even and odd integers are the two cosets of the even subgroup.", "group_cosets"),
+    Concept("Homomorphisms", "A homomorphism is a structure-preserving translator between groups.", "It maps one group to another while respecting the operation, so products before mapping match products after mapping.", r"\varphi(ab)=\varphi(a)\varphi(b)", ["groups", "functions"], "A homomorphism does not have to be one-to-one or onto.", "Map integers under addition to parity by phi(n)=n mod 2.", "phi(3+5)=0 and phi(3)+phi(5)=1+1=0 mod 2.", "The map preserves the operation even though it forgets information.", "Why is determinant a homomorphism from invertible matrices to nonzero scalars?", "det(AB)=det(A)det(B), so multiplication is preserved.", "group_homomorphism"),
+]
+
+ALGORITHMS: list[Concept] = [
+    Concept("Asymptotic complexity", "Big-O lets growth rate speak louder than machine details.", "Asymptotic notation compares how work scales as input size grows, which predicts algorithm behavior across machines.", r"T(n)=O(n\log n)", ["functions", "logs", "counting operations"], "Big-O is an upper bound, not always the exact running time.", "Compare n log n and n squared for n = 1000.", "1000 log2(1000) is about 10000, while 1000^2 is 1000000.", "The slower-growing curve wins at scale.", "Why can a theoretically faster algorithm lose on tiny inputs?", "Constants and setup costs can dominate before asymptotic growth matters.", "cs_array"),
+    Concept("Divide and conquer", "Some problems get easier when you keep splitting them in half.", "Divide and conquer solves smaller copies of a problem, then combines their answers.", r"T(n)=2T(n/2)+O(n)", ["recursion", "arrays"], "Splitting alone is not enough; the combine step determines the cost.", "Merge sort splits 8 items into halves until singletons.", "Merging layers costs 8 work per level for about log2(8)=3 levels.", "The structure gives n log n behavior.", "Why does binary search not have a combine step?", "It discards half the input and recurses on only one side.", "cs_array"),
+    Concept("Breadth-first search", "BFS explores a graph in expanding rings.", "A queue makes BFS visit all nodes at distance k before distance k+1, giving shortest paths in unweighted graphs.", r"O(V+E)", ["graphs", "queues"], "BFS shortest paths require unweighted or equal-weight edges.", "Start at A with edges A-B, A-C, B-D, C-E.", "BFS visits A, then B and C, then D and E.", "Layer order records shortest edge counts.", "How does BFS find the fewest clicks between webpages?", "Treat pages as nodes, links as edges, and expand layer by layer.", "cs_graph"),
+    Concept("Dynamic programming", "Dynamic programming is recursion with a memory.", "DP works when subproblems overlap and a good state captures all information needed for the future.", r"dp[i]=\min_j(dp[j]+\operatorname{cost}(j,i))", ["recursion", "optimization"], "Memoization is not the hard part; choosing the state is.", "For Fibonacci, F(5) asks for F(4) and F(3), and F(4) also asks for F(3).", "Store F(3) once instead of recomputing it.", "The recursion tree collapses into a table.", "How would DP avoid repeated work in text segmentation?", "Store the best answer for each prefix length.", "cs_array"),
+]
+
+PHYSICS_MECHANICS: list[Concept] = [
+    Concept("Newton's second law", "Forces are how motion gets edited.", "Net force determines acceleration, so changing motion requires an imbalance of forces.", r"\sum F=ma", ["vectors", "free-body diagrams"], "A large velocity does not require a large net force; acceleration does.", "A 2 kg cart feels a 10 N push and 2 N friction.", "Net force is 8 N, so acceleration is 8/2 = 4 m/s^2.", "The unbalanced force sets the acceleration.", "What happens to acceleration if the mass doubles with the same net force?", "It halves, because a=F/m.", "physics_force"),
+    Concept("Kinematics", "Kinematics predicts motion before asking what caused it.", "Position, velocity, and acceleration are linked by rates of change and constant-acceleration formulas.", r"x=x_0+v_0t+\frac12at^2", ["algebra", "graphs"], "A position graph's height is position; its slope is velocity.", "A ball starts at 0 m with v0=3 m/s and a=2 m/s^2.", "After 4 s, x = 0 + 12 + 16 = 28 m.", "The formula accumulates initial motion and acceleration.", "How far does a car travel from rest at 3 m/s^2 for 5 s?", "Use x=1/2 at^2 = 37.5 m.", "calculus_tangent"),
+    Concept("Work and energy", "Energy is the accounting system for motion.", "Work transfers energy, and conserved energy lets you solve without tracking every instant of force.", r"W=\Delta K", ["forces", "dot products"], "Energy conservation needs the system and nonconservative work to be named.", "A 5 N force pushes 3 m in the same direction.", "Work is Fd = 15 J.", "That work increases kinetic energy if no other losses intervene.", "Why does friction reduce mechanical energy?", "It does negative work and converts organized motion into thermal energy.", "physics_energy"),
+    Concept("Momentum", "Momentum tracks motion that interactions must balance.", "In an isolated system, total momentum stays constant even while objects exchange forces.", r"p=mv", ["velocity", "mass"], "Momentum and kinetic energy are not the same conserved quantity.", "A 2 kg cart moving 3 m/s hits a 1 kg cart at rest and they stick.", "Initial momentum is 6 kg m/s; final speed is 6/3 = 2 m/s.", "The stuck pair carries the same total momentum.", "Why do recoil problems use momentum conservation?", "The system starts with zero total momentum, so opposite momenta must balance.", "physics_force"),
+]
+
+ECONOMICS: list[Concept] = [
+    Concept("Supply and demand equilibrium", "A market price is where two curves stop disagreeing.", "Equilibrium occurs where quantity supplied equals quantity demanded, so there is no pressure from shortage or surplus.", r"Q_s(P)=Q_d(P)", ["graphs", "linear equations"], "Equilibrium is a model prediction, not a guarantee that every real market clears instantly.", "Let demand be Qd=100-2P and supply be Qs=20+2P.", "Set 100-2P = 20+2P, so P=20 and Q=60.", "The crossing price balances plans of buyers and sellers.", "What does a binding price ceiling create?", "A shortage, because quantity demanded exceeds quantity supplied.", "econ_supply_demand"),
+    Concept("Elasticity", "Elasticity measures sensitivity in percent language.", "Price elasticity of demand compares percent quantity response to percent price change.", r"E_d=\frac{\%\Delta Q}{\%\Delta P}", ["percent changes", "demand curves"], "A steep-looking curve is not automatically inelastic; units and location matter.", "If price rises 10 percent and quantity falls 20 percent.", "Elasticity is -20 percent / 10 percent = -2.", "Quantity is relatively responsive.", "Why do firms care whether demand is elastic?", "It predicts whether raising price increases or decreases revenue.", "econ_elasticity"),
+    Concept("Consumer choice", "A budget line turns preferences into a constrained decision.", "Consumers choose the best affordable bundle where marginal tradeoffs line up with prices.", r"p_x x+p_y y=I", ["algebra", "optimization"], "The favorite bundle may be unaffordable; the constraint matters.", "Income is 40, x costs 4, y costs 2.", "The bundle x=5, y=10 costs 20+20=40.", "It lies exactly on the budget line.", "How does a price increase rotate a budget line?", "The intercept for that good moves inward.", "econ_budget"),
+    Concept("Externalities", "An externality is a cost or benefit that escapes the transaction.", "Markets can overproduce or underproduce when private incentives differ from social costs and benefits.", r"MSC=MSB", ["supply and demand", "welfare"], "A market outcome can be efficient privately and inefficient socially.", "A factory's private marginal cost is 5, but pollution adds 3 social cost.", "Marginal social cost is 8.", "The market price misses part of the real cost.", "How can a tax correct a negative externality?", "Set the tax near the external marginal cost so private decisions face social cost.", "econ_curve"),
+]
+
+
+GROUP_THEORY.extend([
+    Concept("Cyclic groups", "A cyclic group is generated by repeating one move.", "If every element is a power or multiple of one generator, the whole group has a one-dimensional algebraic clock.", r"G=\langle g\rangle", ["groups", "powers", "orders"], "A group can be generated by one element without looking visually circular.", "In integers modulo 6 under addition, 1 generates every residue.", "0,1,2,3,4,5 appear as repeated additions of 1.", "One generator can encode the whole group.", "How do you test whether 2 generates integers modulo 6?", "List 0,2,4,0; it misses odd residues, so it does not generate.", "group_structure"),
+    Concept("Orders of elements", "The order of an element is the first time repetition returns home.", "Element order measures the cycle length created by repeatedly applying that element.", r"g^n=e", ["identity", "cyclic subgroups"], "Order is about the element under the group operation, not its numerical size.", "A rotation by 90 degrees has order 4.", "Four repeats give 360 degrees, the identity.", "The order is the length of the generated cycle.", "What is the order of 3 modulo 8 under addition?", "Repeated addition gives 3,6,1,4,7,2,5,0, so the order is 8.", "group_structure"),
+    Concept("Permutation groups", "A permutation group studies rearrangements as algebra.", "Permutations compose, have inverses, and encode symmetries of finite sets.", r"S_n", ["functions", "composition"], "Permutation multiplication is composition, so order matters.", "Let sigma swap 1 and 2, and tau send 2 to 3.", "Composing in opposite orders can move 1 to different places.", "Permutation notation records motion of labels.", "Why is every symmetry of a triangle a permutation of its vertices?", "Each symmetry rearranges the three vertex labels without losing any label.", "group_action"),
+    Concept("Lagrange's theorem", "Subgroup size must divide group size.", "Cosets partition a finite group into equal-sized copies of a subgroup.", r"|H|\mid |G|", ["subgroups", "cosets"], "The theorem gives a divisibility condition, not a guarantee that every divisor occurs as a subgroup order.", "If a group has 12 elements and H has 3 elements.", "The left cosets of H form 12/3 = 4 blocks.", "Equal coset blocks force divisibility.", "Why can no subgroup of order 5 exist in a group of order 12?", "5 does not divide 12, so Lagrange rules it out.", "group_cosets"),
+    Concept("Normal subgroups", "Normal subgroups are the subgroups whose cosets multiply cleanly.", "Normality means left and right cosets agree, which lets quotient groups inherit a well-defined operation.", r"gH=Hg", ["subgroups", "cosets"], "Normal does not mean common or obvious; it is a conjugation condition.", "In any abelian group, every subgroup is normal.", "Because gh = hg, left and right cosets match.", "Commutativity makes coset order irrelevant.", "How can you test normality using conjugation?", "Check whether ghg^{-1} stays in H for every g in G and h in H.", "group_cosets"),
+    Concept("Isomorphisms", "An isomorphism says two groups have the same structure in different names.", "A bijective homomorphism preserves and reflects the operation, so all group facts transfer across the map.", r"G\cong H", ["homomorphisms", "bijections"], "Same size alone does not imply isomorphic.", "Map rotations of a square by multiples of 90 degrees to integers modulo 4.", "Composition of rotations matches addition modulo 4.", "The two groups share the same operation table after relabeling.", "Why are two cyclic groups of order n isomorphic?", "Each is generated by one element with the same cycle length n.", "group_homomorphism"),
+    Concept("Kernels and images", "A homomorphism's kernel measures what it forgets.", "The kernel maps to identity; the image records what outputs the homomorphism can reach.", r"\ker\varphi=\{g:\varphi(g)=e\}", ["homomorphisms", "identity"], "A large kernel means information is being collapsed.", "Parity maps integers to Z/2Z.", "All even integers map to 0, so they form the kernel.", "The kernel is the lost distinction.", "What does a trivial kernel tell you?", "The homomorphism is injective.", "group_homomorphism"),
+    Concept("First isomorphism theorem", "Quotienting by the kernel leaves exactly the image.", "The theorem formalizes the idea that a homomorphism equals collapse by its kernel followed by relabeling of the image.", r"G/\ker\varphi\cong \operatorname{im}\varphi", ["kernels", "quotients"], "The quotient is by the kernel, not by the image.", "For the parity map from integers to Z/2Z, the kernel is even integers.", "Z/even integers has two cosets, matching the two parity outputs.", "Collapsing the kernel gives the image structure.", "How does this explain determinant as a map?", "Matrices with determinant 1 form the kernel of determinant on invertible matrices.", "group_homomorphism"),
+    Concept("Group actions and orbits", "An orbit is everything an action can reach from one starting point.", "A group action partitions a set into reachable motion classes called orbits.", r"Gx=\{g\cdot x:g\in G\}", ["actions", "sets"], "The orbit is a subset of the acted-on set, not usually a subgroup.", "Rotations of a square act on vertices.", "Starting from one vertex, rotations reach all four vertices.", "The orbit records all symmetric positions.", "What is a fixed point of an action?", "A point that every group element leaves unchanged.", "group_action"),
+    Concept("Stabilizers", "A stabilizer is the symmetry left after choosing a point.", "The stabilizer of x contains group elements that keep x fixed.", r"G_x=\{g:g\cdot x=x\}", ["actions", "subgroups"], "A stabilizer lives inside the group, while an orbit lives inside the set being acted on.", "A square's full symmetry group acts on one vertex.", "Only symmetries that keep that vertex in place belong to its stabilizer.", "Choosing a point breaks some symmetries.", "Why is the stabilizer always a subgroup?", "Identity fixes x, products of fixers fix x, and inverses of fixers fix x.", "group_action"),
+    Concept("Rings", "A ring is algebra with addition, multiplication, and distributivity.", "Rings generalize integer arithmetic while allowing multiplication to behave differently from fields.", r"a(b+c)=ab+ac", ["groups", "operations"], "A ring does not necessarily allow division by every nonzero element.", "Integers form a ring under ordinary addition and multiplication.", "Addition is an abelian group, multiplication is associative, and distributivity holds.", "The integer rules define the ring pattern.", "Why are even integers not a ring with identity 1?", "They do not contain 1, though they are closed under addition and multiplication.", "numeric_rule"),
+    Concept("Ideals", "An ideal is the kind of subset you can quotient a ring by.", "Ideals absorb multiplication by arbitrary ring elements, which makes quotient rings well defined.", r"rI\subseteq I", ["rings", "subsets"], "An ideal is stronger than a subring because it must absorb outside multiplication.", "Multiples of 5 form an ideal in the integers.", "Any integer times a multiple of 5 is still a multiple of 5.", "Absorption makes modular arithmetic possible.", "Why are ideals the ring analogue of normal subgroups?", "They are exactly the subsets that make quotient structures well defined.", "numeric_rule"),
+    Concept("Fields", "A field is arithmetic where nonzero division always works.", "Fields support addition, subtraction, multiplication, and division by nonzero elements.", r"a^{-1}a=1", ["rings", "inverses"], "A ring with no zero divisors is not automatically a field unless every nonzero element has an inverse.", "Integers modulo 5 form a field.", "2 inverse is 3 because 2 times 3 equals 1 modulo 5.", "Every nonzero residue can divide.", "Why is modulo 6 not a field?", "2 has no inverse modulo 6 because 2x never equals 1 mod 6.", "numeric_rule"),
+])
+
+ECONOMICS.extend([
+    Concept("Preferences and utility", "Utility represents rankings, not a literal happiness meter.", "A utility function orders bundles so economists can model choices under constraints.", r"U(x,y)", ["bundles", "orderings"], "Utility numbers themselves are less important than the ranking they preserve.", "If U=x+y, bundle (3,2) and (4,1) both give utility 5.", "The consumer is indifferent between those two bundles in this model.", "Utility compresses preference comparisons into a function.", "Why can two different utility functions represent the same preferences?", "Any increasing transformation preserves the ranking of bundles.", "econ_budget"),
+    Concept("Budget constraints", "A budget line is the boundary of affordable choices.", "Prices and income define which bundles can be purchased and what tradeoffs are possible.", r"p_x x+p_y y\leq I", ["prices", "income"], "The preferred bundle must still be affordable.", "Income is 60, x costs 5, y costs 3.", "Bundle x=6, y=10 costs 30+30=60.", "The bundle lies exactly on the budget line.", "What happens when income rises?", "The budget line shifts outward in a parallel way if prices stay fixed.", "econ_budget"),
+    Concept("Marginal rate of substitution", "MRS is the tradeoff a consumer is willing to make.", "It measures how much of one good compensates for giving up a little of another good while utility stays constant.", r"MRS=-\frac{MU_x}{MU_y}", ["utility", "marginal utility"], "MRS is about preferences, while price ratios are about the market constraint.", "If MUx=6 and MUy=3, MRS is -2.", "The consumer gives up about 2 units of y for 1 more x along an indifference curve.", "The slope captures willingness to substitute.", "At an interior optimum, how does MRS compare to prices?", "It equals the negative price ratio.", "econ_curve"),
+    Concept("Demand curves", "A demand curve records optimal quantity at each price.", "Holding other factors fixed, the consumer's choice problem maps prices to quantities demanded.", r"Q_d=D(P)", ["utility", "budget constraints"], "Demand is not just desire; it includes willingness and ability to pay.", "At price 2, quantity demanded is 20; at price 4, it is 12.", "The higher price corresponds to a lower chosen quantity.", "The curve summarizes many optimization problems.", "Why does a demand curve shift when income changes?", "The entire choice problem changes, not just movement along one price axis.", "econ_supply_demand"),
+    Concept("Income and substitution effects", "A price change has two stories at once.", "The substitution effect changes relative attractiveness, while the income effect changes purchasing power.", r"\Delta x=SE+IE", ["demand", "budget constraints"], "A price change is not the same as an income change, though it can affect real purchasing power.", "If the price of x falls, x becomes relatively cheaper and the consumer can afford more overall.", "Total demand change decomposes into substitution plus income effects.", "The decomposition explains why responses vary by good type.", "Why can a Giffen good slope upward?", "A strong negative income effect can outweigh the substitution effect.", "econ_curve"),
+    Concept("Production functions", "A production function turns inputs into output.", "It describes the maximum output attainable from combinations of inputs such as labor and capital.", r"q=f(L,K)", ["functions", "inputs"], "A production function describes technology, not profit by itself.", "Let q=2L with K fixed, and L=5.", "Output is q=10.", "The function maps input choice to feasible output.", "What does marginal product measure?", "The output gained from one additional unit of an input, holding others fixed.", "econ_curve"),
+    Concept("Costs and cost curves", "Cost curves translate production into money.", "Fixed, variable, average, and marginal costs describe different views of the firm's production expense.", r"TC=FC+VC", ["production", "algebra"], "Average cost and marginal cost answer different questions.", "If fixed cost is 10 and variable cost is 3q, then TC=10+3q.", "At q=5, total cost is 25 and average cost is 5.", "Cost curves organize firm decisions.", "When does marginal cost matter most?", "When deciding whether to produce one more unit.", "econ_curve"),
+    Concept("Perfect competition", "A competitive firm takes price as given.", "In perfect competition, many small firms choose output where price equals marginal cost.", r"P=MC", ["costs", "markets"], "A price-taking firm chooses quantity, not market price.", "If price is 8 and MC(q)=2q, the firm sets 8=2q.", "The profit-maximizing quantity is q=4.", "The firm expands until the next unit no longer adds profit.", "Why can profit be zero in long-run competition?", "Entry and exit push price toward average cost.", "econ_curve"),
+    Concept("Monopoly", "A monopolist chooses quantity knowing price will respond.", "Market power makes marginal revenue fall below price, so monopoly output is lower than competitive output.", r"MR=MC", ["demand", "costs"], "A monopolist cannot independently choose any price and any quantity; demand links them.", "If demand is P=20-Q, then revenue is 20Q-Q^2.", "Marginal revenue is 20-2Q.", "The firm equates MR and MC, not P and MC.", "Why does monopoly create deadweight loss?", "Some mutually beneficial trades do not happen because price exceeds marginal cost.", "econ_supply_demand"),
+    Concept("Oligopoly and strategic behavior", "In oligopoly, one firm's best move depends on another firm's move.", "Strategic interaction makes output, pricing, and entry decisions depend on expectations about rivals.", r"\pi_i(q_i,q_{-i})", ["profits", "game theory"], "You cannot analyze one firm in isolation when rivals react.", "Two firms choose quantities; if both expand, market price falls.", "Each firm's payoff depends on total quantity.", "The decision is strategic, not merely individual optimization.", "What is a best response?", "The action that maximizes a player's payoff given rivals' actions.", "state_machine"),
+    Concept("Welfare and surplus", "Surplus measures gains from trade.", "Consumer surplus and producer surplus summarize how much buyers and sellers gain relative to their alternatives.", r"TS=CS+PS", ["supply", "demand"], "High revenue is not the same as high total surplus.", "A buyer willing to pay 10 buys at price 7.", "Consumer surplus from that unit is 3.", "Surplus measures value above price.", "Where is total surplus maximized in a competitive market?", "At the efficient quantity where demand equals supply.", "econ_supply_demand"),
+    Concept("Taxes and deadweight loss", "A tax creates a wedge between buyers and sellers.", "Taxes can raise revenue but also prevent trades whose value exceeds cost.", r"DWL=\frac12\times base\times height", ["surplus", "elasticity"], "The legal payer of a tax is not necessarily who bears its economic burden.", "If a tax reduces quantity by 4 and creates a wedge of 3.", "DWL is one half times 4 times 3, which is 6.", "The triangle measures lost mutually beneficial trades.", "How does elasticity affect tax burden?", "The less elastic side bears more of the tax burden.", "econ_elasticity"),
+    Concept("Public goods", "Public goods are hard to price because people can share them at once.", "Nonrivalry and nonexcludability can create free-rider problems and underprovision.", r"MB_{social}=\sum_i MB_i", ["externalities", "welfare"], "A public good is not simply a good provided by the government.", "A lighthouse can guide many ships without being used up.", "One ship's use does not reduce another ship's benefit.", "Nonrival benefits change the efficient provision rule.", "Why do private markets underprovide public goods?", "Individuals can benefit without paying, so private willingness to pay understates social benefit.", "econ_curve"),
+])
+
+
+GROUP_THEORY.extend([
+    Concept("Direct products", "Direct products build a larger group from independent component groups.", "Operations happen coordinate by coordinate, so structure can be decomposed into simpler factors.", r"G\times H", ["groups", "ordered pairs"], "A direct product is not just a union; elements carry both coordinates at once.", "Take Z/2Z x Z/3Z.", "Add each coordinate modulo its own modulus.", "The product keeps two independent clocks running together.", "When is Z/2Z x Z/3Z cyclic?", "It is cyclic when the component orders are relatively prime.", "group_structure"),
+    Concept("Abelian groups", "Abelian groups are groups where order of combination does not matter.", "Commutativity makes subgroup, quotient, and generator calculations much cleaner.", r"ab=ba", ["groups", "operations"], "Many familiar groups are abelian, but symmetry groups often are not.", "Integers under addition are abelian.", "a+b=b+a for every pair of integers.", "The operation can be swapped without changing the result.", "Why is every subgroup of an abelian group normal?", "Because gh=hg makes left and right cosets agree.", "group_structure"),
+    Concept("Dihedral groups", "Dihedral groups encode rotations and reflections of regular polygons.", "They are the standard finite examples where noncommutativity appears geometrically.", r"D_n=\langle r,s:r^n=e,s^2=e,srs=r^{-1}\rangle", ["symmetry", "generators"], "A reflection and rotation usually do not commute.", "In D4, rotate a square then reflect it.", "Changing the order can send a vertex to a different position.", "The geometry makes multiplication order visible.", "How many elements does D_n have?", "It has n rotations and n reflections, so 2n elements.", "group_action"),
+    Concept("Conjugacy classes", "Conjugacy groups elements that are the same up to a change of viewpoint.", "Conjugation measures internal symmetry and partitions a group into structurally similar elements.", r"Cl(g)=\{hgh^{-1}:h\in G\}", ["groups", "conjugation"], "Conjugate elements need not be equal; they share a structural role.", "In S3, transpositions form one conjugacy class.", "Relabeling vertices turns one swap into another.", "The class records a motion type rather than a label.", "Why are conjugacy classes important for normal subgroups?", "Normal subgroups are unions of conjugacy classes.", "group_action"),
+    Concept("Center of a group", "The center contains elements that commute with everything.", "It measures the part of a group that behaves abelian from every viewpoint.", r"Z(G)=\{z:zg=gz\}", ["groups", "commutativity"], "The center can be small even when many pairs commute.", "In an abelian group, every element is central.", "So Z(G)=G.", "The center isolates universal commutativity.", "What is the center of a nonabelian group useful for?", "It helps break the group into simpler quotient information.", "group_structure"),
+    Concept("Centralizers", "A centralizer is the set of elements that commute with one chosen element.", "It localizes commutativity around a particular element or subset.", r"C_G(g)=\{h:hg=gh\}", ["groups", "commutativity"], "The centralizer of one element can be larger than the center.", "Rotations commute with a fixed rotation in a dihedral group.", "Some reflections may not commute with it.", "Centralizers compare local and global symmetry.", "Why is a centralizer a subgroup?", "Identity commutes, products of commuting elements commute, and inverses commute.", "group_structure"),
+    Concept("Cayley's theorem", "Every group can be represented as permutations of itself.", "Left multiplication turns abstract group elements into concrete rearrangements.", r"G\hookrightarrow S_G", ["groups", "permutations"], "The theorem represents structure; it does not say every group is a symmetric group itself.", "Let g act on G by x maps to gx.", "This action is a permutation of the underlying set.", "Group multiplication becomes permutation composition.", "Why is the action faithful?", "Different group elements move the identity to different outputs.", "group_action"),
+    Concept("Sylow subgroups", "Sylow theory locates the largest p-power pieces inside finite groups.", "It uses divisibility and congruence to constrain subgroup structure.", r"|P|=p^k", ["Lagrange's theorem", "prime powers"], "Sylow theorems give existence and counts, not a full multiplication table by themselves.", "If |G|=12, a Sylow 3-subgroup has order 3.", "The number of such subgroups divides 4 and is 1 mod 3.", "Arithmetic narrows structural possibilities.", "Why can a unique Sylow subgroup matter?", "A unique Sylow subgroup is normal.", "group_cosets"),
+    Concept("Classification of finite abelian groups", "Finite abelian groups split into cyclic prime-power building blocks.", "The classification theorem turns a large group into a product of simpler cyclic factors.", r"G\cong \prod_i \mathbb{Z}/n_i\mathbb{Z}", ["abelian groups", "direct products"], "Same group order does not determine a finite abelian group uniquely.", "Groups of order 4 include Z/4Z and Z/2Z x Z/2Z.", "They have different element orders.", "Element orders distinguish decompositions.", "How does the theorem help classify order 8 groups?", "List products of cyclic prime-power factors whose orders multiply to 8.", "group_structure"),
+    Concept("Automorphisms", "Automorphisms are symmetries of an algebraic structure itself.", "They are isomorphisms from an object to itself, preserving all operations while relabeling elements.", r"\operatorname{Aut}(G)", ["isomorphisms", "bijections"], "An automorphism can move elements while preserving the full operation table.", "In a cyclic group, a generator can map to another generator.", "The map extends to every power.", "Generator images determine many automorphisms.", "What is an inner automorphism?", "It is conjugation by a fixed group element.", "group_homomorphism"),
+    Concept("Ring homomorphisms", "Ring homomorphisms preserve addition and multiplication together.", "They translate ring arithmetic without breaking either operation.", r"f(a+b)=f(a)+f(b),\quad f(ab)=f(a)f(b)", ["rings", "functions"], "Preserving addition alone is not enough for a ring homomorphism.", "Reduce integers modulo 5.", "Addition and multiplication before reduction match reduction before operations.", "The map carries integer arithmetic into modular arithmetic.", "What is the kernel of a ring homomorphism?", "The set of inputs mapped to zero, usually an ideal.", "group_homomorphism"),
+    Concept("Quotient rings", "Quotient rings collapse an ideal to zero.", "They generalize modular arithmetic by identifying elements that differ by an ideal.", r"R/I", ["rings", "ideals"], "The subset must be an ideal, not merely a subring.", "Integers modulo n are Z/nZ.", "Two integers are equivalent when their difference is a multiple of n.", "The ideal defines what counts as zero.", "Why do ideals make quotient multiplication well-defined?", "Absorption keeps products independent of representative choice.", "numeric_rule"),
+    Concept("Polynomial rings", "Polynomial rings treat polynomials as algebraic objects with coefficients in a ring or field.", "They let algebraic questions become questions about roots, factors, and ideals.", r"F[x]", ["rings", "polynomials"], "A polynomial ring is not the same object as the field of rational functions.", "Over a field F, add and multiply polynomials coefficientwise.", "Degree tracks how multiplication grows.", "Polynomial arithmetic mirrors integer arithmetic in many ways.", "What does irreducible mean in F[x]?", "The polynomial cannot be factored into lower-degree nonunits over F.", "numeric_rule"),
+    Concept("Euclidean domains", "Euclidean domains support division with remainder.", "A Euclidean function makes gcd algorithms and Bezout identities possible.", r"a=bq+r", ["rings", "division"], "Division with remainder depends on a norm-like measure decreasing.", "Integers use absolute value as the Euclidean measure.", "Divide 17 by 5 to get 17=5*3+2.", "The remainder is smaller than the divisor.", "Why does Euclidean imply principal ideal domain?", "The smallest nonzero norm element of an ideal generates it.", "numeric_rule"),
+    Concept("Principal ideal domains", "In a PID every ideal has one generator.", "This makes ideal structure and divisibility behave much like integers.", r"I=(a)", ["ideals", "rings"], "Not every integral domain is a PID.", "In Z, the ideal of multiples of 6 is generated by 6.", "Every element of the ideal is 6k.", "One generator describes the whole ideal.", "How does a PID help with gcds?", "The ideal generated by a and b is generated by their gcd.", "numeric_rule"),
+    Concept("Unique factorization domains", "UFDs are rings where factorization into irreducibles is essentially unique.", "They preserve the arithmetic intuition of prime factorization beyond integers.", r"a=u p_1\cdots p_k", ["domains", "irreducibles"], "Irreducible and prime can differ outside UFD settings.", "Integers factor uniquely into primes up to signs and order.", "12=2*2*3 is unique after rearrangement.", "Uniqueness turns divisibility into reliable bookkeeping.", "Why does unique factorization matter for polynomials?", "It controls roots, factors, and divisibility arguments.", "numeric_rule"),
+    Concept("Field extensions", "Field extensions enlarge a field by adding new elements.", "They let equations have roots in a bigger arithmetic universe.", r"K/F", ["fields", "polynomials"], "An extension is a field containing another field, not just a larger set.", "Adjoin sqrt(2) to Q.", "Numbers a+b sqrt(2) form Q(sqrt(2)).", "The extension contains solutions missing from Q.", "What is the degree of an extension?", "It is the dimension of K as a vector space over F.", "numeric_rule"),
+    Concept("Algebraic elements", "An algebraic element satisfies a polynomial equation over the base field.", "This connects field extensions to polynomial roots.", r"p(\alpha)=0", ["fields", "polynomials"], "Not every added element is algebraic over the base field.", "sqrt(2) is algebraic over Q.", "It satisfies x^2-2=0.", "A polynomial relation pins the element to the base field.", "What is a minimal polynomial?", "The monic polynomial of least degree over the base field that has the element as a root.", "numeric_rule"),
+    Concept("Finite fields", "Finite fields are fields with finitely many elements.", "Their sizes are prime powers, and their arithmetic is central in algebra and coding.", r"|F|=p^n", ["fields", "prime powers"], "Z/nZ is a field only when n is prime.", "Z/5Z has inverses for every nonzero residue.", "2 inverse is 3 modulo 5.", "Every nonzero element can divide.", "Why are finite field sizes prime powers?", "The field has prime characteristic and is a finite vector space over its prime field.", "numeric_rule"),
+    Concept("Galois groups", "A Galois group records symmetries of roots that preserve the base field.", "It converts polynomial-solving questions into group actions on roots.", r"\operatorname{Gal}(K/F)", ["field extensions", "automorphisms"], "The group acts on roots while fixing every base-field element.", "For x^2-2 over Q, send sqrt(2) to -sqrt(2).", "That map preserves rational numbers and the equation.", "Root symmetries become group elements.", "What does the Galois group measure?", "It measures how roots can be permuted without changing base-field arithmetic.", "group_action"),
+    Concept("Solvable groups", "Solvable groups can be decomposed through abelian layers.", "They connect group structure to solvability of equations by radicals.", r"G^{(n)}=\{e\}", ["normal subgroups", "commutators"], "Solvable does not mean easy; it means a precise derived-series condition holds.", "Every abelian group is solvable.", "Its commutator subgroup is trivial.", "The noncommutative part disappears immediately.", "Why do solvable groups matter in Galois theory?", "They characterize when certain polynomial equations are solvable by radicals.", "group_structure"),
+    Concept("Simple groups", "Simple groups have no nontrivial normal subgroups.", "They are the indivisible building blocks in finite group structure.", r"N\triangleleft G\Rightarrow N=\{e\}\text{ or }G", ["normal subgroups", "quotients"], "Simple does not mean small or abelian.", "A cyclic group of prime order is simple.", "Its only subgroups are identity and itself.", "There is no proper normal subgroup to quotient by.", "Why are simple groups like primes?", "They cannot be decomposed by nontrivial normal quotient steps.", "group_cosets"),
+    Concept("Commutator subgroups", "The commutator subgroup measures how far a group is from abelian.", "It is generated by all commutators and controls the largest abelian quotient.", r"[G,G]", ["groups", "normal subgroups"], "A trivial commutator subgroup means the group is abelian.", "Compute aba^{-1}b^{-1} for elements a and b.", "If every commutator is identity, then ab=ba.", "Commutators isolate noncommutativity.", "What quotient does the commutator subgroup produce?", "G/[G,G] is the abelianization of G.", "group_structure"),
+    Concept("Exact sequences", "Exact sequences track kernels and images across maps.", "They organize algebraic information by requiring each image to equal the next kernel.", r"\operatorname{im} f=\ker g", ["homomorphisms", "kernels"], "Exactness is a local condition at each object in the sequence.", "For maps A -> B -> C, check image in B equals kernel out of B.", "Elements arriving are exactly those that vanish next.", "Exactness records conservation of algebraic information.", "Why are short exact sequences useful?", "They describe one object as built from a subobject and quotient.", "group_homomorphism"),
+])
+
+ECONOMICS.extend([
+    Concept("Comparative statics", "Comparative statics asks how an equilibrium changes when one parameter changes.", "It compares before-and-after model outcomes without tracing the whole adjustment path.", r"\Delta y/\Delta x", ["equilibrium", "graphs"], "It is not a time path; it is a comparison of model solutions.", "If income rises, demand may shift right.", "The new intersection has a different price and quantity.", "The shift predicts direction of change.", "What must be held fixed in comparative statics?", "Everything except the named parameter change.", "econ_curve"),
+    Concept("Price ceilings", "A price ceiling caps legal price below or above equilibrium.", "A binding ceiling below equilibrium creates excess demand.", r"P\leq \bar P", ["supply", "demand"], "A ceiling above equilibrium is not binding.", "Equilibrium price is 10, ceiling is 7.", "Quantity demanded exceeds quantity supplied at 7.", "The gap is a shortage.", "Why can rent control create queues?", "The controlled price raises quantity demanded and lowers supplied housing.", "econ_supply_demand"),
+    Concept("Price floors", "A price floor sets a minimum legal price.", "A binding floor above equilibrium creates excess supply.", r"P\geq \underline P", ["supply", "demand"], "A floor below equilibrium is not binding.", "Equilibrium wage is 12, minimum wage is 15.", "Labor supplied can exceed labor demanded.", "The gap is surplus labor in the model.", "What determines whether a floor binds?", "It binds only when the legal minimum is above equilibrium price.", "econ_supply_demand"),
+    Concept("Consumer surplus", "Consumer surplus measures buyer gains from trade.", "It is willingness to pay minus price, aggregated over units bought.", r"CS=WTP-P", ["demand", "welfare"], "Consumer surplus is not the same as total spending.", "A buyer willing to pay 10 buys at price 7.", "Surplus is 3 for that unit.", "The value above price becomes buyer gain.", "Where is consumer surplus on a demand graph?", "It is the area below demand and above price.", "econ_supply_demand"),
+    Concept("Producer surplus", "Producer surplus measures seller gains from trade.", "It is price minus willingness to accept or marginal cost, aggregated over units sold.", r"PS=P-MC", ["supply", "welfare"], "Producer surplus is not the same as profit when fixed costs matter.", "A seller's marginal cost is 4 and price is 7.", "Producer surplus on that unit is 3.", "The value above marginal cost becomes seller gain.", "Where is producer surplus on a supply graph?", "It is the area above supply and below price.", "econ_supply_demand"),
+    Concept("Tax incidence", "Tax incidence asks who really bears a tax burden.", "The burden falls more on the less elastic side of the market.", r"P_b-P_s=t", ["elasticity", "taxes"], "Legal responsibility for paying the tax is not the same as economic burden.", "A tax creates a wedge of 2 between buyer and seller prices.", "If demand is less elastic, buyers bear more of that wedge.", "Elasticity controls burden sharing.", "Why does the less elastic side bear more tax?", "It adjusts quantity less, so price moves more against it.", "econ_elasticity"),
+    Concept("Deadweight loss", "Deadweight loss is surplus destroyed by distorted trades.", "It measures mutually beneficial trades that no longer happen.", r"DWL=\frac12bh", ["surplus", "taxes"], "DWL is not tax revenue; it is lost total surplus.", "A tax reduces quantity by 4 and creates wedge 3.", "DWL is one half times 4 times 3, equal to 6.", "The triangle counts lost gains from trade.", "How does elasticity affect deadweight loss?", "More elastic markets usually create larger quantity distortions and larger DWL.", "econ_elasticity"),
+    Concept("Indifference curves", "Indifference curves show bundles a consumer ranks equally.", "Their slope records willingness to trade one good for another while utility stays fixed.", r"U(x,y)=\bar U", ["utility", "graphs"], "Higher curves usually mean better bundles, but numbers depend on representation.", "Bundles (3,4) and (4,3) may give the same utility.", "They lie on the same indifference curve for a symmetric utility.", "The curve gathers equal-ranked choices.", "Why do indifference curves usually slope downward?", "More of one good allows less of another while keeping utility constant.", "econ_budget"),
+    Concept("Marginal utility", "Marginal utility is the extra utility from one more unit of a good.", "It turns preferences into local tradeoff calculations.", r"MU_x=\partial U/\partial x", ["utility", "calculus"], "Marginal utility depends on the current bundle.", "If U=sqrt(x), marginal utility falls as x rises.", "Each added unit contributes less utility.", "Diminishing marginal utility bends preferences.", "How does marginal utility connect to MRS?", "MRS is the ratio of marginal utilities, with a sign convention.", "econ_curve"),
+    Concept("Income elasticity", "Income elasticity measures how demand responds to income changes.", "It distinguishes normal, inferior, and luxury goods by percentage response.", r"E_I=(\%\Delta Q)/(\%\Delta I)", ["elasticity", "demand"], "A positive income elasticity does not mean demand is price-inelastic.", "Income rises 10 percent and quantity rises 5 percent.", "Income elasticity is 0.5.", "Demand rises less than proportionally.", "What does negative income elasticity mean?", "The good is inferior in the model range.", "econ_elasticity"),
+    Concept("Cross-price elasticity", "Cross-price elasticity measures how one good's demand responds to another good's price.", "It helps identify substitutes and complements.", r"E_{xy}=(\%\Delta Q_x)/(\%\Delta P_y)", ["elasticity", "demand"], "A sign must be interpreted with the goods named.", "If coffee price rises and tea demand rises, the cross-price elasticity is positive.", "The goods behave as substitutes.", "One market's price moves another market's demand.", "What does a negative cross-price elasticity suggest?", "The goods are complements.", "econ_elasticity"),
+    Concept("Marginal product", "Marginal product is extra output from one more input.", "It describes local productivity in a production function.", r"MP_L=\Delta q/\Delta L", ["production", "inputs"], "Marginal product is not average product.", "Output rises from 20 to 27 when labor rises by 1.", "Marginal product of labor is 7.", "The input's local contribution is measured.", "Why can marginal product diminish?", "Crowding or fixed factors can make each extra input less productive.", "econ_curve"),
+    Concept("Returns to scale", "Returns to scale ask what happens when all inputs scale together.", "They classify technologies as increasing, constant, or decreasing returns.", r"f(tL,tK)", ["production functions"], "Returns to scale are not the same as marginal product of one input.", "If doubling all inputs doubles output, returns are constant.", "The whole production plan scales proportionally.", "Scale behavior shapes long-run firm size.", "What does increasing returns to scale mean?", "Doubling all inputs more than doubles output.", "econ_curve"),
+    Concept("Average cost", "Average cost spreads total cost over output.", "It helps compare per-unit cost at different production scales.", r"AC=TC/q", ["costs", "division"], "Average cost and marginal cost can move differently.", "Total cost is 100 at q=20.", "Average cost is 5.", "Each unit carries five units of cost on average.", "When does average cost fall?", "When marginal cost is below average cost.", "econ_curve"),
+    Concept("Marginal cost", "Marginal cost is the extra cost of one more unit.", "It drives output decisions because firms compare marginal cost to marginal revenue or price.", r"MC=\Delta TC/\Delta q", ["costs", "margins"], "Marginal cost is not total cost divided by quantity.", "Cost rises from 20 to 26 when output rises by 1.", "Marginal cost is 6.", "The next unit's cost is what matters for the decision.", "Why does a competitive firm set P=MC?", "It expands output while price exceeds marginal cost and stops when they match.", "econ_curve"),
+    Concept("Shutdown rule", "The shutdown rule compares price to average variable cost in the short run.", "A firm produces only if revenue covers avoidable variable costs.", r"P\geq AVC", ["costs", "firms"], "Fixed costs do not determine short-run shutdown if they are sunk.", "Price is 4 and AVC is 5.", "The firm shuts down in the short run.", "Producing would lose more than fixed cost alone.", "Why can a firm operate at an accounting loss?", "If price covers variable cost, it still contributes toward fixed cost.", "econ_curve"),
+    Concept("Marginal revenue", "Marginal revenue is extra revenue from selling one more unit.", "Market power makes marginal revenue differ from price.", r"MR=\Delta TR/\Delta q", ["revenue", "demand"], "For a price taker, MR equals price; for a monopolist, it usually does not.", "Demand is P=20-Q, so TR=20Q-Q^2.", "MR=20-2Q.", "Selling more lowers price on previous units.", "Why is monopoly MR below demand?", "Lowering price to sell another unit reduces revenue on existing units.", "econ_supply_demand"),
+    Concept("Price discrimination", "Price discrimination charges different prices for related units or buyers.", "It converts more willingness to pay into producer revenue when resale is limited.", r"P_i\neq P_j", ["monopoly", "demand"], "Different prices alone are not discrimination if costs differ.", "A student discount charges lower price to students.", "The firm separates demand groups by willingness to pay.", "Segmentation changes surplus distribution.", "What condition helps price discrimination work?", "The firm needs market power and limited resale between groups.", "econ_supply_demand"),
+    Concept("Nash equilibrium", "A Nash equilibrium is a strategy profile where no player wants to deviate alone.", "It is the basic stability concept for strategic interaction.", r"s_i\in BR_i(s_{-i})", ["game theory", "best responses"], "Nash equilibrium does not always mean socially best.", "Two firms choose high or low output.", "If each is best responding to the other, the profile is Nash.", "Stability comes from mutual best responses.", "How do you check a Nash equilibrium?", "Hold others fixed and see whether each player can improve by changing strategy.", "state_machine"),
+    Concept("Dominant strategies", "A dominant strategy is best regardless of what others do.", "It simplifies games because one action wins across all rival actions.", r"u_i(s_i,s_{-i})\geq u_i(s'_i,s_{-i})", ["game theory", "payoffs"], "Dominance is stronger than being part of a Nash equilibrium.", "If confessing gives a prisoner a better payoff no matter what the other does, it is dominant.", "The choice does not depend on beliefs about the other player.", "Dominance removes strategic uncertainty.", "Can both players have dominant strategies?", "Yes, and their combination is a dominant-strategy equilibrium.", "state_machine"),
+    Concept("Adverse selection", "Adverse selection arises when hidden type affects market participation.", "Bad types can crowd out good types when prices cannot reflect private information.", r"E[value\mid participate]", ["information", "markets"], "It is about hidden information before trade, not hidden action after trade.", "Used-car buyers cannot observe quality perfectly.", "Low expected quality lowers willingness to pay.", "High-quality sellers may leave the market.", "How can screening reduce adverse selection?", "It lets types separate by observable choices or signals.", "econ_curve"),
+    Concept("Moral hazard", "Moral hazard arises when hidden action changes after a contract is signed.", "Insurance or contracts can weaken incentives to avoid costly behavior.", r"action\ hidden\ after\ contract", ["information", "incentives"], "Moral hazard is not the same as adverse selection.", "After getting insurance, a driver may take less care.", "The action is hard for the insurer to observe.", "Hidden behavior changes expected costs.", "How can deductibles reduce moral hazard?", "They keep the insured party exposed to some marginal cost.", "econ_curve"),
+    Concept("Coase theorem", "The Coase theorem says bargaining can solve externalities under ideal conditions.", "If property rights are clear and transaction costs are zero, parties can bargain to efficiency.", r"MB=MC", ["externalities", "bargaining"], "The theorem's conditions are strong and often fail in practice.", "A factory and residents bargain over pollution reduction.", "If bargaining is costless, they can choose efficient abatement.", "Assignment of rights affects distribution, not efficiency, under ideal assumptions.", "Why do transaction costs matter?", "They can prevent efficient bargains from happening.", "econ_curve"),
+    Concept("Common resources", "Common resources are rival but hard to exclude people from using.", "They can be overused because each user ignores part of the social cost.", r"MSC>Private\ MC", ["externalities", "public goods"], "Common resources are not the same as pure public goods.", "A fishery can be depleted by too much harvesting.", "Each fisher captures private benefit but shares depletion cost.", "Private incentives exceed efficient use.", "How can policy address common-resource overuse?", "Use quotas, property rights, taxes, or regulation to align incentives.", "econ_curve"),
+])
+
+DOMAIN_LIBRARY: dict[str, list[Concept]] = {
+    "group_theory": GROUP_THEORY,
+    "algorithms": ALGORITHMS,
+    "physics": PHYSICS_MECHANICS,
+    "economics": ECONOMICS,
+    "linear_algebra": LINEAR_ALGEBRA,
+}
+
+DOMAIN_KEYWORDS: dict[str, dict[str, int]] = {
+    "group_theory": {"18-703": 12, "modern algebra": 12, "abstract algebra": 12, "group theory": 12, "groups": 5, " group ": 4, "subgroup": 7, "coset": 7, "homomorphism": 8, "isomorphism": 8, "normal subgroup": 8, "quotient group": 8, "ring": 5, "field": 5},
+    "algorithms": {"6-006": 12, "algorithm": 6, "algorithms": 8, "data structure": 7, "complexity": 6, "dynamic programming": 8, "graph traversal": 7, "breadth-first": 7, "depth-first": 7, "hash": 5, "sorting": 5},
+    "physics": {"8-01": 12, "classical mechanics": 12, "mechanics": 8, "newton": 7, "force": 5, "acceleration": 5, "momentum": 6, "kinematics": 7, "energy": 5, "oscillation": 6, "torque": 6},
+    "economics": {"14.01": 12, "14-01": 12, "microeconomics": 12, "economics": 8, "supply": 4, "demand": 4, "elasticity": 7, "consumer": 5, "market": 5, "marginal": 5, "externality": 7, "game theory": 7},
+    "linear_algebra": {"18-06": 12, "linear algebra": 12, "matrix": 5, "matrices": 5, "eigen": 7, "vector space": 6, "vectors": 4, "linear transformation": 7, "least squares": 7, "singular value": 7},
+}
+
+SOURCE_TERM_BLOCKLIST = {
+    "about", "accessibility", "account", "assignment", "assignments", "browse", "calendar", "citation",
+    "creative commons", "download", "download file", "download files", "educator", "exams", "feedback",
+    "help", "home", "license", "licensed", "menu", "mit opencourseware", "ocw", "open learning",
+    "opencourseware", "privacy", "problem set", "problem sets", "readings", "related resources", "homework", "exam", "final exam",
+    "resource", "resources", "search", "share", "site", "skip", "terms", "transcript", "video",
+    "video lectures", "view video", "youtube",
+}
+
+SOURCE_TERM_BLOCK_PATTERNS = (
+    "download", "opencourseware", "creative commons", "license", "youtube", "transcript",
+    "course home", "site menu", "privacy", "terms of use", "donate", "learn more", "massachusetts", "institute", "member", "contact", "educator", "learner",
+)
+
+
+
 
 class HtmlExtractor(HTMLParser):
     def __init__(self) -> None:
@@ -128,6 +278,12 @@ def slugify(text: str, fallback: str = "course") -> str:
 
 
 def plain_math(value: str) -> str:
+    out = str(value)
+    frac_re = re.compile(r"\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}")
+    out = re.sub(r"\\text\s*\{([^{}]*)\}", r" \1 ", out)
+    out = re.sub(r"\^\{\(([^{}]+)\)\}", r" superscript (\1) ", out)
+    while frac_re.search(out):
+        out = frac_re.sub(lambda m: f"({m.group(1)}) / ({m.group(2)})", out)
     replacements = [
         (r"\operatorname", ""),
         (r"\{", "{"),
@@ -135,30 +291,75 @@ def plain_math(value: str) -> str:
         (r"\left", ""),
         (r"\right", ""),
         (r"\cdots", "..."),
+        (r"\quad", " "),
         (r"\ldots", "..."),
         (r"\Rightarrow", "=>"),
+        (r"\leq", " <= "),
+        (r"\geq", " >= "),
+        (r"\neq", " != "),
+        (r"\cong", " ~= "),
+        (r"\triangleleft", " normal in "),
+        (r"\mid", " divides "),
+        (r"\in", " in "),
+        (r"\langle", "<"),
+        (r"\rangle", ">"),
+        (r"\ker", "ker"),
+        (r"\im", "im"),
+        (r"\varphi", "phi"),
+        (r"\phi", "phi"),
+        (r"\pi", "pi"),
+        (r"\alpha", "alpha"),
+        (r"\Delta", "Delta "),
+        (r"\times", " times "),
+        (r"\%", " % "),
         (r"\lambda", "lambda"),
+        (r"\Lambda", "Lambda"),
         (r"\Sigma", "Sigma"),
         (r"\vec", ""),
         (r"\hat", ""),
-        (r"\cdot", " dot "),
-        (r"\frac", "frac"),
+        (r"\cdot", " * "),
         (r"\det", "det"),
         (r"\dim", "dim"),
+        (r"\sum", "sum "),
+        (r"\prod", "prod "),
+        (r"\mathbb", ""),
+        (r"\mathcal", ""),
+        (r"\mathbf", ""),
     ]
-    out = value
     for old, new in replacements:
         out = out.replace(old, new)
+    out = re.sub(r"\^\{\s*-\s*1\s*\}", " inverse ", out)
+    out = re.sub(r"\^\{\s*T\s*\}", " transpose ", out)
+    out = re.sub(r"\^\s*T\b", " transpose ", out)
+    out = re.sub(r"\^\s*\{?([A-Za-z0-9]+)\}?", r" to the \1 ", out)
+    out = out.replace(r"\|", " norm ")
+    out = out.replace(r"\Lambda", "Lambda")
     out = out.replace("{", "").replace("}", "")
-    out = re.sub(r"\b(span|rank|det|dim|nullity|proj)(?=[A-Za-z])", r"\1 ", out)
-    out = out.replace("=", " = ")
+    out = re.sub(r"\b(span|rank|det|dim|nullity|proj|ker|im)(?=[A-Za-z])", r"\1 ", out)
+    out = re.sub(r"\s*([=+*/<>])\s*", r" \1 ", out)
+    out = re.sub(r"_\s*\{([^{}]+)\}", r" sub \1", out)
+    out = re.sub(r"_\s*([A-Za-z0-9]+)", r" sub \1", out)
+    out = re.sub(r"\b([A-Za-z]) sub ([A-Za-z])([A-Za-z])\b", r"\1 sub \2 \3", out)
+    out = re.sub(r"\b(MU|MB|MC|MR|MSB|MSC) sub ([A-Za-z])", r"\1_\2", out)
+    out = re.sub(r"<\s+=", "<=", out)
+    out = re.sub(r">\s+=", ">=", out)
+    out = re.sub(r"!\s+=", "!=", out)
+    out = re.sub(r"\)(?=[A-Za-z])", ") ", out)
     return re.sub(r"\s+", " ", out).strip()
 
 
 def screen_math(value: str) -> str:
     out = plain_math(value)
-    out = re.sub(r"_([A-Za-z0-9])", r"\1 ", out)
-    out = out.replace("+", " + ").replace("-", " - ")
+    out = re.sub(r"\bprod sub ([A-Za-z0-9]+)\b", r"product over \1", out)
+    out = re.sub(r"\bsum sub ([A-Za-z0-9]+)\b", r"sum over \1", out)
+    out = re.sub(r"\b([A-Za-z]+) sub ([A-Za-z0-9]+)\b", r"\1_\2", out)
+    out = re.sub(r"\b([APU])([xvb])\b", r"\1 \2", out)
+    out = re.sub(r"\^(?!\s)([A-Za-z0-9]+)", r" to the \1", out)
+    out = re.sub(r"\s*([=+*/<>])\s*", r" \1 ", out)
+    out = re.sub(r"\s+-\s+", " - ", out)
+    out = re.sub(r"<\s+=", "<=", out)
+    out = re.sub(r">\s+=", ">=", out)
+    out = re.sub(r"!\s+=", "!=", out)
     return re.sub(r"\s+", " ", out).strip()
 
 
@@ -215,7 +416,7 @@ def course_prefix(url: str) -> str:
 def link_score(url: str) -> int:
     lower = url.lower()
     score = 0
-    for term in ("syllabus", "lecture", "note", "resource", "problem", "assignment", "exam", "transcript", "pdf"):
+    for term in ("syllabus", "calendar", "unit", "session", "lecture", "note", "notes", "reading", "readings", "resource", "problem", "assignment", "transcript", "video", "pdf"):
         if term in lower:
             score += 3
     if lower.endswith(".pdf"):
@@ -261,7 +462,12 @@ def cmd_extract(args: argparse.Namespace) -> None:
         parsed = urllib.parse.urlparse(link)
         return parsed.scheme in {"http", "https"} and parsed.netloc == parsed_root.netloc and link.startswith(prefix)
 
-    candidates = sorted([link for link in links if allowed(link)], key=link_score, reverse=True)
+    raw_candidates = [link for link in links if allowed(link)]
+    scored_candidates = sorted(((link_score(link), link) for link in raw_candidates), key=lambda item: item[0], reverse=True)
+    candidates = [link for score, link in scored_candidates if score > 0]
+    if not candidates:
+        candidates = [link for _score, link in scored_candidates]
+    candidates = candidates[:MAX_CRAWL_CANDIDATES]
     pages = 0
     pdfs = 0
     cursor = 0
@@ -293,23 +499,120 @@ def cmd_extract(args: argparse.Namespace) -> None:
                 pages += 1
                 materials.append({"kind": "page", "title": title_from_url(final), "url": final, "text": text[:120_000]})
             for link in nested:
-                if allowed(link) and link not in seen and link not in candidates:
+                if allowed(link) and link not in seen and link not in candidates and link_score(link) > 0 and len(candidates) < MAX_CRAWL_CANDIDATES:
                     candidates.append(link)
     pack = {"title": title_from_url(root), "source_url": root, "materials": materials, "warnings": warnings}
     write_json(out / "source_pack.json", pack)
     print(out / "source_pack.json")
 
 
+def domain_score(text: str, keywords: dict[str, int]) -> int:
+    padded = f" {text.lower()} "
+    score = 0
+    for term, weight in keywords.items():
+        score += padded.count(term.lower()) * weight
+    return score
+
+
 def choose_concepts(pack: dict[str, object], max_shorts: int) -> list[Concept]:
     text = json.dumps(pack).lower()
-    if any(term in text for term in ("linear algebra", "matrix", "eigen", "vector")):
-        return LINEAR_ALGEBRA[:max_shorts]
-    terms = frequent_terms(" ".join(str(m.get("text", "")) for m in pack.get("materials", []) if isinstance(m, dict)))
-    concepts: list[Concept] = []
-    for term in terms[:max_shorts]:
-        title = term.title()
-        concepts.append(Concept(title, f"{title} is a core idea in this course.", f"Understand {title} by connecting definition, formula, and example.", title, ["course definitions", "worked examples"], "Do not memorize the term without testing it on a concrete example.", f"Pick a small numerical or symbolic example involving {title}.", "Work through one substitution or transformation step.", "The example should make the definition testable.", f"Where does {title} appear in an application from the course?", "Name the inputs, rule, and output.", "generic"))
-    return concepts
+    ranked = sorted(
+        ((domain, domain_score(text, keywords)) for domain, keywords in DOMAIN_KEYWORDS.items()),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    best_domain, best_score = ranked[0]
+    second_score = ranked[1][1] if len(ranked) > 1 else 0
+    if best_score >= 8 and best_score >= second_score:
+        concepts = list(DOMAIN_LIBRARY[best_domain])
+        return fill_concepts_from_source(pack, concepts, max_shorts, best_domain)
+    return fill_concepts_from_source(pack, [], max_shorts, None)
+
+
+def fill_concepts_from_source(pack: dict[str, object], concepts: list[Concept], max_shorts: int, domain: str | None) -> list[Concept]:
+    out = list(concepts[:max_shorts])
+    existing = {concept.name.lower() for concept in out}
+    for term in frequent_terms(source_text(pack)):
+        if len(out) >= max_shorts:
+            break
+        if not is_course_vocabulary_term(term):
+            continue
+        normalized = term.lower()
+        if any(normalized in name or name in normalized for name in existing):
+            continue
+        concept = source_term_concept(term, domain)
+        out.append(concept)
+        existing.add(concept.name.lower())
+    return out[:max_shorts]
+
+
+def source_term_concept(term: str, domain: str | None) -> Concept:
+    title = re.sub(r"\s+", " ", term).strip().title()
+    lower = title.lower()
+    if domain == "group_theory":
+        visual = "group_structure"
+        formula = r"(G,*)"
+        prereqs = ["groups", "sets", "maps"]
+        if any(word in lower for word in ("coset", "quotient", "normal", "lagrange")):
+            visual, formula, prereqs = "group_cosets", r"gH", ["subgroups", "equivalence classes"]
+        elif any(word in lower for word in ("homomorphism", "isomorphism", "kernel", "image")):
+            visual, formula, prereqs = "group_homomorphism", r"\phi(ab)=\phi(a)\phi(b)", ["groups", "functions"]
+        elif any(word in lower for word in ("action", "orbit", "stabilizer", "permutation", "symmetry")):
+            visual, formula, prereqs = "group_action", r"Gx", ["groups", "sets"]
+        elif any(word in lower for word in ("ring", "field", "ideal")):
+            formula, prereqs = r"a(b+c)=ab+ac", ["groups", "operations"]
+        return Concept(
+            title,
+            f"{title} is a structural idea that organizes how algebraic objects behave.",
+            f"Study {title} by naming the objects, the operation, and the property being preserved or tested.",
+            formula,
+            prereqs,
+            "Do not use the term as a label only; check the hypotheses in a small example.",
+            f"Choose a small group or algebraic structure involving {title}.",
+            "Name the identity, operation, relevant subset or map, then verify one defining condition.",
+            "The example shows which structure is preserved and which assumptions matter.",
+            f"How would {title} change the way you classify a finite example?",
+            "Identify the objects, check the required property, and compare with a near-miss example.",
+            visual,
+        )
+    if domain == "economics":
+        visual = "econ_curve"
+        formula = r"Y=f(X)"
+        prereqs = ["graphs", "marginal reasoning"]
+        if any(word in lower for word in ("demand", "supply", "market", "equilibrium", "surplus")):
+            visual, formula, prereqs = "econ_supply_demand", r"Q_s(P)=Q_d(P)", ["graphs", "markets"]
+        elif any(word in lower for word in ("elasticity", "percent", "response")):
+            visual, formula, prereqs = "econ_elasticity", r"E=(\%\Delta Q)/(\%\Delta P)", ["percent changes", "demand"]
+        elif any(word in lower for word in ("budget", "consumer", "utility", "preference", "income", "mrs")):
+            visual, formula, prereqs = "econ_budget", r"p_x x+p_y y\leq I", ["prices", "choice"]
+        return Concept(
+            title,
+            f"{title} is a modeling idea for comparing incentives, constraints, and marginal choices.",
+            f"Study {title} by identifying the decision maker, the constraint, the margin, and the predicted change.",
+            formula,
+            prereqs,
+            "Do not read a curve or equation without naming what is held fixed and what is changing.",
+            f"Set up a small numerical market or choice example involving {title}.",
+            "Write the relevant curve, constraint, or marginal condition and solve one comparison.",
+            "The example connects the economic story to a visible curve or decision rule.",
+            f"What does {title} predict when one price, income, or marginal cost changes?",
+            "State the changed input, trace the curve or constraint, and explain the new choice or equilibrium.",
+            visual,
+        )
+    return Concept(
+        title,
+        f"{title} is a core idea in this course.",
+        f"Understand {title} by connecting definition, formula, and example.",
+        title,
+        ["course definitions", "worked examples"],
+        "Do not memorize the term without testing it on a concrete example.",
+        f"Pick a small numerical or symbolic example involving {title}.",
+        "Work through one substitution or transformation step.",
+        "The example should make the definition testable.",
+        f"Where does {title} appear in an application from the course?",
+        "Name the inputs, rule, and output.",
+        "numeric_rule",
+    )
 
 
 def frequent_terms(text: str) -> list[str]:
@@ -344,11 +647,31 @@ def source_text(pack: dict[str, object]) -> str:
     return "\n".join(str(m.get("text", "")) for m in pack.get("materials", []) if isinstance(m, dict))
 
 
+def is_course_vocabulary_term(term: str) -> bool:
+    normalized = re.sub(r"\s+", " ", term.lower()).strip(" -_:;,.()[]")
+    if len(normalized) < 4 or len(normalized) > 60:
+        return False
+    if normalized in SOURCE_TERM_BLOCKLIST:
+        return False
+    if any(pattern in normalized for pattern in SOURCE_TERM_BLOCK_PATTERNS):
+        return False
+    words = normalized.split()
+    if len(words) > 4:
+        return False
+    if any(word in SOURCE_TERM_BLOCKLIST for word in words):
+        return False
+    if not any(re.search(r"[a-z]", word) for word in words):
+        return False
+    return True
+
+
 def source_coverage_terms(pack: dict[str, object], shorts: list[dict[str, object]], limit: int = 80) -> list[str]:
     existing = {str(short.get("concept", "")).lower() for short in shorts}
     terms: list[str] = []
     for term in frequent_terms(source_text(pack)):
-        if not term or any(term in concept or concept in term for concept in existing):
+        if not is_course_vocabulary_term(term):
+            continue
+        if any(term in concept or concept in term for concept in existing):
             continue
         if term not in terms:
             terms.append(term)
@@ -359,16 +682,41 @@ def source_coverage_terms(pack: dict[str, object], shorts: list[dict[str, object
 
 def source_snippets(pack: dict[str, object], term: str, limit: int = 2) -> list[str]:
     snippets: list[str] = []
-    pattern = re.compile(r"[^.?!]*(?:" + re.escape(term) + r")[^.?!]*[.?!]", re.I)
+    term_lower = term.lower().strip()
+    if len(term_lower) < 3:
+        return snippets
     for material in pack.get("materials", []):
         if not isinstance(material, dict):
             continue
-        for match in pattern.finditer(str(material.get("text", ""))):
-            cleaned = re.sub(r"\s+", " ", match.group(0)).strip()
-            if 40 <= len(cleaned) <= 320 and cleaned not in snippets:
+        text = re.sub(r"\s+", " ", str(material.get("text", ""))).strip()
+        if not text:
+            continue
+        lower = text.lower()
+        pos = 0
+        attempts = 0
+        while len(snippets) < limit and attempts < 24:
+            idx = lower.find(term_lower, pos)
+            if idx < 0:
+                break
+            start = max(0, idx - 180)
+            end = min(len(text), idx + len(term_lower) + 220)
+            while start > 0 and text[start] not in ".?!":
+                start -= 1
+            if start > 0:
+                start += 1
+            while end < len(text) and text[end] not in ".?!":
+                end += 1
+            cleaned = re.sub(r"\s+", " ", text[start:end].strip(" .?!"))
+            if any(pattern in cleaned.lower() for pattern in SOURCE_TERM_BLOCK_PATTERNS):
+                pos = idx + len(term_lower)
+                attempts += 1
+                continue
+            if 40 <= len(cleaned) <= 360 and cleaned not in snippets:
                 snippets.append(cleaned)
-                if len(snippets) >= limit:
-                    return snippets
+            pos = idx + len(term_lower)
+            attempts += 1
+        if len(snippets) >= limit:
+            return snippets
     return snippets
 
 
@@ -633,9 +981,13 @@ def latex_text_with_inline_math(text: str, *, tuple_style: str = "tuple") -> str
         return store_math(latex_math_expr(core, tuple_style=tuple_style))
 
     work = equation_re.sub(equation_repl, work)
+    inverse_power_re = re.compile(r"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*\^\{\s*-\s*1\s*\})")
+    work = inverse_power_re.sub(lambda m: store_math(latex_math_expr(m.group(1), tuple_style=tuple_style)), work)
     work = MATRIX_LITERAL_RE.sub(lambda m: store_math(latex_math_expr(m.group(0), tuple_style="vector")), work)
     work = ROW_MATRIX_RE.sub(lambda m: store_math(latex_math_expr(m.group(0), tuple_style="vector")), work)
     work = re.sub(r"\b(?:sqrt|rank|det|dim|diag)\([^()]+\)", lambda m: store_math(latex_math_expr(m.group(0), tuple_style=tuple_style)), work)
+    power_re = re.compile(r"(?<![@A-Za-z0-9_])((?:[A-Za-z]|\d+(?:\.\d+)?)(?:\s*\^\s*(?:[A-Za-z]|\d+(?:\.\d+)?))+)" )
+    work = power_re.sub(lambda m: store_math(latex_math_expr(m.group(1), tuple_style=tuple_style)), work)
     work = TUPLE_LITERAL_RE.sub(lambda m: store_math(latex_math_expr(m.group(0), tuple_style=tuple_style)), work)
 
     escaped = latex_escape(work)
@@ -734,6 +1086,62 @@ def latex_formula_reference(short: dict[str, object]) -> str:
     formula = str(short.get("formula", ""))
     plain = latex_escape(plain_formula_read(short))
     return rf"\(\displaystyle {formula}\)\par{{\footnotesize {plain}}}"
+
+
+FIELD_OPENING_QUOTES: dict[str, tuple[str, str]] = {
+    "group_theory": (
+        "My methods are really methods of working and thinking; this is why they have crept in everywhere anonymously.",
+        "Emmy Noether",
+    ),
+    "algorithms": (
+        "An algorithm must be seen to be believed.",
+        "Donald E. Knuth",
+    ),
+    "physics": (
+        "If I have seen further it is by standing on the shoulders of Giants.",
+        "Isaac Newton",
+    ),
+    "economics": (
+        "Economics is a study of mankind in the ordinary business of life.",
+        "Alfred Marshall",
+    ),
+    "linear_algebra": (
+        "We must know. We will know.",
+        "David Hilbert",
+    ),
+    "default": (
+        "From the paradise that Cantor created for us no-one shall be able to expel us.",
+        "David Hilbert",
+    ),
+}
+
+
+def opening_quote(pack: dict[str, object], plan: dict[str, object]) -> tuple[str, str]:
+    haystack = json.dumps(
+        {
+            "pack_title": pack.get("title", ""),
+            "source_url": pack.get("source_url", ""),
+            "course_title": plan.get("course_title", ""),
+            "shorts": plan.get("shorts", []),
+        },
+        ensure_ascii=False,
+    ).lower()
+    if "calculus" in haystack:
+        return FIELD_OPENING_QUOTES["physics"]
+    ranked = sorted(
+        ((domain, domain_score(haystack, keywords)) for domain, keywords in DOMAIN_KEYWORDS.items()),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    if ranked and ranked[0][1] >= 4:
+        return FIELD_OPENING_QUOTES.get(ranked[0][0], FIELD_OPENING_QUOTES["default"])
+    return FIELD_OPENING_QUOTES["default"]
+
+
+def latex_opening_quote_block(pack: dict[str, object], plan: dict[str, object]) -> str:
+    quote, author = opening_quote(pack, plan)
+    return """\\small\\itshape %s\\\\[0.45em]
+\\normalfont\\hfill %s""" % (latex_escape(quote), latex_escape(author))
 
 
 def notes_pdf_report_path(run: Path) -> Path:
@@ -895,6 +1303,38 @@ def symbol_meaning(key: str, latex: str, short: dict[str, object]) -> str:
     vector_match = re.search(r"\\(?:vec|hat)\{([A-Za-z])\}", latex)
     base_match = re.search(r"([A-Za-z])", latex.replace("lambda", ""))
     base = vector_match.group(1) if vector_match else (base_match.group(1) if base_match else latex)
+    if any(term in haystack for term in ("group", "subgroup", "coset", "homomorphism", "isomorphism", "kernel", "orbit", "stabilizer", "ring", "field")):
+        group_map = {
+            "G": "group under discussion",
+            "H": "subgroup or distinguished subset",
+            "g": "group element acting by the operation",
+            "h": "element of the subgroup",
+            "e": "identity element",
+            "n": "order, exponent, or positive integer",
+            "a": "group or ring element",
+            "b": "group or ring element",
+            "r": "ring element used for multiplication",
+            "I": "ideal or identity-like course-defined object",
+        }
+        if base in group_map:
+            return group_map[base]
+    if any(term in haystack for term in ("demand", "supply", "elasticity", "consumer", "budget", "market", "cost", "monopoly", "tax", "utility", "surplus")):
+        econ_map = {
+            "Q": "quantity supplied, demanded, or traded",
+            "P": "price",
+            "E": "elasticity or response measure",
+            "I": "income or budget",
+            "x": "quantity of one good or decision variable",
+            "y": "quantity of another good or output variable",
+            "p": "price or price vector",
+            "q": "firm output quantity",
+            "L": "labor input",
+            "K": "capital input",
+            "U": "utility function",
+            "M": "marginal quantity such as MC, MB, MR, or MRS",
+        }
+        if base in econ_map:
+            return econ_map[base]
     if latex.startswith(r"\vec"):
         if base in {"x", "b"}:
             return "vector of unknowns, inputs, or target values"
@@ -987,6 +1427,14 @@ def visual_label(value: object) -> str:
         "probability": "probability diagram",
         "chemistry_reaction": "reaction diagram",
         "numeric_rule": "input-rule-output diagram",
+        "group_structure": "group operation diagram",
+        "group_cosets": "coset partition diagram",
+        "group_homomorphism": "structure-preserving map diagram",
+        "group_action": "symmetry action diagram",
+        "econ_supply_demand": "supply-demand diagram",
+        "econ_elasticity": "elasticity curve diagram",
+        "econ_budget": "budget-line diagram",
+        "econ_curve": "economic curve diagram",
     }
     key = str(value or "concept diagram").strip().lower()
     if key in labels:
@@ -995,44 +1443,307 @@ def visual_label(value: object) -> str:
     return f"{label} diagram" if label and "diagram" not in label else (label or "concept diagram")
 
 
+
+def detected_domain(pack: dict[str, object], plan: dict[str, object] | None = None) -> str | None:
+    payload = {"pack": pack}
+    if plan:
+        payload["plan"] = plan
+    haystack = json.dumps(payload, ensure_ascii=False).lower()
+    ranked = sorted(
+        ((domain, domain_score(haystack, keywords)) for domain, keywords in DOMAIN_KEYWORDS.items()),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    return ranked[0][0] if ranked and ranked[0][1] >= 4 else None
+
+
+def concept_to_short(concept: Concept, index: int) -> dict[str, object]:
+    short = {
+        "index": index,
+        "concept": concept.name,
+        "hook": concept.hook,
+        "intuition": concept.intuition,
+        "formula": concept.formula,
+        "plain_formula": plain_math(concept.formula),
+        "prerequisites": concept.prerequisites,
+        "misconception": concept.misconception,
+        "worked_example": {
+            "setup": concept.example_setup,
+            "calculation": concept.example_calc,
+            "takeaway": concept.example_takeaway,
+        },
+        "question_prompt": {
+            "question": concept.application_question,
+            "answer": concept.application_answer,
+        },
+        "visual_type": concept.visual_type,
+    }
+    enrich_short(short, [], index - 1)
+    return short
+
+
+def enrich_short(short: dict[str, object], all_shorts: list[dict[str, object]], index: int) -> None:
+    next_concepts = [s["concept"] for s in all_shorts[index + 1 : index + 4]]
+    short["key_concept"] = f"{short['concept']}: {short['hook']}"
+    short["concept_explanation"] = (
+        f"{short['intuition']} The worked example makes the idea testable: "
+        f"{short['worked_example']['takeaway']}"
+    )
+    short["recognition_cue"] = (
+        f"Use this concept when a problem asks you to identify the rule, structure, or quantity behind "
+        f"{str(short['concept']).lower()} and then check it with a concrete example."
+    )
+    short["concept_connections"] = {
+        "builds_on": short.get("prerequisites", []),
+        "prepares_for": next_concepts,
+    }
+
+
+def full_note_shorts(pack: dict[str, object], plan: dict[str, object]) -> list[dict[str, object]]:
+    domain = detected_domain(pack, plan)
+    concepts = list(DOMAIN_LIBRARY.get(domain or "", []))
+    existing = {c.name.lower() for c in concepts}
+    for item in plan.get("shorts", []):
+        name = str(item.get("concept", "")).lower()
+        if name and name not in existing:
+            concepts.append(Concept(
+                str(item.get("concept", "Topic")),
+                str(item.get("hook", "This is a core course idea.")),
+                str(item.get("intuition", "Connect the definition, formula, and worked example.")),
+                str(item.get("formula", item.get("plain_formula", ""))),
+                [str(x) for x in item.get("prerequisites", [])],
+                str(item.get("misconception", "Do not memorize without checking a concrete example.")),
+                str(item.get("worked_example", {}).get("setup", "Choose a small representative example.")),
+                str(item.get("worked_example", {}).get("calculation", "Work through the definition step by step.")),
+                str(item.get("worked_example", {}).get("takeaway", "The calculation should reveal the structure.")),
+                str(item.get("question_prompt", {}).get("question", "Where does this appear in the course?")),
+                str(item.get("question_prompt", {}).get("answer", "Identify the inputs, rule, and output.")),
+                str(item.get("visual_type", "numeric_rule")),
+            ))
+            existing.add(name)
+    if not concepts:
+        concepts = choose_concepts(pack, max(20, len(plan.get("shorts", []))))
+    shorts = [concept_to_short(concept, i) for i, concept in enumerate(concepts, start=1)]
+    for i, short in enumerate(shorts):
+        enrich_short(short, shorts, i)
+    return shorts
+
+
+def latex_topic_properties(short: dict[str, object]) -> str:
+    concept = latex_escape(str(short.get("concept", "Topic")))
+    formula = latex_escape(plain_formula_read(short))
+    return rf"""
+\begin{{itemize}}
+\item Identify the object type before using the formula: set, function, transformation, quantity, or constraint.
+\item Check the assumptions: prerequisites, domain restrictions, and whether the operation or model applies.
+\item Use the formula {formula} only after naming each symbol and unit.
+\item Connect {concept} to adjacent course ideas by asking what it preserves, measures, optimizes, or classifies.
+\end{{itemize}}
+"""
+
+
+def latex_topic_questions(short: dict[str, object]) -> str:
+    concept = latex_escape(str(short.get("concept", "Topic")))
+    qp = short.get("question_prompt", {}) if isinstance(short.get("question_prompt"), dict) else {}
+    app = latex_text_with_inline_math(str(qp.get("question", "Apply the idea in a concrete setting.")))
+    return rf"""
+\begin{{questions}}
+\item State the definition of {concept} and identify every object it depends on.
+\item Give one example that satisfies the definition and one near-example that fails it.
+\item Explain the main formula in words, then identify what each symbol is allowed to be.
+\item Recreate the worked example without looking, changing one number or object at the end.
+\item Describe the visual interpretation: what moves, what stays fixed, and what is measured?
+\item Name the most common trap and write a one-sentence warning that would prevent it.
+\item Connect this topic to a previous topic and to a later topic in the course.
+\item Application: {app}
+\item Write a short proof, derivation, or economic/physical explanation for why the formula is reasonable.
+\item Create a new problem whose answer uses this topic and one prerequisite.
+\end{{questions}}
+"""
+
+
+def latex_topic_answers(short: dict[str, object]) -> str:
+    ex = short.get("worked_example", {}) if isinstance(short.get("worked_example"), dict) else {}
+    qp = short.get("question_prompt", {}) if isinstance(short.get("question_prompt"), dict) else {}
+    answer = latex_example_text(str(qp.get("answer", "Use the definition and worked example to justify the answer.")), short, "answer")
+    takeaway = latex_example_text(str(ex.get("takeaway", "The example reveals how the definition is used.")), short, "takeaway")
+    return rf"""
+\begin{{enumerate}}
+\item The definition is the precise test; the example and non-example should differ on exactly one assumption.
+\item Symbol meanings come from the formula table and should be checked before substitution.
+\item The worked example's key interpretation is: {takeaway}
+\item The application answer idea is: {answer}
+\item A good original problem names inputs, method, and answer direction before doing algebra.
+\end{{enumerate}}
+"""
+
+
+
+def latex_topic_figure(short: dict[str, object]) -> str:
+    """Return a compact topic-specific figure embedded directly in notes.tex."""
+    concept = latex_escape(str(short.get("concept") or "topic"))
+    visual = str(short.get("visual_type") or "").lower()
+    title = latex_escape(visual_label(visual or "concept diagram"))
+    formula_text = screen_prose(str(short.get("plain_formula") or plain_formula_read(short) or short.get("formula") or ""))
+    formula = latex_escape(textwrap.shorten(formula_text, width=120, placeholder="...")) if formula_text else ""
+
+    if any(key in visual for key in ("econ", "demand", "supply", "elasticity", "budget", "curve")):
+        body = r"""
+\draw[->,thick] (0,0) -- (6.4,0) node[right]{Quantity};
+\draw[->,thick] (0,0) -- (0,4.1) node[above]{Price};
+\draw[very thick,blue!70!black] (0.7,0.8) -- (5.7,3.55) node[right]{Supply};
+\draw[very thick,red!70!black] (0.7,3.55) -- (5.7,0.8) node[right]{Demand};
+\draw[dashed] (3.2,0) -- (3.2,2.17) -- (0,2.17);
+\filldraw[green!55!black] (3.2,2.17) circle (2.2pt) node[above right]{equilibrium};
+"""
+    elif any(key in visual for key in ("group", "coset", "homomorphism", "action", "ring", "field")):
+        body = r"""
+\node[circle,draw,thick,minimum size=0.72cm] (e) at (0,1.25) {$e$};
+\node[circle,draw,thick,minimum size=0.72cm] (g) at (2.0,2.35) {$g$};
+\node[circle,draw,thick,minimum size=0.72cm] (h) at (4.0,1.25) {$h$};
+\node[circle,draw,thick,minimum size=0.72cm] (gh) at (2.0,0.1) {$gh$};
+\draw[->,blue!70!black,thick] (e) -- (g);
+\draw[->,blue!70!black,thick] (g) -- (h);
+\draw[->,blue!70!black,thick] (h) -- (gh);
+\draw[->,red!70!black,thick,bend left=16] (gh) to (e);
+\node[align=center] at (2.0,-0.95) {operation sends elements\\to structured outputs};
+"""
+    elif any(key in visual for key in ("matrix", "vector", "linear", "basis", "projection", "eigen", "subspace", "transform")):
+        body = r"""
+\draw[step=0.55cm,gray!35,very thin] (0,0) grid (2.2,2.2);
+\draw[->,very thick,blue!70!black] (0,0) -- (1.65,1.1) node[above] {$x$};
+\draw[->,very thick,green!50!black] (3.9,0.2) -- (5.75,1.75) node[above] {$Ax$};
+\node[draw,thick,rounded corners,minimum width=1.05cm,minimum height=1.05cm] at (3.0,1.1) {$A$};
+\draw[->,thick] (2.1,1.1) -- (2.45,1.1);
+\draw[->,thick] (3.55,1.1) -- (3.9,1.1);
+\node at (3.0,-0.45) {linear rule};
+"""
+    elif any(key in visual for key in ("graph", "algorithm", "cs_", "complexity", "state")):
+        body = r"""
+\node[circle,draw,thick] (a) at (0,1.4) {$A$};
+\node[circle,draw,thick] (b) at (1.55,2.3) {$B$};
+\node[circle,draw,thick] (c) at (3.1,1.35) {$C$};
+\node[circle,draw,thick] (d) at (1.65,0.35) {$D$};
+\node[circle,draw,thick] (e) at (4.75,0.75) {$E$};
+\draw[thick] (a)--(b)--(c)--(e);
+\draw[thick] (b)--(d)--(c);
+\draw[very thick,green!55!black,->] (a)--(b);
+\draw[very thick,green!55!black,->] (b)--(c);
+\node[align=center] at (2.4,-0.55) {trace states and invariants};
+"""
+    elif any(key in visual for key in ("physics", "force", "wave", "energy", "calculus", "area", "slope")):
+        body = r"""
+\draw[->,thick] (0,0) -- (6.2,0) node[right]{$t$};
+\draw[->,thick] (0,-1.4) -- (0,2.4) node[above]{$y$};
+\draw[very thick,blue!70!black] plot[smooth] coordinates {(0.25,0.25) (1.0,1.55) (1.8,1.05) (2.7,-0.55) (3.6,-0.85) (4.8,0.7) (5.7,1.65)};
+\draw[very thick,red!70!black,->] (2.7,-0.55) -- (3.75,0.05) node[right]{rate/change};
+\filldraw[green!55!black] (2.7,-0.55) circle (2.2pt);
+"""
+    else:
+        body = r"""
+\node[draw,rounded corners,thick,minimum width=1.45cm,minimum height=0.82cm] (input) at (0,0.8) {input};
+\node[draw,rounded corners,thick,minimum width=1.45cm,minimum height=0.82cm] (rule) at (2.6,0.8) {rule};
+\node[draw,rounded corners,thick,minimum width=1.45cm,minimum height=0.82cm] (output) at (5.2,0.8) {output};
+\draw[->,very thick,blue!70!black] (input) -- (rule);
+\draw[->,very thick,green!55!black] (rule) -- (output);
+\node[align=center] at (2.6,-0.35) {definition, formula, example\\must agree};
+"""
+
+    return rf"""
+\paragraph{{Generated figure.}}
+\begin{{center}}
+\begin{{tikzpicture}}[scale=0.92,every node/.style={{font=\small}}]
+{body}
+\end{{tikzpicture}}
+\end{{center}}
+\emph{{Figure for {concept}.}} {title}. Related formula cue: {formula}
+"""
+
+def latex_supplemental_topic_notes(pack: dict[str, object], shorts: list[dict[str, object]], limit: int = 40) -> str:
+    sections: list[str] = []
+    for term in source_coverage_terms(pack, shorts, limit=limit):
+        title = latex_escape(term.title())
+        snippets = source_snippets(pack, term, limit=3)
+        if snippets:
+            cues = "\n".join(rf"\item {latex_text_with_inline_math(snippet)}" for snippet in snippets)
+        else:
+            cues = rf"\item {title} appears in the extracted course vocabulary and should be studied with the nearest planned topic."
+        symbol = re.sub(r"[^A-Za-z]", "", term)[:1].lower() or "x"
+        sections.append(rf"""
+\subsection{{{title}}}
+\begin{{definition}}
+{title} is a supplemental course term. Learn the object being named, the hypotheses that make it valid, and the calculation, proof move, or modeling decision it supports.
+\end{{definition}}
+
+\paragraph{{Course cues.}}
+\begin{{itemize}}
+{cues}
+\end{{itemize}}
+
+\begin{{formula}}
+\[
+\text{{object}} \longrightarrow \text{{rule or relation}} \longrightarrow \text{{conclusion}}
+\]
+\textbf{{Notation pattern.}} Assign a stable symbol such as \( {symbol} \), specify its domain, then write the defining relation before using the term in an example.
+\end{{formula}}
+
+\small
+\begin{{longtable}}{{@{{}}L{{0.26\linewidth}}L{{0.68\linewidth}}@{{}}}}
+\toprule
+Study angle & Notes to learn \\
+\midrule
+Definition & Identify the exact object, relation, or process named by {title}. \\
+Properties & Record closure, uniqueness, monotonicity, conservation, symmetry, or complexity properties when the course states them. \\
+Formula use & Write hypotheses first, then the conclusion or computed quantity. \\
+Example & Build the smallest nontrivial example and verify the definition line by line. \\
+Common trap & Do not use the term as a label only; check the required conditions before applying it. \\
+\bottomrule
+\end{{longtable}}
+\normalsize
+
+\begin{{example}}
+\textbf{{Mini-example template.}} Choose a small object involving {title}. Name the inputs, apply the defining rule once, and explain why the result satisfies the definition or property.
+\end{{example}}
+
+\subsubsection*{{Questions}}
+\begin{{questions}}
+\item What is the formal definition of {title} in this course?
+\item Which hypotheses must be checked before the term applies?
+\item What is the smallest example and the smallest non-example?
+\item Which formula, table, or property usually appears next to this term?
+\item How does {title} connect to the nearest planned topic in the course map?
+\end{{questions}}
+""")
+    if not sections:
+        return "No additional supplemental topic vocabulary was detected beyond the planned topics."
+    return "\n".join(sections)
+
 def cmd_notes(args: argparse.Namespace) -> None:
     run = Path(args.run)
     pack = read_json(run / "source_pack.json")
     plan = read_json(run / "short_plan.json")
     title = str(plan.get("course_title") or pack.get("title") or "Course")
-    materials = pack.get("materials", [])
-    shorts = plan["shorts"]
-    source_inventory = "\n".join(
-        rf"\item \textbf{{{latex_escape(str(m.get('kind', 'source')).upper())}}}: {latex_escape(str(m.get('title', 'Untitled')))}\\ {latex_escape(str(m.get('url', '')))}"
-        for m in materials if isinstance(m, dict)
-    ) or r"\item No source inventory was recorded. Re-run extraction with the course URL before treating these as complete notes."
+    shorts = full_note_shorts(pack, plan)
+    notes_plan = {**plan, "shorts": shorts}
+
     course_map = "\n".join(
-        rf"\item \textbf{{{latex_escape(short['concept'])}}}: prerequisites -- {latex_escape(', '.join(short.get('prerequisites', [])) or 'none')}. Outcome -- {latex_escape(short['intuition'])}"
+        rf"\item \textbf{{{latex_escape(short['concept'])}}}: prerequisites -- {latex_escape(', '.join(short.get('prerequisites', [])) or 'none')}. Outcome -- {latex_text_with_inline_math(short['intuition'])}"
         for short in shorts
     )
     definition_rows = "\n".join(
-        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_escape(compact_key_concept(short))} \\"
+        rf"{short['index']} & {latex_escape(short['concept'])} & {latex_text_with_inline_math(compact_key_concept(short))} \\"
         for short in shorts
     )
     formula_rows = "\n".join(
         rf"{short['index']} & {latex_escape(short['concept'])} & {latex_formula_reference(short)} \\"
         for short in shorts
     )
+    opening_quote_tex = latex_opening_quote_block(pack, notes_plan)
     symbol_rows = "\n".join(
         rf"{short['index']} & {latex_escape(short['concept'])} & {symbol_glossary(short)} \\"
         for short in shorts
     )
-    coverage_terms = source_coverage_terms(pack, shorts)
-    coverage_items = "\n".join(rf"\item {latex_escape(term.title())}" for term in coverage_terms[:80]) or r"\item No additional source-derived terms were detected beyond the planned topics."
-    coverage_sections = []
-    for term in coverage_terms[:18]:
-        snippets = source_snippets(pack, term)
-        context = " ".join(snippets) if snippets else "This term appears in the course source pack and should be checked against the original lecture notes, assignments, or readings."
-        coverage_sections.append(rf"""
-\subsection{{{latex_escape(term.title())}}}
-\paragraph{{Source context.}} {latex_escape(context)}
-\paragraph{{Study task.}} Write the formal definition, identify the symbols used by the course, solve one small example, and add one conceptual question before relying on this topic in a video script.
-""")
+    supplemental_sections = latex_supplemental_topic_notes(pack, shorts, limit=40)
     sections = []
     practice_items = []
     for short in shorts:
@@ -1042,34 +1753,34 @@ def cmd_notes(args: argparse.Namespace) -> None:
         connections = short.get("concept_connections", {})
         builds_on = latex_escape(", ".join(connections.get("builds_on", short.get("prerequisites", []))) or "none")
         prepares_for = latex_escape(", ".join(connections.get("prepares_for", [])) or "later course topics")
-        key_concept = latex_escape(short.get("key_concept", short["hook"]))
-        concept_explanation = latex_escape(short.get("concept_explanation", short["intuition"]))
-        recognition_cue = latex_escape(short.get("recognition_cue", "Use the definition and worked example to decide when this idea applies."))
+        key_concept = latex_text_with_inline_math(short.get("key_concept", short["hook"]))
+        concept_explanation = latex_text_with_inline_math(short.get("concept_explanation", short["intuition"]))
+        recognition_cue = latex_text_with_inline_math(short.get("recognition_cue", "Use the definition and worked example to decide when this idea applies."))
         setup_tex = latex_example_text(str(ex.get("setup", "")), short, "setup")
         calculation_tex = latex_example_text(str(ex.get("calculation", "")), short, "calculation")
         takeaway_tex = latex_example_text(str(ex.get("takeaway", "")), short, "takeaway")
         answer_tex = latex_example_text(str(qp.get("answer", "")), short, "answer")
         question_tex = latex_text_with_inline_math(str(qp.get("question", "")), tuple_style="tuple")
         sections.append(rf"""
+\clearpage
 \subsection{{{latex_escape(short['concept'])}}}
-\subsubsection*{{Prerequisites}}
+
+\subsubsection*{{Definition and prerequisites}}
+\begin{{definition}}
+{latex_text_with_inline_math(short['intuition'])}
+\end{{definition}}
+\begin{{itemize}}
+\item \textbf{{Prerequisites.}}
 \begin{{itemize}}
 {prereq_items}
 \end{{itemize}}
+\item \textbf{{Key concept.}} {key_concept}
+\item \textbf{{Explanation.}} {concept_explanation}
+\item \textbf{{Recognition cue.}} {recognition_cue}
+\item \textbf{{Connections.}} Builds on {builds_on}. Prepares for {prepares_for}.
+\end{{itemize}}
 
-\subsubsection*{{Key concept and use}}
-\textbf{{Key concept.}} {key_concept}
-
-\textbf{{Explanation.}} {concept_explanation}
-
-\textbf{{Recognition cue.}} {recognition_cue}
-
-\textbf{{Connections.}} Builds on {builds_on}. Prepares for {prepares_for}.
-
-\begin{{definition}}
-{latex_escape(short['intuition'])}
-\end{{definition}}
-
+\subsubsection*{{Formula and symbol check}}
 \begin{{formula}}
 \[
 {short['formula']}
@@ -1078,6 +1789,10 @@ def cmd_notes(args: argparse.Namespace) -> None:
 \textbf{{Symbols.}} {symbol_glossary(short)}.
 \end{{formula}}
 
+\subsubsection*{{Properties and use cases}}
+{latex_topic_properties(short)}
+
+\subsubsection*{{Worked example}}
 \begin{{example}}
 \textbf{{Setup.}} {setup_tex}
 
@@ -1086,27 +1801,27 @@ def cmd_notes(args: argparse.Namespace) -> None:
 \textbf{{Interpretation.}} {takeaway_tex}
 \end{{example}}
 
-\paragraph{{Visual interpretation.}} Use a {latex_escape(visual_label(short.get('visual_type', 'concept diagram')))}: show the input, animate the rule, label the intermediate quantity, and highlight the output.
+\subsubsection*{{Visual and conceptual interpretation}}
+Use a {latex_escape(visual_label(short.get('visual_type', 'concept diagram')))}: show the input, animate the rule, label the intermediate quantity, and highlight the output. The important check is not the drawing itself; it is whether the diagram makes the definition, the formula, and the worked example agree.
 
-\paragraph{{Common trap.}} {latex_escape(short['misconception'])}
+{latex_topic_figure(short)}
+
+\subsubsection*{{Common trap}}
+\begin{{quote}}
+{latex_escape(short['misconception'])}
+\end{{quote}}
 
 \subsubsection*{{Questions}}
-\begin{{questions}}
-\item Conceptual: Explain {latex_escape(short['concept'])} without using the formula. What problem does the idea solve?
-\item Symbol check: In the displayed formula, what does each symbol mean and what are its allowed inputs?
-\item Calculation: Recreate the worked example, then change one number and predict which part of the answer changes.
-\item Interpretation: Which part of the example is the input, which part is the rule, and which part is the output?
-\item Application: {question_tex}
-\item Error check: What mistake would someone make if they believed the common trap above?
-\end{{questions}}
+{latex_topic_questions(short)}
 
-\paragraph{{Answers and explanations.}}
-The displayed calculation gives the mechanical steps. The key interpretation is: {takeaway_tex} For the application question, {answer_tex}
+\subsubsection*{{Answers and explanations}}
+{latex_topic_answers(short)}
 """)
         practice_items.append(rf"\item \textbf{{{latex_escape(short['concept'])}.}} {question_tex} \emph{{Answer idea:}} {answer_tex}")
     tex = rf"""\documentclass[11pt]{{article}}
-\usepackage[letterpaper,margin=0.95in]{{geometry}}
+\usepackage[letterpaper,margin=0.92in]{{geometry}}
 \usepackage{{amsmath,amssymb,amsthm,longtable,booktabs,array}}
+\usepackage{{tikz}}
 \setlength{{\parskip}}{{0.35em}}
 \setlength{{\parindent}}{{0pt}}
 \renewcommand{{\arraystretch}}{{1.14}}
@@ -1118,36 +1833,26 @@ The displayed calculation gives the mechanical steps. The key interpretation is:
 \begin{{document}}
 \begin{{center}}
 \vspace*{{1.35in}}
-{{\LARGE {latex_escape(title)} Comprehensive Notes\par}}
+{{\LARGE {latex_escape(title)} Definitions and Formulas\par}}
 \vspace{{0.45in}}
 {{\large \today\par}}
 \end{{center}}
-\vspace{{0.5in}}
+\vspace{{0.7in}}
 \begin{{flushright}}
-\begin{{minipage}}{{0.42\textwidth}}
-\small Generated as a course-wide study document: definitions, formulas, examples, applications, and checks for understanding.\\[0.4em]
-\hrule
-\vspace{{0.3em}}
-\hfill Course Shorts Skills
+\begin{{minipage}}{{0.46\textwidth}}
+{opening_quote_tex}
 \end{{minipage}}
 \end{{flushright}}
 \vfill
 \newpage
 
-\section{{Course Overview}}
-These notes are designed to be read as a course proxy: first learn the vocabulary, then the formulas, then the examples, then the questions. Each topic includes conceptual meaning, notation, a worked example, common traps, and application checks. The reference tables are compact; the topic sections carry the deeper explanations and worked calculations.
-
-\subsection{{Source Inventory}}
-\begin{{itemize}}
-{source_inventory}
-\end{{itemize}}
-
+\section{{Foundations and Notation}}
 \subsection{{Prerequisite Order}}
 \begin{{enumerate}}
 {course_map}
 \end{{enumerate}}
 
-\section{{Key Concepts and Definitions}}
+\section{{Definitions}}
 \small
 \begin{{longtable}}{{@{{}}L{{0.07\linewidth}}L{{0.25\linewidth}}L{{0.62\linewidth}}@{{}}}}
 \toprule
@@ -1186,13 +1891,11 @@ No. & Concept & Symbols and meanings \\
 \section{{Core Topics}}
 {''.join(sections)}
 
-\section{{Source-Derived Coverage Checklist}}
-The following terms were detected in the source pack beyond the main planned topics. Use this checklist to prevent gaps when turning a full course into notes and shorts.
-\begin{{itemize}}
-{coverage_items}
-\end{{itemize}}
-{''.join(coverage_sections)}
+\clearpage
+\section{{Supplemental Topic Notes}}
+{supplemental_sections}
 
+\clearpage
 \section{{Cumulative Practice Bank}}
 \begin{{enumerate}}
 {chr(10).join(practice_items)}
@@ -1200,30 +1903,29 @@ The following terms were detected in the source pack beyond the main planned top
 \end{{document}}
 """
     (run / "notes.tex").write_text(tex, encoding="utf-8")
-    (run / "notes.md").write_text(markdown_notes(plan, pack), encoding="utf-8")
+    (run / "notes.md").write_text(markdown_notes(notes_plan, pack), encoding="utf-8")
     pdf_engine = "auto" if args.compile and args.pdf_engine == "none" else args.pdf_engine
     if args.compile or pdf_engine != "none":
-        compile_notes_pdf(run, plan, pdf_engine)
+        compile_notes_pdf(run, notes_plan, pdf_engine)
     print(run / "notes.tex")
-
 
 def markdown_notes(plan: dict[str, object], pack: dict[str, object] | None = None) -> str:
     lines = [f"# {plan.get('course_title', 'Course')} Definitions and Formulas\n"]
-    lines.append("## Key Concepts\n")
+    lines.append("## Definitions\n")
     for short in plan["shorts"]:
         lines.append(f"- **{short['concept']}**: {short.get('concept_explanation', short['intuition'])}")
     lines.append("\n## Formula Reference\n")
     for short in plan["shorts"]:
         lines.append(f"- **{short['concept']}**: `{plain_formula_read(short)}` - {symbol_glossary(short)}")
-    lines.append("\n")
+    lines.append("\n## Core Topics\n")
     for short in plan["shorts"]:
         ex = short["worked_example"]
         qp = short["question_prompt"]
         lines.append(f"## {short['index']}. {short['concept']}\n")
+        lines.append(f"**Definition.** {short['intuition']}\n")
         lines.append(f"**Key concept.** {short.get('key_concept', short['hook'])}\n")
         lines.append(f"**Concept explanation.** {short.get('concept_explanation', short['intuition'])}\n")
         lines.append(f"**How to recognize it.** {short.get('recognition_cue', 'Use the definition and worked example to decide when this idea applies.')}\n")
-        lines.append(f"**Definition.** {short['intuition']}\n")
         lines.append(f"**Formula.** `{plain_formula_read(short)}`\n")
         lines.append(f"**Symbols.** {symbol_glossary(short)}\n")
         setup_md = latex_example_text(str(ex.get("setup", "")), short, "setup")
@@ -1232,19 +1934,15 @@ def markdown_notes(plan: dict[str, object], pack: dict[str, object] | None = Non
         question_md = latex_text_with_inline_math(str(qp.get("question", "")), tuple_style="tuple")
         answer_md = latex_example_text(str(qp.get("answer", "")), short, "answer")
         lines.append(f"**Worked example.**\n\nSetup: {setup_md}\n\nCalculation: {calculation_md}\n\nInterpretation: {takeaway_md}\n")
-        lines.append("**Questions.** Explain the concept without the formula; define every symbol; redo the example with one changed number; identify input/rule/output; answer the application prompt.\n")
+        lines.append("**Questions.** Define the idea; give an example and non-example; explain every symbol; redo the example; connect to a prerequisite; answer the application prompt.\n")
         lines.append(f"**Application.** {question_md} Answer idea: {answer_md}\n")
-    if pack:
-        terms = source_coverage_terms(pack, plan.get("shorts", []), limit=40)
-        if terms:
-            lines.append("\n## Source-Derived Coverage Checklist\n")
-            for term in terms:
-                lines.append(f"- {term.title()}")
     return "\n".join(lines)
-
 
 def wrap(text: str, width: int = 34, lines: int = 4) -> list[str]:
     normalized = re.sub(r"\s+", " ", text).strip()
+    normalized = re.sub(r"([,;:])(?=\S)", r"\1 ", normalized)
+    normalized = re.sub(r"(?<=[A-Za-z])(?=\d)", " ", normalized)
+    normalized = re.sub(r"(?<=\d)(?=[A-Za-z])", " ", normalized)
     out = textwrap.wrap(normalized, width=width, break_long_words=False, break_on_hyphens=False)
     if len(out) > lines:
         out = out[: lines - 1] + [out[lines - 1].rstrip(".") + "..."]
@@ -1272,9 +1970,144 @@ def screen_prose(text: object) -> str:
     normalized = re.sub(r"\b([A-Za-z]\w*)\s*=\s*\[([^\]\n]{1,80})\]", r"\1 is the row matrix with entries \2", normalized)
     normalized = re.sub(r"\bsqrt\(([^)]*)\)", r"square root of \1", normalized)
     normalized = re.sub(r"([A-Za-z0-9_.]+)\s*\^\s*2\b", r"\1 squared", normalized)
+    normalized = re.sub(r"\b([APU])([xvb])\b", r"\1 \2", normalized)
+    normalized = re.sub(r"\b([A-Za-z])_\{?([A-Za-z0-9]+)\}?\b", r"\1 sub \2", normalized)
     normalized = normalized.replace("*", " times ")
+    normalized = re.sub(r"\s*([=+/<>])\s*", r" \1 ", normalized)
+    normalized = re.sub(r"(?<=\d)\s*-\s*(?=\d)", " - ", normalized)
     normalized = re.sub(r"\s+", " ", normalized).strip()
     return normalized
+
+
+WORDS_PER_SECOND = 2.35
+MIN_SHORT_VIDEO_SECONDS = 24.0
+
+
+def spoken_word_count(text: object) -> int:
+    return len(re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?", screen_prose(text)))
+
+
+def estimate_spoken_seconds(text: object) -> float:
+    return spoken_word_count(text) / WORDS_PER_SECOND
+
+
+def duration_for_texts(texts: list[object], minimum: float, animation_budget: float) -> float:
+    speech = sum(estimate_spoken_seconds(text) for text in texts)
+    return max(minimum, speech + animation_budget + 1.2)
+
+
+
+def float_or_zero(value: object) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return number if math.isfinite(number) else 0.0
+
+
+def short_video_pacing(short: dict[str, object]) -> dict[str, float]:
+    ex = short["worked_example"] if isinstance(short.get("worked_example"), dict) else {}
+    qp = short["question_prompt"] if isinstance(short.get("question_prompt"), dict) else {}
+    intro_texts = [short.get("hook", ""), short.get("intuition", ""), short.get("key_concept", ""), short.get("concept_explanation", ""), short.get("plain_formula", short.get("formula", ""))]
+    example_texts = [ex.get("setup", ""), ex.get("calculation", ""), ex.get("takeaway", "")]
+    recall_texts = [short.get("recognition_cue", ""), short.get("misconception", ""), qp.get("question", ""), qp.get("answer", "")]
+    groups = [intro_texts, example_texts, recall_texts]
+    floors = [14.0, 15.0, 11.5]
+    fixed_motion = [7.7, 6.1, 5.3]
+
+    voice_target = float_or_zero(short.get("voice_duration_seconds") or short.get("narration_duration_seconds"))
+    if voice_target > 0:
+        target_total = max(sum(floors), MIN_SHORT_VIDEO_SECONDS, min(92.0, voice_target + 0.35))
+        weights = [max(1, sum(spoken_word_count(text) for text in group)) for group in groups]
+        remaining = max(0.0, target_total - sum(floors))
+        total_weight = sum(weights) or 1
+        durations = [floors[i] + remaining * weights[i] / total_weight for i in range(3)]
+    else:
+        durations = [
+            duration_for_texts(intro_texts, minimum=floors[0], animation_budget=6.4),
+            duration_for_texts(example_texts, minimum=floors[1], animation_budget=5.6),
+            duration_for_texts(recall_texts, minimum=floors[2], animation_budget=4.8),
+        ]
+        target_total = sum(durations)
+
+    intro_duration, example_duration, recall_duration = durations
+    intro_hold = max(0.8, intro_duration - fixed_motion[0])
+    example_hold = max(0.8, example_duration - fixed_motion[1])
+    recall_hold = max(0.8, recall_duration - fixed_motion[2])
+    total = fixed_motion[0] + intro_hold + fixed_motion[1] + example_hold + fixed_motion[2] + recall_hold
+    return {
+        "intro_duration": round(fixed_motion[0] + intro_hold, 2),
+        "example_duration": round(fixed_motion[1] + example_hold, 2),
+        "recall_duration": round(fixed_motion[2] + recall_hold, 2),
+        "intro_hold": round(intro_hold, 2),
+        "example_hold": round(example_hold, 2),
+        "recall_hold": round(recall_hold, 2),
+        "total": round(total, 2),
+    }
+
+
+def srt_timestamp(seconds: float) -> str:
+    millis = int(round(seconds * 1000))
+    hours, rem = divmod(millis, 3_600_000)
+    minutes, rem = divmod(rem, 60_000)
+    secs, ms = divmod(rem, 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{ms:03d}"
+
+
+def distribute_cue_durations(total: float, texts: list[object], minimum: float = 2.4) -> list[float]:
+    if not texts:
+        return []
+    floor = min(minimum, total / len(texts))
+    weights = [max(1, spoken_word_count(text)) for text in texts]
+    remaining = max(0.0, total - floor * len(texts))
+    weight_total = sum(weights) or len(texts)
+    return [floor + remaining * weight / weight_total for weight in weights]
+
+
+def caption_cues(short: dict[str, object], target_duration: float | None = None) -> list[tuple[str, str, str]]:
+    ex = short["worked_example"] if isinstance(short.get("worked_example"), dict) else {}
+    qp = short["question_prompt"] if isinstance(short.get("question_prompt"), dict) else {}
+    pacing = short_video_pacing(short)
+    groups = [
+        (
+            pacing["intro_duration"],
+            [
+                screen_prose(short.get("hook", "")),
+                screen_prose(short.get("intuition", "")),
+                screen_prose(short.get("key_concept", "")),
+                screen_prose(short.get("concept_explanation", "")),
+                screen_prose(short.get("plain_formula", short.get("formula", ""))),
+            ],
+        ),
+        (
+            pacing["example_duration"],
+            [
+                f"Example: {screen_prose(ex.get('setup', ''))}",
+                screen_prose(ex.get("calculation", "")),
+                f"Takeaway: {screen_prose(ex.get('takeaway', ''))}",
+            ],
+        ),
+        (
+            pacing["recall_duration"],
+            [
+                f"Recognition cue: {screen_prose(short.get('recognition_cue', ''))}",
+                f"Common trap: {screen_prose(short.get('misconception', ''))}",
+                f"Try this: {screen_prose(qp.get('question', ''))}",
+                f"Answer: {screen_prose(qp.get('answer', ''))}",
+            ],
+        ),
+    ]
+    raw_cues: list[tuple[float, float, str]] = []
+    cursor = 0.0
+    for total, texts in groups:
+        for duration, cue_text in zip(distribute_cue_durations(total, texts), texts):
+            start = cursor
+            cursor += duration
+            raw_cues.append((start, cursor, cue_text))
+    if target_duration and cursor > 0:
+        scale = max(0.25, float(target_duration) / cursor)
+        raw_cues = [(start * scale, end * scale, cue_text) for start, end, cue_text in raw_cues]
+    return [(srt_timestamp(start), srt_timestamp(end), cue_text) for start, end, cue_text in raw_cues]
 
 
 def numeric_literals(text: str) -> list[object]:
@@ -1398,7 +2231,7 @@ def matrix_vector_data(short: dict[str, object]) -> dict[str, object]:
     columns = [[matrix[row][col] for row in range(row_count)] for col in range(col_count)]
     row_calcs = []
     for row, result in zip(matrix, output):
-        terms = [f"{format_scalar(a)}*{format_scalar(b)}" for a, b in zip(row, vector)]
+        terms = [f"{format_scalar(a)} * {format_scalar(b)}" for a, b in zip(row, vector)]
         row_calcs.append(f"{' + '.join(terms)} = {format_scalar(result)}")
     return {
         "matrix": display_matrix(matrix),
@@ -1474,12 +2307,14 @@ def infer_visual_kind(short: dict[str, object]) -> str:
 
 
 def visual_data_for(short: dict[str, object], kind: str) -> dict[str, object]:
-    return {
-        "matrix_vector": matrix_vector_data(short),
-        "vector": vector_example_data(short),
-        "linear_combo": linear_combo_data(short),
-        "numbers": extract_numbers(short_text(short)),
-    }
+    data: dict[str, object] = {"numbers": extract_numbers(short_text(short))}
+    if kind == "matrix_vector":
+        data["matrix_vector"] = matrix_vector_data(short)
+    if kind == "vector_components":
+        data["vector"] = vector_example_data(short)
+    if kind == "linear_combination":
+        data["linear_combo"] = linear_combo_data(short)
+    return data
 
 
 MANIM_SCENE_HELPERS = '''
@@ -1504,7 +2339,12 @@ def fit_in(self, mob, max_width=7.8, max_height=6.0):
         mob.scale(max_height / mob.height)
     return mob
 
-def validate_layout(self, mob, name="mobject", pad=0.24):
+def layout_registry(self):
+    if not hasattr(self, "_layout_registry"):
+        self._layout_registry = []
+    return self._layout_registry
+
+def validate_layout(self, mob, name="mobject", pad=0.36):
     left_limit = -config.frame_width / 2 + pad
     right_limit = config.frame_width / 2 - pad
     bottom_limit = -config.frame_height / 2 + pad
@@ -1517,24 +2357,66 @@ def validate_layout(self, mob, name="mobject", pad=0.24):
         mob.shift(DOWN * (mob.get_top()[1] - top_limit))
     return mob
 
-def safe_place(self, mob, y=0, max_width=7.8, max_height=6.0, top=6.15, bottom=-7.25):
+def boxes_overlap(self, a, b, pad=0.12):
+    return not (
+        a.get_right()[0] + pad < b.get_left()[0]
+        or b.get_right()[0] + pad < a.get_left()[0]
+        or a.get_top()[1] + pad < b.get_bottom()[1]
+        or b.get_top()[1] + pad < a.get_bottom()[1]
+    )
+
+def avoid_layout_collisions(self, mob, top=6.05, bottom=-7.15, pad=0.14):
+    registry = [other for other in self.layout_registry() if other is not mob and hasattr(other, "get_left")]
+    for _ in range(18):
+        overlapping = [other for other in registry if self.boxes_overlap(mob, other, pad=pad)]
+        if not overlapping:
+            break
+        other = max(overlapping, key=lambda item: abs(item.get_center()[1] - mob.get_center()[1]))
+        if mob.get_center()[1] <= other.get_center()[1]:
+            shift = other.get_bottom()[1] - mob.get_top()[1] - pad
+        else:
+            shift = other.get_top()[1] - mob.get_bottom()[1] + pad
+        if abs(shift) < 0.05:
+            shift = -0.18 if mob.get_center()[1] <= other.get_center()[1] else 0.18
+        mob.shift(UP * shift)
+        if mob.get_top()[1] > top:
+            mob.shift(DOWN * (mob.get_top()[1] - top))
+        if mob.get_bottom()[1] < bottom:
+            mob.shift(UP * (bottom - mob.get_bottom()[1]))
+    return mob
+
+def remember_layout(self, mob):
+    registry = self.layout_registry()
+    if mob not in registry:
+        registry.append(mob)
+    return mob
+
+def safe_place(self, mob, y=0, max_width=7.8, max_height=6.0, top=6.05, bottom=-7.15, remember=True):
     self.fit_in(mob, max_width=max_width, max_height=max_height)
     mob.move_to(UP * y)
     if mob.get_top()[1] > top:
         mob.shift(DOWN * (mob.get_top()[1] - top))
     if mob.get_bottom()[1] < bottom:
         mob.shift(UP * (bottom - mob.get_bottom()[1]))
-    return self.validate_layout(mob)
+    self.validate_layout(mob)
+    if remember:
+        self.avoid_layout_collisions(mob, top=top, bottom=bottom)
+        self.validate_layout(mob)
+        self.remember_layout(mob)
+    return mob
 
-def text_block(self, lines, font_size=25, color="#EAF2FF", max_width=7.4, line_buff=0.12):
-    group = VGroup(*[Text(str(line), font_size=font_size, color=color) for line in lines]).arrange(DOWN, buff=line_buff)
-    return self.fit_in(group, max_width=max_width, max_height=2.3)
+def text_block(self, lines, font_size=25, color="#EAF2FF", max_width=7.4, line_buff=0.12, max_height=2.3):
+    clean_lines = [str(line).strip() for line in lines if str(line).strip()]
+    if not clean_lines:
+        clean_lines = [""]
+    group = VGroup(*[Text(line, font_size=font_size, color=color, disable_ligatures=True) for line in clean_lines]).arrange(DOWN, buff=line_buff)
+    return self.fit_in(group, max_width=max_width, max_height=max_height)
 
 def formula_block(self, latex, plain, font_size=32, color="#F7C948", max_width=7.6):
     try:
         mob = MathTex(str(latex), font_size=font_size, color=color)
     except Exception:
-        mob = Text(str(plain or latex), font_size=font_size, color=color)
+        mob = Text(str(plain or latex), font_size=font_size, color=color, disable_ligatures=True)
     return self.fit_in(mob, max_width=max_width, max_height=1.15)
 
 def section_label(self, text, color="#F7C948"):
@@ -1542,10 +2424,38 @@ def section_label(self, text, color="#F7C948"):
     return self.safe_place(label, y=5.7, max_width=7.6, max_height=0.65, top=6.05, bottom=5.15)
 
 def fade_all_except(self, keep=None, run_time=0.6):
-    keep = set(keep or [])
-    fading = [mob for mob in self.mobjects if mob not in keep]
+    keep = keep or []
+    keep_family = set()
+    for mob in keep:
+        keep_family.add(mob)
+        if hasattr(mob, "get_family"):
+            keep_family.update(mob.get_family())
+    fading = [mob for mob in self.mobjects if mob not in keep_family]
     if fading:
         self.play(*[FadeOut(mob) for mob in fading], run_time=run_time)
+    self._layout_registry = [mob for mob in keep if hasattr(mob, "get_left")]
+
+def active_hold(self, duration, focus=None):
+    remaining = max(0.0, float(duration or 0))
+    if remaining <= 0.05:
+        return
+    focus = [mob for mob in (focus or []) if hasattr(mob, "animate")]
+    if not focus:
+        focus = [mob for mob in self.mobjects if hasattr(mob, "animate") and getattr(mob, "width", 0) > 0.2 and getattr(mob, "height", 0) > 0.2]
+    if not focus:
+        self.wait(remaining)
+        return
+    group = VGroup(*focus)
+    index = 0
+    while remaining > 0.05:
+        step = min(5.2, remaining)
+        direction = RIGHT * (0.34 if index % 2 == 0 else -0.34)
+        # Move the visible scene group together during long narration holds.
+        # Longer pulses keep frame-diff validation healthy without exploding
+        # Manim render time into dozens of tiny animations.
+        self.play(group.animate.shift(direction).scale(1.02), rate_func=there_and_back, run_time=step)
+        remaining -= step
+        index += 1
 
 def matrix_block(self, rows, font_size=30, color="#EAF2FF", bracket_color="#8FD3FF", column_colors=None, cell_colors=None):
     row_groups = VGroup()
@@ -1852,7 +2762,111 @@ def play_numeric_rule_visual(self, phase, data, primary_lines, secondary_lines=N
     self.play(LaggedStart(*[Transform(outputs[i][1], Text(str(nums[min(i + 1, len(nums) - 1)]), font_size=18, color="#7EE787").move_to(outputs[i][1])) for i in range(len(outputs))], lag_ratio=0.12), FadeIn(outputs), run_time=1.1)
     self.play(FadeIn(result, shift=UP * 0.08), Indicate(rule), run_time=0.9)
 
+def play_group_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    result = self.text_block(result_lines or secondary_lines or ["structure is preserved"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    if kind == "group_cosets":
+        blocks = VGroup()
+        labels = ["H", "gH", "kH"]
+        for i, label in enumerate(labels):
+            rect = RoundedRectangle(width=1.55, height=2.35, corner_radius=0.1, color=self.palette(i), fill_color="#101A33", fill_opacity=0.75)
+            dots = VGroup(*[Dot(radius=0.045, color=self.palette(i)).shift(RIGHT * ((j % 2) - 0.5) * 0.45 + UP * (0.55 - (j // 2) * 0.45)) for j in range(6)])
+            dots.move_to(rect)
+            blocks.add(VGroup(rect, dots, Text(label, font_size=25, color=self.palette(i)).next_to(rect, UP, buff=0.14)))
+        blocks.arrange(RIGHT, buff=0.45)
+        self.safe_place(blocks, y=0.4, max_width=7.4, max_height=3.8, top=2.7, bottom=-2.4)
+        self.play(FadeIn(caption), LaggedStart(*[FadeIn(block, shift=UP * 0.08) for block in blocks], lag_ratio=0.18), run_time=1.2)
+        self.play(*[Indicate(block[0]) for block in blocks], FadeIn(result, shift=UP * 0.08), run_time=1.1)
+        return
+    if kind == "group_homomorphism":
+        left = VGroup(Circle(radius=1.1, color="#58A6FF"), Text("G", font_size=28, color="#58A6FF")).arrange(DOWN, buff=-0.25)
+        right = VGroup(Circle(radius=1.1, color="#7EE787"), Text("H", font_size=28, color="#7EE787")).arrange(DOWN, buff=-0.25)
+        left.shift(LEFT * 2.25)
+        right.shift(RIGHT * 2.25)
+        arrows = VGroup(*[Arrow(left.get_center() + UP * y + RIGHT * 0.65, right.get_center() + UP * (y * 0.55) + LEFT * 0.65, buff=0.02, stroke_width=4, color=self.palette(i)) for i, y in enumerate([-0.55, 0.0, 0.55])])
+        law = Text("phi(ab) = phi(a) phi(b)", font_size=26, color="#F7C948")
+        diagram = VGroup(left, right, arrows, law.next_to(arrows, DOWN, buff=0.45))
+        self.safe_place(diagram, y=0.35, max_width=7.7, max_height=4.7, top=3.0, bottom=-2.7)
+        self.play(FadeIn(caption), FadeIn(left), FadeIn(right), run_time=0.9)
+        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in arrows], lag_ratio=0.18), Write(law), run_time=1.35)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(law), run_time=1.0)
+        return
+    if kind == "group_action":
+        square = Square(side_length=2.7, color="#58A6FF")
+        vertices = VGroup(*[Dot(square.get_corner(corner), radius=0.075, color=self.palette(i)) for i, corner in enumerate([UL, UR, DR, DL])])
+        labels = VGroup(*[Text(str(i + 1), font_size=22, color=self.palette(i)).next_to(vertices[i], [UL, UR, DR, DL][i], buff=0.12) for i in range(4)])
+        arrow = CurvedArrow(square.get_top() + UP * 0.45, square.get_right() + RIGHT * 0.45, radius=1.6, color="#F7C948")
+        diagram = VGroup(square, vertices, labels, arrow)
+        self.safe_place(diagram, y=0.45, max_width=6.8, max_height=4.7, top=3.0, bottom=-2.8)
+        self.play(FadeIn(caption), Create(square), FadeIn(vertices), FadeIn(labels), run_time=1.0)
+        self.play(Create(arrow), Rotate(vertices, angle=PI / 2, about_point=square.get_center()), run_time=1.2)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(vertices), run_time=0.9)
+        return
+    nodes = VGroup()
+    names = ["e", "g", "h", "gh"]
+    for i, name in enumerate(names):
+        angle = TAU * i / len(names) + PI / 4
+        node = VGroup(Circle(radius=0.35, color=self.palette(i), fill_opacity=0.18), Text(name, font_size=24, color=self.palette(i)))
+        node.move_to(RIGHT * math.cos(angle) * 2.2 + UP * math.sin(angle) * 1.55)
+        nodes.add(node)
+    arrows = VGroup(*[CurvedArrow(nodes[i].get_center(), nodes[(i + 1) % len(nodes)].get_center(), radius=1.8, color=self.palette(i), stroke_width=4) for i in range(len(nodes))])
+    law = Text("combine, stay inside, return to identity", font_size=24, color="#F7C948")
+    diagram = VGroup(nodes, arrows, law.next_to(nodes, DOWN, buff=0.45))
+    self.safe_place(diagram, y=0.35, max_width=7.5, max_height=4.5, top=2.95, bottom=-2.7)
+    self.play(FadeIn(caption), LaggedStart(*[FadeIn(node, scale=1.1) for node in nodes], lag_ratio=0.12), run_time=1.0)
+    self.play(LaggedStart(*[Create(arrow) for arrow in arrows], lag_ratio=0.1), Write(law), run_time=1.35)
+    self.play(FadeIn(result, shift=UP * 0.08), Indicate(nodes[-1]), run_time=0.9)
+
+
+def play_econ_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    result = self.text_block(result_lines or secondary_lines or ["compare the margin"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    axes = Axes(x_range=[0, 10, 2], y_range=[0, 10, 2], x_length=6.4, y_length=4.7, tips=False, axis_config={"color": "#EAF2FF", "stroke_width": 2})
+    self.safe_place(axes, y=0.4, max_width=7.0, max_height=5.0, top=3.0, bottom=-2.55)
+    if kind == "econ_budget":
+        budget = Line(axes.c2p(0, 8), axes.c2p(8, 0), color="#F7C948", stroke_width=6)
+        choice = Dot(axes.c2p(4.6, 3.4), color="#7EE787", radius=0.09)
+        curve = axes.plot(lambda x: 12 / (x + 0.9) - 0.6, x_range=[1.0, 7.4], color="#58A6FF", stroke_width=5)
+        label = Text("best affordable bundle", font_size=23, color="#7EE787")
+        self.safe_place(label, y=-3.25, max_width=7.0, max_height=0.55, top=-2.9, bottom=-3.7)
+        self.play(FadeIn(caption), Create(axes), Create(budget), run_time=1.0)
+        self.play(Create(curve), FadeIn(choice, scale=1.3), FadeIn(label, shift=UP * 0.05), run_time=1.2)
+        self.play(FadeOut(label, shift=DOWN * 0.08), FadeIn(result, shift=UP * 0.08), Flash(choice, color="#7EE787"), run_time=0.9)
+        return
+    if kind == "econ_elasticity":
+        curve = axes.plot(lambda x: 8.5 - 0.55 * x, x_range=[0.7, 8.4], color="#58A6FF", stroke_width=6)
+        p1 = Dot(axes.c2p(3.0, 6.85), color="#F7C948")
+        p2 = Dot(axes.c2p(5.2, 5.64), color="#7EE787")
+        brace_q = Brace(Line(axes.c2p(3.0, 1.0), axes.c2p(5.2, 1.0)), DOWN, color="#7EE787")
+        brace_p = Brace(Line(axes.c2p(8.8, 6.85), axes.c2p(8.8, 5.64)), RIGHT, color="#F7C948")
+        label = Text("percent response", font_size=23, color="#F7C948")
+        self.safe_place(label, y=-3.25, max_width=7.0, max_height=0.55, top=-2.9, bottom=-3.7)
+        self.play(FadeIn(caption), Create(axes), Create(curve), run_time=1.0)
+        self.play(FadeIn(p1), TransformFromCopy(p1, p2), GrowFromCenter(brace_q), GrowFromCenter(brace_p), FadeIn(label, shift=UP * 0.05), run_time=1.25)
+        self.play(FadeOut(label, shift=DOWN * 0.08), FadeIn(result, shift=UP * 0.08), Indicate(VGroup(p1, p2)), run_time=0.9)
+        return
+    demand = Line(axes.c2p(1, 8.4), axes.c2p(8.5, 1.8), color="#58A6FF", stroke_width=6)
+    supply = Line(axes.c2p(1.1, 1.4), axes.c2p(8.3, 8.2), color="#F7C948", stroke_width=6)
+    eq = Dot(axes.c2p(4.8, 5.0), color="#7EE787", radius=0.1)
+    if kind == "econ_curve":
+        supply.set_color("#7EE787")
+        demand.set_color("#F7C948")
+    label = Text("equilibrium", font_size=23, color="#7EE787")
+    self.safe_place(label, y=-3.25, max_width=7.0, max_height=0.55, top=-2.9, bottom=-3.7)
+    self.play(FadeIn(caption), Create(axes), Create(demand), run_time=1.0)
+    self.play(Create(supply), FadeIn(eq, scale=1.3), FadeIn(label, shift=UP * 0.05), run_time=1.25)
+    self.play(FadeOut(label, shift=DOWN * 0.08), FadeIn(result, shift=UP * 0.08), Flash(eq, color="#7EE787"), run_time=0.9)
+
+
 def play_generic_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    if kind in {"group_structure", "group_cosets", "group_homomorphism", "group_action"}:
+        return self.play_group_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
+    if kind in {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve"}:
+        return self.play_econ_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"calculus_tangent", "calculus_area"}:
         return self.play_calculus_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"physics_force", "physics_energy"}:
@@ -1909,6 +2923,7 @@ def manim_scene(short: dict[str, object], class_name: str) -> str:
     question = screen_prose(short["question_prompt"]["question"])
     answer = screen_prose(short["question_prompt"]["answer"])
     visual_data = visual_data_for(short, visual_kind)
+    pacing = short_video_pacing(short)
     return f'''from manim import *
 import math
 
@@ -1926,40 +2941,42 @@ class {class_name}(Scene):
         self.camera.background_color = "#0B1020"
         visual_kind = {visual_kind!r}
         visual_data = {visual_data!r}
-        setup_lines = {wrap(setup, 44, 2)!r}
-        calc_lines = {wrap(calc, 42, 3)!r}
-        takeaway_lines = {wrap(takeaway, 40, 2)!r}
+        pacing = {pacing!r}
+        setup_lines = {wrap(setup, 30, 3)!r}
+        calc_lines = {wrap(calc, 30, 3)!r}
+        takeaway_lines = {wrap(takeaway, 30, 3)!r}
         question_lines = {wrap(question, 40, 3)!r}
         answer_lines = {wrap(answer, 40, 3)!r}
 
-        title = Text({short["concept"]!r}, font_size=45, weight="BOLD", color="#EAF2FF")
-        self.safe_place(title, y=7.15, max_width=8.25, max_height=0.85, top=7.55, bottom=6.55)
-        hook = self.text_block({wrap(str(short["hook"]), 34, 3)!r}, font_size=26, color="#8FD3FF", max_width=7.6).next_to(title, DOWN, buff=0.22)
-        self.fit_in(hook, max_width=7.6, max_height=1.25)
+        title = Text({short["concept"]!r}, font_size=45, weight="BOLD", color="#EAF2FF", disable_ligatures=True)
+        self.safe_place(title, y=7.08, max_width=8.1, max_height=0.8, top=7.48, bottom=6.58)
+        hook = self.text_block({wrap(str(short["hook"]), 34, 3)!r}, font_size=26, color="#8FD3FF", max_width=7.4, max_height=1.15)
+        self.safe_place(hook, y=5.95, max_width=7.4, max_height=1.15, top=6.42, bottom=5.22)
         self.play(FadeIn(title, shift=DOWN * 0.1), LaggedStart(*[FadeIn(x) for x in hook], lag_ratio=0.12), run_time=1.2)
 
         {visual_template(visual_kind, "intro")}
+        self.fade_all_except([title, hook], run_time=0.45)
 
         formula = self.formula_block({str(short["formula"])!r}, {screen_math(str(short["formula"]))!r}, font_size=32, color="#F7C948")
-        self.safe_place(formula, y=-5.25, max_width=7.6, max_height=1.0, top=-4.7, bottom=-5.95)
-        intuition = self.text_block({wrap(str(short["intuition"]), 42, 3)!r}, font_size=23, color="#EAF2FF", max_width=7.35)
-        self.safe_place(intuition, y=-6.55, max_width=7.35, max_height=1.15, top=-5.95, bottom=-7.25)
+        self.safe_place(formula, y=-4.95, max_width=7.4, max_height=0.9, top=-4.45, bottom=-5.55)
+        intuition = self.text_block({wrap(str(short["intuition"]), 42, 3)!r}, font_size=23, color="#EAF2FF", max_width=7.25, max_height=1.15)
+        self.safe_place(intuition, y=-6.55, max_width=7.25, max_height=1.15, top=-5.9, bottom=-7.25)
         self.play(Write(formula), run_time=0.9)
         self.play(FadeIn(intuition, shift=UP * 0.12), run_time=0.9)
-        self.wait(7.0)
+        self.active_hold(pacing["intro_hold"], [formula, intuition])
         self.fade_all_except([title], run_time=0.7)
         self.play(title.animate.scale(0.72).to_edge(UP, buff=0.35), run_time=0.45)
 
         section = self.section_label("Worked example", "#F7C948")
         self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
         {visual_template(visual_kind, "example")}
-        self.wait(8.0)
+        self.active_hold(pacing["example_hold"])
         self.fade_all_except([title], run_time=0.7)
 
         section = self.section_label("Active recall", "#F7C948")
         self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
         {visual_template(visual_kind, "recall")}
-        self.wait(8.0)
+        self.active_hold(pacing["recall_hold"])
 '''
 
 
@@ -1986,6 +3003,7 @@ def cmd_manim(args: argparse.Namespace) -> None:
         short["class_name"] = class_name
         short["scene_file"] = f"scenes/short_{short['index']:02d}_{slug}.py"
         short["srt_file"] = f"captions/short_{short['index']:02d}_{slug}.srt"
+        short["target_duration_seconds"] = short_video_pacing(short)["total"]
         (run / short["scene_file"]).write_text(manim_scene(short, class_name), encoding="utf-8")
         (run / short["srt_file"]).write_text(make_srt(short), encoding="utf-8")
         (scripts / f"short_{short['index']:02d}_{slug}.md").write_text(script_markdown(short), encoding="utf-8")
@@ -1993,39 +3011,35 @@ def cmd_manim(args: argparse.Namespace) -> None:
     print(scenes)
 
 
-def make_srt(short: dict[str, object]) -> str:
-    ex = short["worked_example"]
-    qp = short["question_prompt"]
-    cues = [
-        ("00:00:00,000", "00:00:06,000", screen_prose(short["hook"])),
-        ("00:00:06,000", "00:00:20,000", screen_prose(short["intuition"])),
-        ("00:00:20,000", "00:00:34,000", screen_prose(short["plain_formula"])),
-        ("00:00:34,000", "00:01:04,000", f"Example: {screen_prose(ex['setup'])} {screen_prose(ex['calculation'])}"),
-        ("00:01:04,000", "00:01:22,000", f"Takeaway: {screen_prose(ex['takeaway'])}"),
-        ("00:01:22,000", "00:01:42,000", f"Try this: {screen_prose(qp['question'])}"),
-        ("00:01:42,000", "00:02:00,000", f"Answer: {screen_prose(qp['answer'])}"),
-    ]
+def make_srt(short: dict[str, object], target_duration: float | None = None) -> str:
+    cues = caption_cues(short, target_duration=target_duration)
     return "\n\n".join(f"{i}\n{a} --> {b}\n{textwrap.fill(str(t), width=42)}" for i, (a, b, t) in enumerate(cues, start=1)) + "\n"
 
 
+def script_clock(timestamp: str) -> str:
+    head = timestamp.split(",", 1)[0]
+    hours, minutes, seconds = head.split(":")
+    if hours != "00":
+        return f"{int(hours)}:{minutes}:{seconds}"
+    return f"{int(minutes)}:{seconds}"
+
+
 def script_markdown(short: dict[str, object]) -> str:
-    ex = short["worked_example"]
-    qp = short["question_prompt"]
+    target_seconds = short_video_pacing(short)["total"]
+    rows = []
+    for start, end, cue_text in caption_cues(short):
+        cleaned = str(cue_text).replace("|", "-")
+        rows.append(f"| {script_clock(start)}-{script_clock(end)} | {cleaned} |")
+    beat_rows = "\n".join(rows)
     return f"""# Short {short['index']:02d}: {short['concept']}
 
-Target length: no fixed one-minute limit; keep going until the concept, worked example, and recall question are clear.
+Target length: about {target_seconds:.0f} seconds from script-paced captions; keep going until the concept, worked example, and recall question are clear.
 
 ## Beats
 
 | Time | Beat |
 | --- | --- |
-| 0:00-0:06 | {screen_prose(short['hook'])} |
-| 0:06-0:20 | {screen_prose(short['intuition'])} |
-| 0:20-0:34 | Formula: `{screen_prose(short['plain_formula'])}` |
-| 0:34-1:04 | Example: {screen_prose(ex['setup'])} {screen_prose(ex['calculation'])} |
-| 1:04-1:22 | Takeaway: {screen_prose(ex['takeaway'])} |
-| 1:22-1:42 | Try this: {screen_prose(qp['question'])} |
-| 1:42-2:00 | Answer: {screen_prose(qp['answer'])} |
+{beat_rows}
 """
 
 
@@ -2048,11 +3062,20 @@ def make_voiceover(text: str, out: Path, engine: str) -> dict[str, object]:
         say = shutil.which("say")
         if not say:
             return {"status": "failed", "engine": engine, "message": "say not found"}
-        subprocess.run([say, text, "-o", str(out.with_suffix(".aiff"))], check=False)
-        dur = audio_duration(out.with_suffix(".aiff"))
-        if dur < 0.75:
-            return {"status": "failed", "engine": engine, "message": f"say produced invalid duration {dur:.3f}s"}
-        return {"status": "ok", "engine": engine, "file": str(out.with_suffix(".aiff")), "duration": dur}
+        aiff = out.with_suffix(".aiff")
+        configured_voice = os.environ.get("COURSE_SHORTS_SAY_VOICE", "Samantha")
+        voices = []
+        for candidate in [configured_voice, "Samantha", "Daniel", "Karen", "Fred"]:
+            if candidate and candidate not in voices:
+                voices.append(candidate)
+        attempts = []
+        for voice in voices:
+            result = subprocess.run([say, "-v", voice, "-o", str(aiff), text], text=True, capture_output=True)
+            dur = audio_duration(aiff)
+            attempts.append(f"{voice}:{dur:.3f}s")
+            if result.returncode == 0 and dur >= 0.75:
+                return {"status": "ok", "engine": engine, "voice": voice, "file": str(aiff), "duration": dur}
+        return {"status": "failed", "engine": engine, "message": "say produced invalid audio (" + ", ".join(attempts) + ")"}
     if engine == "edge-tts":
         edge = shutil.which("edge-tts")
         if not edge:
@@ -2079,49 +3102,168 @@ def make_voiceover(text: str, out: Path, engine: str) -> dict[str, object]:
     return {"status": "failed", "engine": engine, "message": "unknown voice engine"}
 
 
+
+def narration_text(short: dict[str, object]) -> str:
+    ex = short["worked_example"] if isinstance(short.get("worked_example"), dict) else {}
+    qp = short["question_prompt"] if isinstance(short.get("question_prompt"), dict) else {}
+    pieces = [
+        short.get("hook", ""),
+        short.get("intuition", ""),
+        short.get("key_concept", ""),
+        short.get("concept_explanation", ""),
+        short.get("plain_formula", short.get("formula", "")),
+        ex.get("setup", ""),
+        ex.get("calculation", ""),
+        ex.get("takeaway", ""),
+        short.get("recognition_cue", ""),
+        short.get("misconception", ""),
+        qp.get("question", ""),
+        qp.get("answer", ""),
+    ]
+    return " ".join(screen_prose(piece) for piece in pieces if str(piece).strip())
+
+
+def mux_voiceover(raw: Path, voice_file: Path, final: Path, raw_duration: float, voice_duration: float, log_path: Path) -> dict[str, object]:
+    if not FFMPEG:
+        return {"status": "failed", "message": "ffmpeg not found"}
+    target_duration = max(MIN_SHORT_VIDEO_SECONDS, voice_duration + 0.35 if voice_duration > 0 else raw_duration)
+    if raw_duration > 0 and voice_duration > 0:
+        video_time_scale = max(0.55, min(1.85, voice_duration / raw_duration))
+    else:
+        video_time_scale = 1.0
+    scaled_video_duration = raw_duration * video_time_scale if raw_duration > 0 else target_duration
+    video_tail_pad = max(0.0, target_duration - scaled_video_duration)
+    audio_pad = max(0.0, target_duration - voice_duration)
+    video_filter = f"[0:v]setpts={video_time_scale:.8f}*PTS"
+    if video_tail_pad > 0.05:
+        video_filter += f",tpad=stop_mode=clone:stop_duration={video_tail_pad:.3f}"
+    video_filter += "[v]"
+    filter_complex = video_filter + ";[1:a]apad,asetpts=PTS-STARTPTS[a]"
+    cmd = [
+        FFMPEG,
+        "-y",
+        "-i",
+        str(raw),
+        "-i",
+        str(voice_file),
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        "[v]",
+        "-map",
+        "[a]",
+        "-t",
+        f"{target_duration:.3f}",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-movflags",
+        "+faststart",
+        str(final),
+    ]
+    result = subprocess.run(cmd, text=True, capture_output=True, timeout=900)
+    log_path.write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
+    return {
+        "status": "ok" if result.returncode == 0 else "failed",
+        "returncode": result.returncode,
+        "target_duration": target_duration,
+        "video_time_scale": video_time_scale,
+        "scaled_video_duration": scaled_video_duration,
+        "video_tail_pad_seconds": video_tail_pad,
+        "video_pad_seconds": video_tail_pad,
+        "audio_pad_seconds": audio_pad,
+        "message": result.stderr.strip()[-500:] if result.returncode else "",
+    }
+
+
+
 def cmd_render(args: argparse.Namespace) -> None:
     run = Path(args.run)
     plan = read_json(run / "short_plan.json")
     videos = run / "videos"
     audio = run / "audio"
     logs = run / "logs"
-    videos.mkdir(exist_ok=True)
-    audio.mkdir(exist_ok=True)
-    logs.mkdir(exist_ok=True)
+    scenes = run / "scenes"
+    scripts = run / "scripts"
+    captions = run / "captions"
+    for directory in (videos, audio, logs, scenes, scripts, captions):
+        directory.mkdir(exist_ok=True)
     results = []
     for short in plan["shorts"]:
+        slug = slugify(short["concept"])
+        class_name = str(short.get("class_name") or "".join(part.title() for part in slug.split("-")) + "Short")
+        short["class_name"] = class_name
+        short["scene_file"] = f"scenes/short_{short['index']:02d}_{slug}.py"
+        short["srt_file"] = f"captions/short_{short['index']:02d}_{slug}.srt"
         scene = run / short["scene_file"]
-        class_name = short["class_name"]
+        raw = videos / f"short_{short['index']:02d}_{slug}_raw.mp4"
+        final = videos / f"short_{short['index']:02d}_{slug}_final.mp4"
+
+        voice = make_voiceover(narration_text(short), audio / f"short_{short['index']:02d}_{slug}.mp3", args.voice_engine)
+        voice_duration = float(voice.get("duration", 0) or 0)
+        if voice.get("status") == "ok":
+            short["voice_duration_seconds"] = round(voice_duration, 3)
+            short["narration_duration_seconds"] = round(voice_duration, 3)
+        else:
+            short.pop("voice_duration_seconds", None)
+            short.pop("narration_duration_seconds", None)
+
+        short["target_duration_seconds"] = short_video_pacing(short)["total"]
+        scene.write_text(manim_scene(short, class_name), encoding="utf-8")
+        (run / str(short["srt_file"])).write_text(make_srt(short, target_duration=short["target_duration_seconds"]), encoding="utf-8")
+        (scripts / f"short_{short['index']:02d}_{slug}.md").write_text(script_markdown(short), encoding="utf-8")
+
         qflag = "-ql" if args.quality == "l" else "-qm"
-        cmd = [sys.executable, "-m", "manim", qflag, "--media_dir", str(run / "manim_media"), str(scene), class_name]
+        media_dir = run / "manim_media"
+        scene_media = media_dir / "videos" / scene.stem
+        shutil.rmtree(scene_media, ignore_errors=True)
+        cmd = [sys.executable, "-m", "manim", qflag, "--media_dir", str(media_dir), str(scene), class_name]
         manim = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True, timeout=1200)
-        (logs / f"short_{short['index']:02d}_manim.log").write_text(manim.stdout + "\n" + manim.stderr, encoding="utf-8")
+        log_text = manim.stdout + "\n" + manim.stderr
         if manim.returncode != 0:
-            results.append({"index": short["index"], "status": "failed", "stage": "manim"})
+            shutil.rmtree(scene_media, ignore_errors=True)
+            retry = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True, timeout=1200)
+            log_text += "\n\n--- retry after clearing Manim scene media ---\n" + retry.stdout + "\n" + retry.stderr
+            if retry.returncode == 0:
+                manim = retry
+        (logs / f"short_{short['index']:02d}_manim.log").write_text(log_text, encoding="utf-8")
+        if manim.returncode != 0:
+            results.append({"index": short["index"], "status": "failed", "stage": "manim", "voiceover": voice})
             continue
         rendered = newest_mp4(run / "manim_media", class_name)
         if not rendered:
-            results.append({"index": short["index"], "status": "failed", "stage": "locate"})
+            results.append({"index": short["index"], "status": "failed", "stage": "locate", "voiceover": voice})
             continue
-        slug = slugify(short["concept"])
-        raw = videos / f"short_{short['index']:02d}_{slug}_raw.mp4"
-        final = videos / f"short_{short['index']:02d}_{slug}_final.mp4"
         shutil.copy2(rendered, raw)
-        narration = " ".join([short["hook"], short["intuition"], short["worked_example"]["setup"], short["worked_example"]["calculation"], short["worked_example"]["takeaway"], short["question_prompt"]["question"], short["question_prompt"]["answer"]])
-        voice = make_voiceover(narration, audio / f"short_{short['index']:02d}_{slug}.mp3", args.voice_engine)
+
         raw_duration = audio_duration(raw)
-        voice_duration = float(voice.get("duration", 0) or 0)
+        sync: dict[str, object] = {"raw_duration": raw_duration, "voice_duration": voice_duration, "target_duration": raw_duration, "video_pad_seconds": 0.0, "audio_pad_seconds": 0.0, "video_time_scale": 1.0}
         if voice.get("status") == "ok" and raw_duration and voice_duration < max(2.0, raw_duration * 0.15):
             voice = {**voice, "status": "failed", "message": f"voiceover too short for video: {voice_duration:.3f}s vs {raw_duration:.3f}s"}
         if voice.get("status") == "ok" and FFMPEG:
-            subprocess.run([FFMPEG, "-y", "-i", str(raw), "-i", str(voice["file"]), "-filter_complex", "[1:a]apad[a]", "-map", "0:v:0", "-map", "[a]", "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", str(final)], text=True, capture_output=True, timeout=900)
+            mux = mux_voiceover(raw, Path(str(voice["file"])), final, raw_duration, voice_duration, logs / f"short_{short['index']:02d}_ffmpeg.log")
+            sync.update(mux)
+            if mux.get("status") != "ok":
+                voice = {**voice, "status": "failed", "message": f"ffmpeg mux failed: {mux.get('message', 'unknown error')}"}
+                shutil.copy2(raw, final)
         else:
             shutil.copy2(raw, final)
+
         duration = audio_duration(final)
+        target_duration = float(sync.get("target_duration") or duration or raw_duration or short_video_pacing(short)["total"])
+        if duration > 0:
+            target_duration = duration
+        if short.get("srt_file"):
+            (run / str(short["srt_file"])).write_text(make_srt(short, target_duration=target_duration), encoding="utf-8")
+        short["target_duration_seconds"] = round(target_duration, 3)
         short["video_file"] = str(final.relative_to(run))
         short["voiceover"] = voice
         short["duration_seconds"] = duration
-        results.append({"index": short["index"], "status": "rendered", "duration_seconds": duration, "voiceover": voice})
+        sync["final_duration"] = duration
+        results.append({"index": short["index"], "status": "rendered", "duration_seconds": duration, "voiceover": voice, "sync": sync})
     write_json(run / "short_plan.json", plan)
     write_json(run / "render_report.json", {"results": results})
     print(run / "render_report.json")

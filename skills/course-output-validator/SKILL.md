@@ -32,12 +32,14 @@ python tools/validate_course_run.py runs/<course> --allow-fallback-pdf
 
 ## Checks
 
-- Notes: `notes.tex`, `notes.md`, `notes.pdf`, and `notes_compile_report.json`.
+- Notes: `notes.tex`, `notes.md`, `notes.pdf`, and `notes_compile_report.json`, including a depth check for full-course coverage and a ban on source inventory/checklist placeholders.
 - LaTeX quality: prose/Python-list matrices, escaped exponent text, bare powers outside math mode, and prose `sqrt(...)` expressions.
-- Scene assets: expected Manim scene files, script markdown, SRT captions, Python syntax, vertical scene config, sparse animation, repeated-looking scene source, and matrix/list notation leaking into on-screen text.
-- Videos: expected final MP4s, Manim MP4s when scenes exist, duration, vertical orientation, blank sampled frames, static sampled frames, and audio streams.
+- Scene assets: expected Manim scene files, script markdown, SRT captions, Python syntax, vertical scene config, sparse animation, repeated-looking scene source, domain-specific group/economics renderer routing, and matrix/list notation leaking into on-screen text.
+- Videos: expected final MP4s, Manim MP4s when scenes exist, duration, vertical orientation, blank sampled frames, static sampled frames, audio streams, and render-report sync proving the final MP4 is not shorter than narration.
 - Publish queue: local video file existence and public URL warnings for API publishing.
 
 ## Quality Rule
 
 Before saying a run is upload-ready, run the validator in strict mode and report the command result. Warnings can be accepted with judgment; failures must be fixed or explicitly called out as unresolved blockers.
+
+- Validation must fail notes that do not contain embedded figures/graphs and must fail final renders whose duration is not aligned to the measured voiceover duration. Scene validation should also require the collision-aware layout helper in generated Manim code.

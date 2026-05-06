@@ -36,6 +36,8 @@ python tools/validate_course_run.py runs/<course> --draft
 - Calculus: moving tangent lines, accumulated area, slope fields, Taylor approximations.
 - Physics: force diagrams, trajectories, fields, energy bars, wave motion.
 - CS: state machines, trees, arrays, graphs, automata, complexity curves.
+- Group theory / algebra: operation cycles, coset partitions, homomorphism maps, symmetry actions, quotient-style grouping.
+- Economics: supply-demand intersections, elasticity response diagrams, budget lines, indifference curves, cost/revenue/marginal curves.
 
 ## Visual Standard
 
@@ -44,10 +46,14 @@ python tools/validate_course_run.py runs/<course> --draft
 - Setup, calculation, takeaway, and active recall should each move or transform mathematical/diagram objects; static text-only cards are a failure mode.
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.
 - Keep vertical 9:16 composition readable on a phone.
-- Use generator safe-area/layout helpers before rendering; top titles, bottom formulas, and captions must fit inside the vertical frame.
+- Use generator safe-area/layout helpers before rendering; top titles, bottom formulas, and captions must fit inside the vertical frame with visible breathing room between bands.
+- Do not hard-code scene length with fixed waits. Pace Manim waits and SRT cues from the generated script/caption text so short videos can be shorter or longer than the old roughly 38-second default.
+- Clear or fade prior visual text before placing formulas, takeaways, or recall answers in the same lower safe area.
+- Normalize screen text before rendering: preserve spaces around operators, subscripts, products, and matrix/vector prose; avoid labels like `2*4`, `Ax=b`, or `x_1` collapsing into hard-to-read text.
 - Avoid tiny formulas. If a formula is long, animate it in parts.
 - Render matrices and vectors as stacked mathematical objects, not single-line Python lists.
-- For non-linear-algebra topics, choose a visual family such as calculus, physics, CS, probability, chemistry, or a numeric input-rule-output diagram instead of the generic placeholder.
+- For non-linear-algebra topics, choose a visual family such as calculus, physics, CS, probability, chemistry, group theory, economics, or a numeric input-rule-output diagram instead of the generic placeholder.
+- Group-theory and economics visual types must route to domain-specific renderers; do not let them fall through to the generic numeric rule diagram.
 - Do not force a one-minute cap; keep pacing long enough for concept, worked example, and active recall to land clearly.
 
 ## Output
@@ -55,3 +61,5 @@ python tools/validate_course_run.py runs/<course> --draft
 - Manim Python files in `runs/<course>/scenes/`
 - Markdown scripts in `runs/<course>/scripts/`
 - SRT captions in `runs/<course>/captions/`
+
+- Generated scenes must use the collision-aware `safe_place`/`avoid_layout_collisions` helpers for all text and major visual groups. Do not rely on boundary checks alone; text blocks, section labels, formulas, captions, and diagrams must be registered so they cannot overlap after wrapping or scaling.

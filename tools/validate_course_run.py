@@ -25,6 +25,9 @@ VIDEO_SUFFIXES = {".mp4", ".mov", ".m4v"}
 MIN_FINAL_DURATION_SECONDS = 10.0
 MIN_ANY_VIDEO_DURATION_SECONDS = 3.0
 TARGET_ASPECT_RATIO = 9 / 16
+GROUP_VISUAL_KINDS = {"group_structure", "group_cosets", "group_homomorphism", "group_action"}
+ECON_VISUAL_KINDS = {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve"}
+
 
 
 @dataclass
@@ -116,6 +119,7 @@ class CourseRunValidator:
         if tex.exists():
             self.check_nonempty(tex, "notes")
             self.scan_latex_quality(tex)
+            self.scan_notes_comprehensiveness(tex)
         else:
             self.warn("notes", "notes.tex is missing; LaTeX formatting cannot be checked.", tex)
 
@@ -193,6 +197,23 @@ class CourseRunValidator:
                         )
                         break
 
+
+    def scan_notes_comprehensiveness(self, path: Path) -> None:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        forbidden = ["Source Inventory", "Source-Derived Coverage Checklist", "source-derived coverage checklist"]
+        for phrase in forbidden:
+            if phrase in text:
+                self.fail("notes.format", f"notes.tex still contains `{phrase}` instead of integrated course notes.", path, fix="Expand source-derived material into real topic notes; do not list sources or checklists.")
+                break
+        topic_count = len(re.findall(r"\\subsection\{", text))
+        figure_count = len(re.findall(r"\\begin\{tikzpicture\}|\\includegraphics(?:\[[^\]]*\])?\{", text))
+        if figure_count < max(4, min(12, topic_count // 4)):
+            self.fail("notes.figures", f"notes.tex contains only {figure_count} embedded figure(s) for {topic_count} topic subsections.", path, fix="Generate topic-specific TikZ figures or include generated graphics directly in notes.tex/PDF.")
+        if len(text) < 30_000:
+            self.warn("notes.depth", f"notes.tex is compact ({len(text):,} characters); full-course notes may be too short.", path, fix="Add definitions, formulas, properties, examples, questions, and supplemental topics until the course is covered.")
+        if topic_count < 12:
+            self.warn("notes.depth", f"notes.tex has only {topic_count} topic subsections; broad courses should cover more of the course map.", path, fix="Generate notes from the full course topic library, not only the shorts queue.")
+
     def scan_markdown_quality(self, path: Path) -> None:
         for lineno, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1):
             if re.search(r"\[\s*\[[^\n]{1,160}\]\s*,\s*\[[^\n]{1,160}\]\s*\]", line):
@@ -214,6 +235,17 @@ class CourseRunValidator:
             self.fail("notes.pdf", "notes.pdf does not start with a PDF header.", path, fix="Regenerate the PDF.")
         elif path.stat().st_size < 10_000:
             self.warn("notes.pdf", "notes.pdf is unusually small; verify it contains the full notes.", path)
+        try:
+            import fitz  # type: ignore
+            doc = fitz.open(path)
+            page_count = doc.page_count
+            doc.close()
+            if page_count < 8:
+                self.fail("notes.pdf", f"notes.pdf has only {page_count} pages; full-course notes are too short.", path, fix="Regenerate comprehensive notes from the full course topic set.")
+            elif page_count < 20:
+                self.warn("notes.pdf", f"notes.pdf has only {page_count} pages; verify it covers the whole course.", path)
+        except Exception:
+            pass
 
     def validate_short_plan(self, plan: Any) -> None:
         if plan is None:
@@ -252,7 +284,7 @@ class CourseRunValidator:
             script = self.run / "scripts" / f"short_{index:02d}_{slug}.md"
 
             self.validate_scene(scene, index, normalized_sources)
-            self.validate_caption(caption, index)
+            self.validate_caption(caption, index, expected_duration=parse_float(short.get("target_duration_seconds")))
             self.validate_script(script, index)
 
         self.detect_repeated_scene_sources(normalized_sources)
@@ -281,6 +313,15 @@ class CourseRunValidator:
                 path,
                 fix="Sanitize narration/screen text and show matrices through a visual matrix object or MathTex bmatrix.",
             )
+        if "avoid_layout_collisions" not in text or "safe_place" not in text:
+            self.fail("scene.layout-helper", "Scene is missing the collision-aware safe placement helper.", path, fix="Regenerate Manim scenes after updating the course-manim skill.")
+
+        visual_match = re.search(r"visual_kind\s*=\s*['\"]([^'\"]+)['\"]", text)
+        visual_kind = visual_match.group(1) if visual_match else ""
+        if visual_kind in GROUP_VISUAL_KINDS and "def play_group_visual" not in text:
+            self.fail("scene.visual", f"Group-theory visual `{visual_kind}` falls through without a domain-specific group renderer.", path, fix="Regenerate scenes after updating the Manim skill helpers.")
+        if visual_kind in ECON_VISUAL_KINDS and "def play_econ_visual" not in text:
+            self.fail("scene.visual", f"Economics visual `{visual_kind}` falls through without a domain-specific economics renderer.", path, fix="Regenerate scenes after updating the Manim skill helpers.")
 
         play_count = len(re.findall(r"\bself\.play\s*\(", text))
         if play_count == 0:
@@ -318,7 +359,7 @@ class CourseRunValidator:
                         fix="Vary the visual model, transformations, layout, or worked-example animation.",
                     )
 
-    def validate_caption(self, path: Path, index: int) -> None:
+    def validate_caption(self, path: Path, index: int, *, expected_duration: float = 0.0) -> None:
         if not path.exists():
             self.fail("caption", f"SRT caption for short {index:02d} is missing.", path)
             return
@@ -337,8 +378,10 @@ class CourseRunValidator:
                 break
             previous_end = end
         total = max(end for _, end in cues)
-        if total < 20:
+        if total < 24:
             self.warn("caption", f"SRT caption for short {index:02d} is only {total:.1f}s long.", path)
+        if expected_duration > 0 and abs(total - expected_duration) > max(3.0, expected_duration * 0.12):
+            self.fail("caption.sync", f"SRT length {total:.1f}s does not match planned/render target {expected_duration:.1f}s.", path, fix="Regenerate captions from script-paced timing or rerun render so captions are stretched to the final duration.")
 
     def validate_script(self, path: Path, index: int) -> None:
         if not path.exists():
@@ -403,6 +446,11 @@ class CourseRunValidator:
                 )
             else:
                 self.validate_video_file(expected_final, role="final")
+                target = parse_float(short.get("target_duration_seconds"))
+                metadata = self.video_cache.get(expected_final.resolve(), {})
+                duration = float(metadata.get("duration") or 0.0)
+                if target > 0 and duration > 0 and duration + 1.0 < target:
+                    self.fail("video.sync", f"Final MP4 is {duration:.1f}s, shorter than the planned/audio target {target:.1f}s.", expected_final, fix="Do not use ffmpeg -shortest; pad video/audio and mux to the longest stream.")
 
             manim_outputs = [
                 path
@@ -442,6 +490,18 @@ class CourseRunValidator:
                     self.run / "render_report.json",
                     fix="Use a working voice engine before treating the video as upload-ready.",
                 )
+            sync = result.get("sync")
+            if isinstance(sync, dict):
+                raw = parse_float(sync.get("raw_duration"))
+                voice_dur = parse_float(sync.get("voice_duration"))
+                final = parse_float(sync.get("final_duration", result.get("duration_seconds")))
+                target = parse_float(sync.get("target_duration")) or (voice_dur + 0.35 if voice_dur > 0 else max(raw, voice_dur))
+                if voice_dur > 0 and final + 0.75 < target:
+                    self.fail("render-report.sync", f"Final video {final:.1f}s is shorter than the voice-aligned target {target:.1f}s.", self.run / "render_report.json", fix="Generate voice first, pace Manim to that duration, then mux without `-shortest`.")
+                if voice_dur > 0 and abs(final - (voice_dur + 0.35)) > max(1.2, voice_dur * 0.06):
+                    self.fail("render-report.sync", f"Final video {final:.1f}s is not aligned to voiceover length {voice_dur:.1f}s.", self.run / "render_report.json", fix="Time-scale the rendered video to the narration duration before padding the short tail.")
+                if raw > 0 and voice_dur > 0 and abs(raw - voice_dur) > 1.0 and parse_float(sync.get("video_time_scale")) == 1.0 and parse_float(sync.get("video_pad_seconds")) <= 0:
+                    self.fail("render-report.sync", "Raw Manim duration and voiceover duration differ, but no time scaling or padding was recorded.", self.run / "render_report.json", fix="Use the voice-first render flow and record video_time_scale in render_report.json.")
 
     def validate_video_file(self, path: Path, *, role: str) -> None:
         path = path.resolve()
@@ -470,7 +530,7 @@ class CourseRunValidator:
         min_duration = MIN_FINAL_DURATION_SECONDS if role == "final" else MIN_ANY_VIDEO_DURATION_SECONDS
         if duration < min_duration:
             self.fail("video.duration", f"{role} video duration is only {duration:.2f}s.", path, fix="Render a complete scene, not a stub or failed output.")
-        elif role == "final" and duration < 20:
+        elif role == "final" and duration < 24:
             self.warn("video.duration", f"Final video is short ({duration:.1f}s); confirm the concept, example, and recall prompt all fit.", path)
 
         if width and height:
@@ -639,6 +699,10 @@ def latex_outside_display_segments(line: str, in_display_math: bool) -> tuple[li
 
 
 def outside_math_segments(line: str) -> list[str]:
+    # Strip LaTeX inline math before scanning prose. The validator checks for
+    # bare caret/sqrt leaks outside math mode, so valid \(x^{2}\) spans
+    # should not be reported.
+    line = re.sub(r"\\\([^\n]*?\\\)", "", line)
     parts = re.split(r"(?<!\\)\$", line)
     return parts[0::2]
 
