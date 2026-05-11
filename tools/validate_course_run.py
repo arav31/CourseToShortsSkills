@@ -26,7 +26,20 @@ MIN_FINAL_DURATION_SECONDS = 10.0
 MIN_ANY_VIDEO_DURATION_SECONDS = 3.0
 TARGET_ASPECT_RATIO = 9 / 16
 GROUP_VISUAL_KINDS = {"group_structure", "group_cosets", "group_homomorphism", "group_action"}
-ECON_VISUAL_KINDS = {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve"}
+ECON_VISUAL_KINDS = {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve", "econ_tax_wedge"}
+REQUIRED_SYNC_FIELDS = ("raw_duration", "voice_duration", "target_duration", "final_duration", "video_time_scale")
+NUMERIC_RULE_DOMAINS = ("algebra", "group", "econ", "economics", "micro")
+CONCEPT_VISUAL_FAMILIES: list[tuple[tuple[str, ...], set[str]]] = [
+    (("coset",), {"group_cosets"}),
+    (("homomorphism",), {"group_homomorphism"}),
+    (("action", "orbit", "stabilizer"), {"group_action"}),
+    (("group",), GROUP_VISUAL_KINDS),
+    (("supply", "demand"), {"econ_supply_demand", "econ_tax_wedge"}),
+    (("tax", "incidence", "deadweight", "wedge"), {"econ_tax_wedge"}),
+    (("elasticity",), {"econ_elasticity", "econ_tax_wedge"}),
+    (("budget",), {"econ_budget", "econ_curve"}),
+    (("indifference", "curve"), {"econ_budget", "econ_curve", "econ_supply_demand"}),
+]
 
 
 
@@ -59,6 +72,7 @@ class CourseRunValidator:
             return self.issues
 
         plan = self.load_json(self.run / "short_plan.json", required=False)
+        self.validate_no_nested_run_artifacts()
         self.validate_source_pack()
         self.validate_notes()
         self.validate_short_plan(plan)
@@ -95,6 +109,21 @@ class CourseRunValidator:
             self.fail("json", f"JSON is not parseable: {exc.msg}.", path, line=exc.lineno, fix="Regenerate or repair this JSON file.")
             return None
 
+    def validate_no_nested_run_artifacts(self) -> None:
+        nested_markers = []
+        for marker_name in ("short_plan.json", "render_report.json"):
+            for marker in self.run.glob(f"**/{marker_name}"):
+                if marker.parent == self.run:
+                    continue
+                nested_markers.append(marker)
+        for marker in sorted(nested_markers):
+            self.fail(
+                "run.contamination",
+                f"Nested run artifact `{marker.name}` found below this run directory.",
+                marker,
+                fix="Move nested runs outside this run directory before validating or publishing.",
+            )
+
     def validate_source_pack(self) -> None:
         source_pack = self.run / "source_pack.json"
         if not source_pack.exists():
@@ -120,12 +149,14 @@ class CourseRunValidator:
             self.check_nonempty(tex, "notes")
             self.scan_latex_quality(tex)
             self.scan_notes_comprehensiveness(tex)
+            self.scan_notes_staleness(tex, require_figures=True)
         else:
             self.warn("notes", "notes.tex is missing; LaTeX formatting cannot be checked.", tex)
 
         if md.exists():
             self.check_nonempty(md, "notes")
             self.scan_markdown_quality(md)
+            self.scan_notes_staleness(md, require_figures=False)
         else:
             self.warn("notes", "notes.md is missing.", md)
 
@@ -152,6 +183,61 @@ class CourseRunValidator:
                 self.warn("notes.compile", message, report_path, fix=fix)
             else:
                 self.fail("notes.compile", message, report_path, fix=fix)
+        self.scan_notes_compile_warnings(report, report_path)
+
+    def scan_notes_staleness(self, path: Path, *, require_figures: bool) -> None:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        lowered = text.lower()
+        has_source_inventory = "source inventory" in lowered or "source-derived coverage checklist" in lowered
+        checklist_count = len(re.findall(r"(?m)^\s*(?:[-*]|\\item)\s*\[[ xX]?\]", text))
+        figure_count = len(re.findall(r"\\begin\{tikzpicture\}|\\includegraphics(?:\[[^\]]*\])?\{|!\[[^\]]*\]\(", text))
+        if has_source_inventory or checklist_count >= 6:
+            self.fail(
+                "notes.stale-template",
+                "Notes still look like a source inventory/checklist template rather than integrated course notes.",
+                path,
+                fix="Regenerate notes with the current comprehensive notes template.",
+            )
+        if figure_count == 0 and len(text) > 5000:
+            if require_figures:
+                self.fail(
+                    "notes.stale-template",
+                    "Notes contain no figures or embedded visuals; this matches stale low-quality note output.",
+                    path,
+                    fix="Regenerate notes with topic-specific figures enabled.",
+                )
+            else:
+                self.warn(
+                    "notes.markdown",
+                    "Markdown notes have no embedded figures; TeX/PDF remains the canonical visual notes artifact.",
+                    path,
+                )
+
+    def scan_notes_compile_warnings(self, report: dict[str, Any], report_path: Path) -> None:
+        text = json.dumps(report, ensure_ascii=False)
+        candidates = [self.run / "notes.log", self.run / "notes_compile.log"]
+        for raw_path in (report.get("log_file"), report.get("log_path"), report.get("tex_log")):
+            if isinstance(raw_path, str) and raw_path:
+                candidates.append(self.run / raw_path)
+        for candidate in candidates:
+            if candidate.exists() and candidate.is_file():
+                text += "\n" + candidate.read_text(encoding="utf-8", errors="replace")
+        warning_counts = report.get("warning_counts") if isinstance(report.get("warning_counts"), dict) else {}
+        overfull = max(
+            int(warning_counts.get("overfull_hboxes", 0) or 0),
+            len(re.findall(r"Overfull \\hbox|Overfull \\vbox", text)),
+        )
+        underfull = max(
+            int(warning_counts.get("underfull_hboxes", 0) or 0),
+            len(re.findall(r"Underfull \\hbox|Underfull \\vbox", text)),
+        )
+        if overfull >= 8 or underfull >= 20 or (overfull + underfull) >= 24:
+            self.warn(
+                "notes.compile.layout",
+                f"LaTeX reported {overfull} overfull and {underfull} underfull boxes.",
+                report_path,
+                fix="Inspect the notes compile log and simplify or reflow crowded equations, tables, and figures.",
+            )
 
     def scan_latex_quality(self, path: Path) -> None:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -275,6 +361,8 @@ class CourseRunValidator:
             return
 
         normalized_sources: list[tuple[Path, str]] = []
+        scene_visuals: list[dict[str, Any]] = []
+        domain_text = json.dumps(shorts, ensure_ascii=False).lower()
         for short in shorts:
             index = int(short.get("index", 0) or 0)
             concept = str(short.get("concept", f"short-{index}"))
@@ -283,28 +371,30 @@ class CourseRunValidator:
             caption = self.run / str(short.get("srt_file") or f"captions/short_{index:02d}_{slug}.srt")
             script = self.run / "scripts" / f"short_{index:02d}_{slug}.md"
 
-            self.validate_scene(scene, index, normalized_sources)
+            visual_kind = self.validate_scene(scene, index, normalized_sources)
+            scene_visuals.append({"path": scene, "visual_kind": visual_kind, "concept": concept})
             self.validate_caption(caption, index, expected_duration=parse_float(short.get("target_duration_seconds")))
             self.validate_script(script, index)
 
         self.detect_repeated_scene_sources(normalized_sources)
+        self.validate_scene_visual_quality(scene_visuals, domain_text)
 
     def scene_asset_stage_present(self, shorts: list[dict[str, Any]]) -> bool:
         if any((self.run / dirname).exists() for dirname in ("scenes", "scripts", "captions")):
             return True
         return any("scene_file" in short or "srt_file" in short or "class_name" in short for short in shorts)
 
-    def validate_scene(self, path: Path, index: int, normalized_sources: list[tuple[Path, str]]) -> None:
+    def validate_scene(self, path: Path, index: int, normalized_sources: list[tuple[Path, str]]) -> str:
         if not path.exists():
             self.fail("scene", f"Scene file for short {index:02d} is missing.", path, fix="Run `python tools/stem_course.py manim --run <run>` or restore the scene file.")
-            return
+            return ""
         self.check_nonempty(path, "scene")
         text = path.read_text(encoding="utf-8", errors="replace")
         try:
             compile(text, str(path), "exec")
         except SyntaxError as exc:
             self.fail("scene", f"Scene Python has a syntax error: {exc.msg}.", path, line=exc.lineno, fix="Repair the Manim scene before rendering.")
-            return
+            return ""
 
         if re.search(r"\b(?:setup|calc|question|answer)_lines\s*=\s*\[[^\n]*\[\s*\[", text):
             self.fail(
@@ -315,6 +405,8 @@ class CourseRunValidator:
             )
         if "avoid_layout_collisions" not in text or "safe_place" not in text:
             self.fail("scene.layout-helper", "Scene is missing the collision-aware safe placement helper.", path, fix="Regenerate Manim scenes after updating the course-manim skill.")
+        if "avoid_layout_collisions" not in text:
+            self.fail("scene.stale-template", "Scene source is missing the current avoid_layout_collisions marker.", path, fix="Regenerate Manim scenes with the current template.")
 
         visual_match = re.search(r"visual_kind\s*=\s*['\"]([^'\"]+)['\"]", text)
         visual_kind = visual_match.group(1) if visual_match else ""
@@ -344,6 +436,58 @@ class CourseRunValidator:
             self.warn("scene.orientation", "Scene does not set config.pixel_width and config.pixel_height.", path, fix="Set 1080x1920 or another vertical 9:16 size.")
 
         normalized_sources.append((path, normalize_scene_source(text)))
+        return visual_kind
+
+    def validate_scene_visual_quality(self, scene_visuals: list[dict[str, Any]], domain_text: str) -> None:
+        if not scene_visuals:
+            return
+        kinds = [str(item.get("visual_kind") or "") for item in scene_visuals]
+        known = [kind for kind in kinds if kind]
+        if not known:
+            self.warn("scene.visual-quality", "No scene source declares visual_kind; visual variety cannot be audited.", self.run / "scenes")
+            return
+        total = len(scene_visuals)
+        numeric_count = sum(1 for kind in kinds if kind == "numeric_rule")
+        domain_needs_specifics = any(token in domain_text for token in NUMERIC_RULE_DOMAINS)
+        if domain_needs_specifics:
+            numeric_ratio = numeric_count / total
+            if numeric_count >= 3 and numeric_ratio > 0.35:
+                self.fail(
+                    "scene.visual-quality",
+                    f"{numeric_count}/{total} scenes use generic visual_kind='numeric_rule' in a domain that needs concept-specific visuals.",
+                    self.run / "scenes",
+                    fix="Use group/economics/algebra visual families instead of generic numeric-rule scenes.",
+                )
+            elif numeric_count >= 2:
+                self.warn(
+                    "scene.visual-quality",
+                    f"{numeric_count}/{total} scenes use generic visual_kind='numeric_rule'.",
+                    self.run / "scenes",
+                    fix="Prefer concept-specific visual families for repeated domain concepts.",
+                )
+        counts = {kind: kinds.count(kind) for kind in set(known)}
+        dominant_kind, dominant_count = max(counts.items(), key=lambda item: (item[1], item[0]))
+        dominant_ratio = dominant_count / total
+        if total >= 4 and dominant_count >= 4 and dominant_ratio >= 0.65:
+            severity = self.fail if dominant_kind == "numeric_rule" or dominant_ratio >= 0.8 else self.warn
+            severity(
+                "scene.visual-quality",
+                f"{dominant_count}/{total} scenes repeat visual_kind={dominant_kind!r}.",
+                self.run / "scenes",
+                fix="Vary visual_kind across the run so the videos do not feel templated.",
+            )
+        for item in scene_visuals:
+            concept_text = str(item.get("concept") or "").lower()
+            visual_kind = str(item.get("visual_kind") or "")
+            for tokens, expected in CONCEPT_VISUAL_FAMILIES:
+                if any(token in concept_text for token in tokens) and visual_kind not in expected:
+                    self.warn(
+                        "scene.visual-family",
+                        f"Concept {item.get('concept')!r} uses visual_kind={visual_kind!r}, not one of {sorted(expected)}.",
+                        item.get("path") if isinstance(item.get("path"), Path) else self.run / "scenes",
+                        fix="Regenerate or edit the scene to use the concept-specific visual family.",
+                    )
+                    break
 
     def detect_repeated_scene_sources(self, sources: list[tuple[Path, str]]) -> None:
         for i, (left_path, left_text) in enumerate(sources):
@@ -491,6 +635,23 @@ class CourseRunValidator:
                     fix="Use a working voice engine before treating the video as upload-ready.",
                 )
             sync = result.get("sync")
+            if isinstance(voice, dict) and voice.get("status") == "ok":
+                if not isinstance(sync, dict):
+                    self.fail(
+                        "render-report.sync",
+                        f"Voiceover for short {result.get('index')} is ok, but no sync object was recorded.",
+                        self.run / "render_report.json",
+                        fix="Record raw_duration, voice_duration, target_duration, final_duration, and video_time_scale in render_report.json.",
+                    )
+                    continue
+                missing_sync = [field for field in REQUIRED_SYNC_FIELDS if field not in sync]
+                if missing_sync:
+                    self.fail(
+                        "render-report.sync",
+                        f"Voiceover for short {result.get('index')} is ok, but sync is missing {', '.join(missing_sync)}.",
+                        self.run / "render_report.json",
+                        fix="Regenerate render_report.json with complete sync provenance.",
+                    )
             if isinstance(sync, dict):
                 raw = parse_float(sync.get("raw_duration"))
                 voice_dur = parse_float(sync.get("voice_duration"))
@@ -541,10 +702,10 @@ class CourseRunValidator:
         else:
             self.fail("video.probe", "Video stream width/height could not be read.", path)
 
-        if not has_audio:
+        if not has_audio and role == "final":
             message = f"{role} video has no audio stream."
             fix = "Render with a working voice engine; silent files are drafts, not upload-ready videos."
-            if role == "final" and not self.draft:
+            if not self.draft:
                 self.fail("video.audio", message, path, fix=fix)
             else:
                 self.warn("video.audio", message, path, fix=fix)
@@ -664,11 +825,17 @@ class CourseRunValidator:
                 self.fail("publish-queue", f"Queue item {item.get('short_index')} has no video_file.", queue_path)
                 continue
             video_path = self.run / str(video_file)
+            status = str(item.get("status") or "").lower()
             if not video_path.exists():
-                self.fail("publish-queue", f"Queue item {item.get('short_index')} points to a missing local video.", video_path)
+                if status == "ready":
+                    self.fail("publish-queue", f"Queue item {item.get('short_index')} is marked ready but its local final video is missing.", video_path)
+                else:
+                    self.warn("publish-queue", f"Queue item {item.get('short_index')} points to a missing local video.", video_path)
             else:
                 self.validate_video_file(video_path, role="final")
-            if not item.get("video_url"):
+            if status == "ready" and not item.get("video_url"):
+                self.warn("publish-queue", f"Queue item {item.get('short_index')} is locally ready but has no public video_url for API publishing.", queue_path, fix="Host the MP4s and rerun queue with `--public-base-url`.")
+            elif not item.get("video_url"):
                 self.warn("publish-queue", f"Queue item {item.get('short_index')} has no public video_url for API publishing.", queue_path, fix="Host the MP4s and rerun queue with `--public-base-url`.")
 
     def check_nonempty(self, path: Path, area: str) -> None:

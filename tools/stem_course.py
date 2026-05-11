@@ -29,6 +29,7 @@ DEFAULT_SHORTS = 40
 MAX_CRAWL_CANDIDATES = 240
 FFMPEG = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
 EXTRA_TEX_PATHS = ["/Library/TeX/texbin", "/opt/homebrew/bin", "/usr/local/bin"]
+NOTES_GENERATOR_VERSION = "stem-course-notes-v2"
 
 
 
@@ -229,12 +230,35 @@ SOURCE_TERM_BLOCKLIST = {
     "opencourseware", "privacy", "problem set", "problem sets", "readings", "related resources", "homework", "exam", "final exam",
     "resource", "resources", "search", "share", "site", "skip", "terms", "transcript", "video",
     "video lectures", "view video", "youtube",
+    "all rights", "also available", "available online", "back to top", "cookie", "cookies", "course info",
+    "course material", "course materials", "course menu", "course number", "course site", "courseware",
+    "department", "departments", "description", "download course", "download transcript", "download video",
+    "faculty", "file", "files", "instructor", "instructors", "language", "learn", "learning resource",
+    "left navigation", "legal notices", "level", "metadata", "navigation", "next lecture", "previous lecture",
+    "online publication", "open license", "publication date", "related content", "rights reserved",
+    "search ocw", "share this", "social media", "student", "students", "topics", "undergraduate",
+    "back", "top", "studies",
 }
 
 SOURCE_TERM_BLOCK_PATTERNS = (
     "download", "opencourseware", "creative commons", "license", "youtube", "transcript",
     "course home", "site menu", "privacy", "terms of use", "donate", "learn more", "massachusetts", "institute", "member", "contact", "educator", "learner",
+    "all rights", "back to top", "cookie", "course info", "course materials", "course site", "department", "download file",
+    "download transcript", "download video", "left navigation", "legal notice", "metadata", "mit open", "ocw", "online publication",
+    "previous lecture", "related resource", "rights reserved", "search this", "share this", "skip to",
 )
+
+SOURCE_TERM_PREFERRED_MARKERS = {
+    "algorithm", "array", "basis", "budget", "consumer", "coset", "cost", "demand", "domain", "elasticity",
+    "energy", "equilibrium", "field", "force", "game", "graph", "group", "ideal", "kernel", "market",
+    "matrix", "marginal", "momentum", "orbit", "price", "recurrence", "ring", "sequence", "series",
+    "subgroup", "supply", "surplus", "tax", "torque", "utility", "vector", "wave",
+}
+
+SOURCE_TERM_CONTEXT_MARKERS = {
+    "definition", "derive", "equation", "example", "lecture", "lemma", "method", "model", "proof", "problem",
+    "section", "session", "solve", "syllabus", "theorem", "unit",
+}
 
 
 
@@ -579,7 +603,9 @@ def source_term_concept(term: str, domain: str | None) -> Concept:
         visual = "econ_curve"
         formula = r"Y=f(X)"
         prereqs = ["graphs", "marginal reasoning"]
-        if any(word in lower for word in ("demand", "supply", "market", "equilibrium", "surplus")):
+        if any(word in lower for word in ("tax", "incidence", "deadweight", "wedge")):
+            visual, formula, prereqs = "econ_tax_wedge", r"P_b-P_s=t", ["graphs", "markets", "elasticity"]
+        elif any(word in lower for word in ("demand", "supply", "market", "equilibrium", "surplus")):
             visual, formula, prereqs = "econ_supply_demand", r"Q_s(P)=Q_d(P)", ["graphs", "markets"]
         elif any(word in lower for word in ("elasticity", "percent", "response")):
             visual, formula, prereqs = "econ_elasticity", r"E=(\%\Delta Q)/(\%\Delta P)", ["percent changes", "demand"]
@@ -615,33 +641,64 @@ def source_term_concept(term: str, domain: str | None) -> Concept:
     )
 
 
+def source_term_quality(term: str, count: int = 1) -> int:
+    normalized = re.sub(r"\s+", " ", term.lower()).strip()
+    words = normalized.split()
+    score = count * 3 + min(len(words), 3)
+    if any(word in SOURCE_TERM_PREFERRED_MARKERS for word in words):
+        score += 18
+    if any(marker in normalized for marker in SOURCE_TERM_CONTEXT_MARKERS):
+        score += 6
+    if len(words) == 1 and normalized not in SOURCE_TERM_PREFERRED_MARKERS:
+        score -= 4
+    if any(word in {"course", "lecture", "notes", "problem", "resource", "section"} for word in words):
+        score -= 5
+    if any(pattern in normalized for pattern in SOURCE_TERM_BLOCK_PATTERNS):
+        score -= 60
+    return score
+
+
 def frequent_terms(text: str) -> list[str]:
     stop = {
         "course", "lecture", "lectures", "chapter", "section", "the", "and", "for", "with", "this", "that",
         "from", "have", "notes", "page", "problem", "problems", "example", "examples", "using", "where",
         "there", "which", "then", "than", "into", "will", "shall", "their", "about", "between", "through",
+        "also", "available", "content", "copyright", "download", "file", "files", "instructor", "learn", "learning",
+        "material", "materials", "metadata", "navigation", "online", "open", "publication", "related", "reserved", "rights",
+        "share", "site", "student", "students", "study", "studies", "topic", "topics", "undergraduate", "back", "top",
     }
     words = re.findall(r"\b[a-zA-Z][a-zA-Z-]{3,}\b", text.lower())
     counts: dict[str, int] = {}
     for word in words:
-        if word not in stop:
+        if word not in stop and is_course_vocabulary_term(word):
             counts[word] = counts.get(word, 0) + 1
     phrase_counts: dict[str, int] = {}
     usable = [w for w in words if w not in stop]
     for size in (2, 3):
         for i in range(max(0, len(usable) - size + 1)):
             phrase = " ".join(usable[i : i + size])
-            if len(set(phrase.split())) > 1:
+            if len(set(phrase.split())) > 1 and is_course_vocabulary_term(phrase):
                 phrase_counts[phrase] = phrase_counts.get(phrase, 0) + 1
-    ranked_phrases = [p for p, n in sorted(phrase_counts.items(), key=lambda item: (item[1], len(item[0])), reverse=True) if n >= 2]
-    ranked_words = [w for w, _ in sorted(counts.items(), key=lambda item: item[1], reverse=True)]
+    ranked_phrases = [
+        p for p, n in sorted(
+            phrase_counts.items(),
+            key=lambda item: (source_term_quality(item[0], item[1]), item[1], len(item[0])),
+            reverse=True,
+        ) if n >= 2
+    ]
+    ranked_words = [
+        w for w, n in sorted(
+            counts.items(),
+            key=lambda item: (source_term_quality(item[0], item[1]), item[1]),
+            reverse=True,
+        )
+    ]
     out: list[str] = []
     for term in ranked_phrases + ranked_words:
         normalized = term.strip()
         if normalized and all(normalized not in existing and existing not in normalized for existing in out):
             out.append(normalized)
     return out
-
 
 def source_text(pack: dict[str, object]) -> str:
     return "\n".join(str(m.get("text", "")) for m in pack.get("materials", []) if isinstance(m, dict))
@@ -661,6 +718,13 @@ def is_course_vocabulary_term(term: str) -> bool:
     if any(word in SOURCE_TERM_BLOCKLIST for word in words):
         return False
     if not any(re.search(r"[a-z]", word) for word in words):
+        return False
+    if re.fullmatch(r"(?:lecture|session|unit|chapter|section)\s+\d+[a-z]?", normalized):
+        return False
+    if re.fullmatch(r"(?:pdf|html|www|http|https|email|copyright|reserved)s?", normalized):
+        return False
+    generic_words = {"activity", "available", "content", "description", "information", "material", "materials", "overview", "resource", "resources", "topic", "topics"}
+    if all(word in generic_words for word in words):
         return False
     return True
 
@@ -768,6 +832,91 @@ def latex_escape(s: str) -> str:
     return (s.replace("\\", r"\textbackslash{}").replace("&", r"\&").replace("%", r"\%").replace("$", r"\$")
              .replace("#", r"\#").replace("_", r"\_").replace("^", r"\^{}").replace("~", r"\textasciitilde{}")
              .replace("{", r"\{").replace("}", r"\}"))
+
+
+FORMULA_MACROS = {
+    "alpha", "beta", "cdot", "cdots", "cong", "cos", "det", "dim", "Delta", "epsilon", "exp",
+    "frac", "ge", "geq", "hat", "im", "in", "ker", "lambda", "Lambda", "langle", "ldots",
+    "le", "leq", "left", "ln", "log", "mathbb", "mathcal", "mathbf", "mid", "mu", "neq",
+    "notin", "operatorname", "phi", "pi", "prod", "rangle", "right", "Rightarrow", "sigma",
+    "Sigma", "sin", "sqrt", "subset", "subseteq", "sum", "tan", "text", "theta", "times",
+    "triangleleft", "varphi", "vec",
+}
+
+
+def formula_text_value(formula: str) -> str:
+    text_value = str(formula).replace(r"\ ", " ").replace("\\", " ")
+    return re.sub(r"\s+", " ", plain_math(text_value)).strip()
+
+
+def formula_has_unknown_macros(formula: str) -> bool:
+    return any(match.group(1) not in FORMULA_MACROS for match in re.finditer(r"\\([A-Za-z]+)", str(formula)))
+
+
+def formula_like_string(formula: str) -> bool:
+    raw = str(formula).strip()
+    if not raw:
+        return False
+    if MATRIX_LITERAL_RE.search(raw) or ROW_MATRIX_RE.fullmatch(raw):
+        return True
+    has_relation = bool(re.search(r"(?:=|<=|>=|<|>|\\leq|\\geq|\\neq|\\subseteq|\\subset|\\in|\\notin|\\Rightarrow)", raw))
+    has_math_structure = bool(re.search(r"[0-9_^{}()+*/]|\\(?:" + "|".join(sorted(FORMULA_MACROS)) + r")\b", raw))
+    if has_relation or has_math_structure:
+        words = re.findall(r"[A-Za-z]{3,}", re.sub(r"\\[A-Za-z]+", " ", raw))
+        prose_markers = {"after", "before", "because", "contract", "hidden", "private", "public", "where", "when"}
+        return len([word for word in words if word.lower() in prose_markers]) <= 2 or has_relation
+    return False
+
+
+def sanitize_formula_latex(formula: str) -> str:
+    raw = str(formula).strip()
+    if not raw:
+        return r"\text{formula cue not recorded}"
+    if not formula_like_string(raw):
+        return r"\text{" + latex_escape(formula_text_value(raw) or raw).replace("\\textbackslash{}", "") + "}"
+    work = raw.replace(r"\ ", " ")
+
+    def macro_repl(match: re.Match[str]) -> str:
+        name = match.group(1)
+        return "\\" + name if name in FORMULA_MACROS else name
+
+    work = re.sub(r"\\([A-Za-z]+)", macro_repl, work)
+
+    def relation_side_repl(side_text: str) -> str:
+        side = side_text.strip()
+        if re.fullmatch(r"[A-Za-z][A-Za-z ]{1,32}", side) and " " in side:
+            return r"\mathrm{" + latex_escape(side).replace(" ", r"\ ") + "}"
+        if re.fullmatch(r"[A-Z]{2,8}", side):
+            return r"\mathrm{" + side + "}"
+        return side
+
+    relation_tokens = {
+        "<=": r"\leq",
+        ">=": r"\geq",
+        "!=": r"\neq",
+        "<": "<",
+        ">": ">",
+        "=": "=",
+        r"\leq": r"\leq",
+        r"\geq": r"\geq",
+        r"\neq": r"\neq",
+        r"\Rightarrow": r"\Rightarrow",
+    }
+    parts = re.split(r"(<=|>=|!=|=|<|>|\\leq|\\geq|\\neq|\\Rightarrow)", work)
+    if len(parts) > 1:
+        formatted_parts = []
+        for i, part in enumerate(parts):
+            if i % 2 == 0:
+                formatted_parts.append(relation_side_repl(part))
+            else:
+                formatted_parts.append(" " + relation_tokens.get(part, part) + " ")
+        work = "".join(formatted_parts)
+    work = re.sub(r"\b([A-Z]{2,})(?=_|\()", r"\\operatorname{\1}", work)
+    return re.sub(r"\s+", " ", work).strip()
+
+
+def latex_formula_display(short: dict[str, object]) -> str:
+    return sanitize_formula_latex(str(short.get("formula", "")))
 
 
 MATRIX_LITERAL_RE = re.compile(r"\[\[[^\]]+\](?:\s*,\s*\[[^\]]+\])*\]")
@@ -1079,11 +1228,15 @@ def compact_key_concept(short: dict[str, object]) -> str:
 
 def plain_formula_read(short: dict[str, object]) -> str:
     formula = str(short.get("formula", ""))
-    return plain_math(formula) if formula else str(short.get("plain_formula", ""))
+    if not formula:
+        return str(short.get("plain_formula", ""))
+    if not formula_like_string(formula) or formula_has_unknown_macros(formula) or r"\ " in formula:
+        return formula_text_value(formula)
+    return plain_math(formula)
 
 
 def latex_formula_reference(short: dict[str, object]) -> str:
-    formula = str(short.get("formula", ""))
+    formula = latex_formula_display(short)
     plain = latex_escape(plain_formula_read(short))
     return rf"\(\displaystyle {formula}\)\par{{\footnotesize {plain}}}"
 
@@ -1167,6 +1320,23 @@ def compile_notes_pdf(run: Path, plan: dict[str, object], engine: str = "auto") 
     return report
 
 
+def latex_warning_counts_from_logs(run: Path, names: list[str]) -> dict[str, int]:
+    chunks: list[str] = []
+    for name in names:
+        log = run / name
+        if log.exists():
+            chunks.append(log.read_text(encoding="utf-8", errors="replace"))
+    main_log = run / "notes.log"
+    if main_log.exists():
+        chunks.append(main_log.read_text(encoding="utf-8", errors="replace"))
+    text = "\n".join(chunks)
+    return {
+        "latex_warnings": len(re.findall(r"(?:LaTeX|Package [^\n]+|Class [^\n]+) Warning:", text)),
+        "overfull_hboxes": len(re.findall(r"Overfull \\hbox", text)),
+        "underfull_hboxes": len(re.findall(r"Underfull \\hbox", text)),
+    }
+
+
 def run_latex_engine(run: Path) -> dict[str, object]:
     tex = run / "notes.tex"
     latexmk = find_executable("latexmk")
@@ -1174,9 +1344,10 @@ def run_latex_engine(run: Path) -> dict[str, object]:
         cmd = [latexmk, "-pdf", "-interaction=nonstopmode", "-halt-on-error", "notes.tex"]
         result = subprocess.run(cmd, cwd=run, text=True, capture_output=True, timeout=300)
         (run / "notes_latexmk.log").write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
+        warning_counts = latex_warning_counts_from_logs(run, ["notes_latexmk.log"])
         if result.returncode == 0 and (run / "notes.pdf").exists():
-            return {"status": "ok", "engine": "latexmk", "pdf": "notes.pdf"}
-        return {"status": "failed", "engine": "latexmk", "message": "latexmk failed; see notes_latexmk.log"}
+            return {"status": "ok", "engine": "latexmk", "pdf": "notes.pdf", "warning_counts": warning_counts}
+        return {"status": "failed", "engine": "latexmk", "message": "latexmk failed; see notes_latexmk.log", "warning_counts": warning_counts}
     pdflatex = find_executable("pdflatex")
     if pdflatex:
         last = None
@@ -1185,16 +1356,18 @@ def run_latex_engine(run: Path) -> dict[str, object]:
             (run / f"notes_pdflatex_pass_{i + 1}.log").write_text(last.stdout + "\n" + last.stderr, encoding="utf-8")
             if last.returncode != 0:
                 break
+        warning_counts = latex_warning_counts_from_logs(run, ["notes_pdflatex_pass_1.log", "notes_pdflatex_pass_2.log"])
         if last and last.returncode == 0 and (run / "notes.pdf").exists():
-            return {"status": "ok", "engine": "pdflatex", "pdf": "notes.pdf"}
-        return {"status": "failed", "engine": "pdflatex", "message": "pdflatex failed; see notes_pdflatex_pass_*.log"}
+            return {"status": "ok", "engine": "pdflatex", "pdf": "notes.pdf", "warning_counts": warning_counts}
+        return {"status": "failed", "engine": "pdflatex", "message": "pdflatex failed; see notes_pdflatex_pass_*.log", "warning_counts": warning_counts}
     tectonic = find_executable("tectonic")
     if tectonic:
         result = subprocess.run([tectonic, "notes.tex"], cwd=run, text=True, capture_output=True, timeout=300)
         (run / "notes_tectonic.log").write_text(result.stdout + "\n" + result.stderr, encoding="utf-8")
+        warning_counts = latex_warning_counts_from_logs(run, ["notes_tectonic.log"])
         if result.returncode == 0 and (run / "notes.pdf").exists():
-            return {"status": "ok", "engine": "tectonic", "pdf": "notes.pdf"}
-        return {"status": "failed", "engine": "tectonic", "message": "tectonic failed; see notes_tectonic.log"}
+            return {"status": "ok", "engine": "tectonic", "pdf": "notes.pdf", "warning_counts": warning_counts}
+        return {"status": "failed", "engine": "tectonic", "message": "tectonic failed; see notes_tectonic.log", "warning_counts": warning_counts}
     return {"status": "missing-engine", "engine": None, "message": "No LaTeX engine found: install latexmk, pdflatex, or tectonic."}
 
 
@@ -1394,6 +1567,8 @@ def formula_operator_entries(formula: str, short: dict[str, object]) -> list[str
 
 def symbol_glossary(short: dict[str, object]) -> str:
     formula = str(short.get("formula", ""))
+    if formula and not formula_like_string(formula):
+        return "Formula cue is prose; translate it into variables before using it in a calculation."
     entries: list[str] = []
     seen_latex: set[str] = set()
     for key, latex in formula_symbol_tokens(formula):
@@ -1427,6 +1602,13 @@ def visual_label(value: object) -> str:
         "probability": "probability diagram",
         "chemistry_reaction": "reaction diagram",
         "numeric_rule": "input-rule-output diagram",
+        "algebra_ring_field": "ring-field structure diagram",
+        "algebra_ideal": "ideal absorption diagram",
+        "algebra_quotient_ring": "quotient-ring collapse diagram",
+        "algebra_factorization": "domain divisibility diagram",
+        "algebra_field_extension": "field-extension tower diagram",
+        "algebra_galois": "Galois root-symmetry diagram",
+        "game_payoff": "payoff matrix diagram",
         "group_structure": "group operation diagram",
         "group_cosets": "coset partition diagram",
         "group_homomorphism": "structure-preserving map diagram",
@@ -1435,6 +1617,7 @@ def visual_label(value: object) -> str:
         "econ_elasticity": "elasticity curve diagram",
         "econ_budget": "budget-line diagram",
         "econ_curve": "economic curve diagram",
+        "econ_tax_wedge": "tax wedge and deadweight-loss diagram",
     }
     key = str(value or "concept diagram").strip().lower()
     if key in labels:
@@ -1584,11 +1767,36 @@ def latex_topic_figure(short: dict[str, object]) -> str:
     concept = latex_escape(str(short.get("concept") or "topic"))
     visual = str(short.get("visual_type") or "").lower()
     title = latex_escape(visual_label(visual or "concept diagram"))
-    formula_text = screen_prose(str(short.get("plain_formula") or plain_formula_read(short) or short.get("formula") or ""))
+    formula_text = screen_prose(str(plain_formula_read(short) or short.get("plain_formula") or short.get("formula") or ""))
     formula = latex_escape(textwrap.shorten(formula_text, width=120, placeholder="...")) if formula_text else ""
+    haystack = " ".join(str(short.get(key, "")) for key in ("concept", "visual_type", "formula", "intuition", "hook")).lower()
 
-    if any(key in visual for key in ("econ", "demand", "supply", "elasticity", "budget", "curve")):
-        body = r"""
+    if any(key in visual or key in haystack for key in ("econ", "demand", "supply", "elasticity", "budget", "curve", "tax", "surplus", "game")):
+        if any(key in haystack for key in ("tax", "surplus", "welfare", "externality")):
+            body = r"""
+\draw[->,thick] (0,0) -- (6.4,0) node[right]{Quantity};
+\draw[->,thick] (0,0) -- (0,4.1) node[above]{Price};
+\draw[very thick,blue!70!black] (0.7,0.75) -- (5.7,3.45) node[right]{Supply};
+\draw[very thick,red!70!black] (0.7,3.65) -- (5.7,0.85) node[right]{Demand};
+\draw[fill=green!18,draw=green!45!black] (1.05,3.45) -- (3.05,2.18) -- (1.05,2.18) -- cycle;
+\draw[fill=orange!25,draw=orange!70!black] (1.05,0.95) -- (3.05,2.18) -- (1.05,2.18) -- cycle;
+\draw[dashed] (3.05,0) -- (3.05,2.18) -- (0,2.18);
+\draw[very thick,purple!70!black] (3.75,1.85) -- (3.75,2.65) node[midway,right]{tax wedge};
+\node at (2.0,3.05) {CS};
+\node at (2.0,1.35) {PS};
+"""
+        elif any(key in haystack for key in ("game", "nash", "strategy", "dominant")):
+            body = r"""
+\matrix[matrix of nodes,nodes={draw,minimum width=1.15cm,minimum height=0.65cm,anchor=center},column sep=-\pgflinewidth,row sep=-\pgflinewidth] at (3,1.8) {
+ & Left & Right \\
+Up & 3,2 & 1,4 \\
+Down & 4,1 & 2,3 \\
+};
+\draw[very thick,green!55!black,rounded corners] (2.42,1.46) rectangle (3.57,2.11);
+\node[align=center] at (3,-0.15) {best responses mark stable choices};
+"""
+        else:
+            body = r"""
 \draw[->,thick] (0,0) -- (6.4,0) node[right]{Quantity};
 \draw[->,thick] (0,0) -- (0,4.1) node[above]{Price};
 \draw[very thick,blue!70!black] (0.7,0.8) -- (5.7,3.55) node[right]{Supply};
@@ -1596,8 +1804,44 @@ def latex_topic_figure(short: dict[str, object]) -> str:
 \draw[dashed] (3.2,0) -- (3.2,2.17) -- (0,2.17);
 \filldraw[green!55!black] (3.2,2.17) circle (2.2pt) node[above right]{equilibrium};
 """
-    elif any(key in visual for key in ("group", "coset", "homomorphism", "action", "ring", "field")):
-        body = r"""
+    elif any(key in visual or key in haystack for key in ("group", "coset", "homomorphism", "action", "ring", "field", "domain")):
+        if any(key in haystack for key in ("ring", "field", "domain", "ideal")):
+            body = r"""
+\node[circle,draw,thick,minimum size=0.75cm] (a) at (0,1.6) {$a$};
+\node[circle,draw,thick,minimum size=0.75cm] (b) at (1.55,2.35) {$b$};
+\node[circle,draw,thick,minimum size=0.75cm] (c) at (1.55,0.85) {$c$};
+\node[draw,thick,rounded corners,minimum width=1.15cm,minimum height=0.72cm] (sum) at (3.25,1.6) {$b+c$};
+\node[draw,thick,rounded corners,minimum width=1.25cm,minimum height=0.72cm] (dist) at (5.15,1.6) {$ab+ac$};
+\draw[->,blue!70!black,thick] (b) -- (sum);
+\draw[->,blue!70!black,thick] (c) -- (sum);
+\draw[->,green!50!black,thick] (a) -- (dist);
+\draw[->,green!50!black,thick] (sum) -- (dist);
+\node[align=center] at (2.75,-0.1) {two operations share one structure};
+"""
+        elif any(key in haystack for key in ("action", "orbit", "stabilizer", "permutation")):
+            body = r"""
+\node[circle,draw,thick] (x1) at (0,1.3) {$x$};
+\node[circle,draw,thick] (x2) at (1.7,2.25) {$gx$};
+\node[circle,draw,thick] (x3) at (3.4,1.3) {$g^2x$};
+\node[circle,draw,thick] (x4) at (1.7,0.35) {$hx$};
+\draw[->,very thick,blue!70!black] (x1) -- (x2);
+\draw[->,very thick,blue!70!black] (x2) -- (x3);
+\draw[->,very thick,red!70!black] (x1) -- (x4);
+\draw[dashed,rounded corners] (-0.45,-0.2) rectangle (3.85,2.75);
+\node at (1.7,-0.55) {orbit of one point};
+"""
+        elif any(key in haystack for key in ("coset", "quotient", "lagrange", "normal")):
+            body = r"""
+\draw[rounded corners,thick,fill=blue!8] (0,0) rectangle (1.45,2.4);
+\draw[rounded corners,thick,fill=green!10] (1.8,0) rectangle (3.25,2.4);
+\draw[rounded corners,thick,fill=orange!13] (3.6,0) rectangle (5.05,2.4);
+\node at (0.72,1.35) {$H$};
+\node at (2.52,1.35) {$gH$};
+\node at (4.32,1.35) {$kH$};
+\node[align=center] at (2.52,-0.45) {cosets partition the group};
+"""
+        else:
+            body = r"""
 \node[circle,draw,thick,minimum size=0.72cm] (e) at (0,1.25) {$e$};
 \node[circle,draw,thick,minimum size=0.72cm] (g) at (2.0,2.35) {$g$};
 \node[circle,draw,thick,minimum size=0.72cm] (h) at (4.0,1.25) {$h$};
@@ -1608,7 +1852,7 @@ def latex_topic_figure(short: dict[str, object]) -> str:
 \draw[->,red!70!black,thick,bend left=16] (gh) to (e);
 \node[align=center] at (2.0,-0.95) {operation sends elements\\to structured outputs};
 """
-    elif any(key in visual for key in ("matrix", "vector", "linear", "basis", "projection", "eigen", "subspace", "transform")):
+    elif any(key in visual or key in haystack for key in ("matrix", "vector", "linear", "basis", "projection", "eigen", "subspace", "transform")):
         body = r"""
 \draw[step=0.55cm,gray!35,very thin] (0,0) grid (2.2,2.2);
 \draw[->,very thick,blue!70!black] (0,0) -- (1.65,1.1) node[above] {$x$};
@@ -1618,8 +1862,26 @@ def latex_topic_figure(short: dict[str, object]) -> str:
 \draw[->,thick] (3.55,1.1) -- (3.9,1.1);
 \node at (3.0,-0.45) {linear rule};
 """
-    elif any(key in visual for key in ("graph", "algorithm", "cs_", "complexity", "state")):
-        body = r"""
+    elif any(key in visual or key in haystack for key in ("graph", "algorithm", "cs_", "complexity", "state", "recurrence", "array")):
+        if any(key in haystack for key in ("array", "sort", "heap", "hash")):
+            body = r"""
+\foreach \x/\v in {0/7,1/2,2/5,3/9,4/1,5/4}{\node[draw,minimum width=0.65cm,minimum height=0.65cm] at (\x*0.72,1.3) {\v};}
+\draw[very thick,green!55!black,->] (0.72,0.65) -- (1.44,0.65) node[midway,below]{scan};
+\draw[very thick,blue!70!black,->] (2.88,2.05) -- (1.44,2.05) node[midway,above]{swap/update};
+\node[align=center] at (2.0,-0.15) {array state changes one index at a time};
+"""
+        elif any(key in haystack for key in ("recurrence", "dynamic", "dp")):
+            body = r"""
+\node[draw,thick] (a) at (0,1.6) {$T(n)$};
+\node[draw,thick] (b) at (1.8,2.35) {$T(n/2)$};
+\node[draw,thick] (c) at (1.8,0.85) {$T(n/2)$};
+\node[draw,thick] (d) at (3.6,2.35) {$T(n/4)$};
+\node[draw,thick] (e) at (3.6,0.85) {$T(n/4)$};
+\draw[->,thick] (a)--(b); \draw[->,thick] (a)--(c); \draw[->,thick] (b)--(d); \draw[->,thick] (c)--(e);
+\node at (2.1,-0.05) {work splits by level};
+"""
+        else:
+            body = r"""
 \node[circle,draw,thick] (a) at (0,1.4) {$A$};
 \node[circle,draw,thick] (b) at (1.55,2.3) {$B$};
 \node[circle,draw,thick] (c) at (3.1,1.35) {$C$};
@@ -1631,8 +1893,27 @@ def latex_topic_figure(short: dict[str, object]) -> str:
 \draw[very thick,green!55!black,->] (b)--(c);
 \node[align=center] at (2.4,-0.55) {trace states and invariants};
 """
-    elif any(key in visual for key in ("physics", "force", "wave", "energy", "calculus", "area", "slope")):
-        body = r"""
+    elif any(key in visual or key in haystack for key in ("physics", "force", "wave", "energy", "calculus", "area", "slope")):
+        if "force" in haystack:
+            body = r"""
+\draw[thick,fill=gray!15] (2.2,0.55) rectangle (3.25,1.35);
+\draw[->,very thick,red!70!black] (3.25,0.95) -- (5.15,0.95) node[right]{$F$};
+\draw[->,very thick,blue!70!black] (2.72,1.35) -- (2.72,2.75) node[above]{$N$};
+\draw[->,very thick,green!45!black] (2.72,0.55) -- (2.72,-0.75) node[below]{$mg$};
+\draw[thick] (0,0.55) -- (6,0.55);
+\node at (3,-1.25) {free-body forces balance or accelerate};
+"""
+        elif any(key in haystack for key in ("energy", "work", "potential")):
+            body = r"""
+\draw[->,thick] (0,0) -- (6.2,0) node[right]{$x$};
+\draw[->,thick] (0,0) -- (0,3.2) node[above]{$E$};
+\draw[very thick,blue!70!black] (0.4,2.4) .. controls (1.7,0.55) and (3.9,0.55) .. (5.4,2.4) node[right]{$U$};
+\draw[very thick,red!70!black] (0.35,2.85) -- (5.6,2.85) node[right]{$E_{total}$};
+\draw[dashed] (3.0,0) -- (3.0,0.72);
+\node at (3,-0.45) {motion trades kinetic and potential};
+"""
+        else:
+            body = r"""
 \draw[->,thick] (0,0) -- (6.2,0) node[right]{$t$};
 \draw[->,thick] (0,-1.4) -- (0,2.4) node[above]{$y$};
 \draw[very thick,blue!70!black] plot[smooth] coordinates {(0.25,0.25) (1.0,1.55) (1.8,1.05) (2.7,-0.55) (3.6,-0.85) (4.8,0.7) (5.7,1.65)};
@@ -1658,7 +1939,6 @@ def latex_topic_figure(short: dict[str, object]) -> str:
 \end{{center}}
 \emph{{Figure for {concept}.}} {title}. Related formula cue: {formula}
 """
-
 def latex_supplemental_topic_notes(pack: dict[str, object], shorts: list[dict[str, object]], limit: int = 40) -> str:
     sections: list[str] = []
     for term in source_coverage_terms(pack, shorts, limit=limit):
@@ -1783,7 +2063,7 @@ def cmd_notes(args: argparse.Namespace) -> None:
 \subsubsection*{{Formula and symbol check}}
 \begin{{formula}}
 \[
-{short['formula']}
+{latex_formula_display(short)}
 \]
 \textbf{{Plain-language read.}} {latex_escape(plain_formula_read(short))}.\\
 \textbf{{Symbols.}} {symbol_glossary(short)}.
@@ -1818,10 +2098,12 @@ Use a {latex_escape(visual_label(short.get('visual_type', 'concept diagram')))}:
 {latex_topic_answers(short)}
 """)
         practice_items.append(rf"\item \textbf{{{latex_escape(short['concept'])}.}} {question_tex} \emph{{Answer idea:}} {answer_tex}")
-    tex = rf"""\documentclass[11pt]{{article}}
+    tex = rf"""% Generated by {NOTES_GENERATOR_VERSION}; template=course-latex-notes
+\documentclass[11pt]{{article}}
 \usepackage[letterpaper,margin=0.92in]{{geometry}}
 \usepackage{{amsmath,amssymb,amsthm,longtable,booktabs,array}}
 \usepackage{{tikz}}
+\usetikzlibrary{{matrix,arrows.meta,calc,positioning}}
 \setlength{{\parskip}}{{0.35em}}
 \setlength{{\parindent}}{{0pt}}
 \renewcommand{{\arraystretch}}{{1.14}}
@@ -1968,19 +2250,33 @@ def screen_prose(text: object) -> str:
     normalized = MATRIX_LITERAL_RE.sub(lambda match: screen_matrix_literal(match.group(0)), normalized)
     normalized = re.sub(r"\b([A-Za-z]\w*)\s*=\s*matrix with rows", r"\1 is the matrix with rows", normalized)
     normalized = re.sub(r"\b([A-Za-z]\w*)\s*=\s*\[([^\]\n]{1,80})\]", r"\1 is the row matrix with entries \2", normalized)
+    normalized = re.sub(r"\\sqrt\{([^{}]+)\}", r"square root of \1", normalized)
     normalized = re.sub(r"\bsqrt\(([^)]*)\)", r"square root of \1", normalized)
     normalized = re.sub(r"([A-Za-z0-9_.]+)\s*\^\s*2\b", r"\1 squared", normalized)
+    normalized = re.sub(r"([A-Za-z0-9_.]+)\s*\^\s*\{([^{}]+)\}", r"\1 to the \2", normalized)
+    normalized = re.sub(r"([A-Za-z0-9_.]+)\s*\^\s*([A-Za-z0-9]+)", r"\1 to the \2", normalized)
+    normalized = re.sub(r"\\sum(?:_\{?([^{}\s]+)\}?)?(?:\^\{?([^{}\s]+)\}?)?", lambda m: "sum" + (f" from {m.group(1)}" if m.group(1) else "") + (f" to {m.group(2)}" if m.group(2) else ""), normalized)
+    normalized = re.sub(r"\\prod(?:_\{?([^{}\s]+)\}?)?(?:\^\{?([^{}\s]+)\}?)?", lambda m: "product" + (f" from {m.group(1)}" if m.group(1) else "") + (f" to {m.group(2)}" if m.group(2) else ""), normalized)
+    normalized = re.sub(r"\bprod(?:uct)?\s*\(([^)]*)\)", r"product of \1", normalized, flags=re.I)
+    normalized = re.sub(r"\bsum\s*\(([^)]*)\)", r"sum of \1", normalized, flags=re.I)
     normalized = re.sub(r"\b([APU])([xvb])\b", r"\1 \2", normalized)
+    normalized = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", normalized)
     normalized = re.sub(r"\b([A-Za-z])_\{?([A-Za-z0-9]+)\}?\b", r"\1 sub \2", normalized)
+    normalized = normalized.replace("\\cdots", " dot dot dot ").replace("\\times", " times ").replace("\\cdot", " times ")
     normalized = normalized.replace("*", " times ")
-    normalized = re.sub(r"\s*([=+/<>])\s*", r" \1 ", normalized)
-    normalized = re.sub(r"(?<=\d)\s*-\s*(?=\d)", " - ", normalized)
+    normalized = normalized.replace("\\leq", " <= ").replace("\\geq", " >= ").replace("\\neq", " not equal ")
+    normalized = normalized.replace("\\subseteq", " subset of ").replace("\\subset", " subset of ").replace("\\in", " in ")
+    normalized = re.sub(r"\s*(<=|>=|=|\+|/|<|>)\s*", r" \1 ", normalized)
+    normalized = re.sub(r"(?<![A-Za-z])\s*-\s*(?![A-Za-z])", " - ", normalized)
+    normalized = re.sub(r"([A-Za-z])(?=\()", r"\1 ", normalized)
+    normalized = re.sub(r"\s+([,.;:])", r"\\1", normalized)
+    normalized = re.sub(r"([,;:])(?=\S)", r"\1 ", normalized)
     normalized = re.sub(r"\s+", " ", normalized).strip()
     return normalized
 
-
 WORDS_PER_SECOND = 2.35
 MIN_SHORT_VIDEO_SECONDS = 24.0
+SCENE_METADATA_VERSION = "2026-05-11-video-rootfix2"
 
 
 def spoken_word_count(text: object) -> int:
@@ -2274,11 +2570,67 @@ def linear_combo_data(short: dict[str, object]) -> dict[str, object]:
     }
 
 
+
+def text_has_any(text: str, terms: tuple[str, ...]) -> bool:
+    return any(term in text for term in terms)
+
+
+def semantic_visual_kind(text: str) -> str | None:
+    if text_has_any(text, ("payoff", "nash", "dominant strateg", "best response", "game theory", "oligopoly", "strategic interaction", "prisoner")):
+        return "game_payoff"
+    if text_has_any(text, ("galois", "automorphism", "root symmetr", "gal(")):
+        return "algebra_galois"
+    if text_has_any(text, ("field extension", "extension degree", "algebraic element", "minimal polynomial", "finite field", "adjoin", "sqrt(2)", "q(sqrt")):
+        return "algebra_field_extension"
+    if text_has_any(text, ("polynomial ring", "quotient ring", "quotient rings", "f[x]", "r/i", "modular arithmetic")):
+        return "algebra_quotient_ring"
+    if text_has_any(text, ("euclidean domain", "principal ideal domain", "unique factorization", "ufd", "pid", "irreducible", "factorization")):
+        return "algebra_factorization"
+    if text_has_any(text, ("ideal", "ideals", "kernel", "absorb multiplication")) and "ring" in text:
+        return "algebra_ideal"
+    if text_has_any(text, ("ring", "rings", "field", "fields", "zero divisor", "inverse modulo", "modulo")):
+        return "algebra_ring_field"
+    if text_has_any(text, ("cache", "memory", "stack", "queue", "heap", "pointer", "array", "hash", "linked list")):
+        return "cs_array"
+    if text_has_any(text, ("recursion", "dynamic programming", "divide and conquer", "control flow", "branch", "loop", "algorithm", "sort", "search", "complexity", "runtime", "big-o", "o(")):
+        return "cs_array"
+    if text_has_any(text, ("graph", "tree", "network", "path", "node", "edge", "bfs", "dfs")):
+        return "cs_graph"
+    if text_has_any(text, ("state", "automaton", "transition", "markov")):
+        return "state_machine"
+    if text_has_any(text, ("free body", "force", "newton", "acceleration", "velocity", "momentum", "vector field")):
+        return "physics_force"
+    if text_has_any(text, ("energy", "work", "potential", "kinetic", "conservation")):
+        return "physics_energy"
+    if text_has_any(text, ("wave", "frequency", "amplitude", "oscillation", "phase")):
+        return "physics_wave"
+    return None
+
+
 def infer_visual_kind(short: dict[str, object]) -> str:
     explicit = str(short.get("visual_type", "generic")).strip().lower()
-    if explicit and explicit != "generic":
-        return explicit
     text = short_text(short).lower()
+    concept = str(short.get("concept", "")).lower()
+    concept_visuals = (
+        (("galois",), "algebra_galois"),
+        (("field extension", "algebraic element", "finite field"), "algebra_field_extension"),
+        (("quotient ring", "polynomial ring"), "algebra_quotient_ring"),
+        (("euclidean domain", "principal ideal domain", "unique factorization", "ufd"), "algebra_factorization"),
+        (("ideal",), "algebra_ideal"),
+        (("ring", "field"), "algebra_ring_field"),
+        (("nash", "dominant strateg", "oligopoly", "payoff"), "game_payoff"),
+        (("tax", "incidence", "deadweight", "wedge"), "econ_tax_wedge"),
+        (("surplus", "ceiling", "floor", "externalit", "public good", "welfare"), "econ_supply_demand"),
+        (("budget", "consumer choice", "preference", "utility", "indifference", "marginal rate of substitution", "marginal utility"), "econ_budget"),
+        (("elasticity",), "econ_elasticity"),
+        (("income", "substitution", "comparative statics", "cost", "production", "returns", "marginal product", "marginal cost", "average cost", "shutdown", "competition", "monopoly", "revenue", "price discrimination", "adverse selection", "moral hazard", "coase"), "econ_curve"),
+    )
+    inferred = next((kind for terms, kind in concept_visuals if any(term in concept for term in terms)), None) or semantic_visual_kind(text)
+    generic_fallbacks = {"", "generic", "numeric_rule", "state_machine"}
+    if inferred:
+        return inferred
+    if explicit and explicit not in generic_fallbacks:
+        return explicit
     if any(term in text for term in ("matrix", "linear system", "ax=", "a\\vec", "row operation")):
         return "matrix_vector"
     if "vector" in text or "coordinate" in text:
@@ -2287,24 +2639,11 @@ def infer_visual_kind(short: dict[str, object]) -> str:
         return "calculus_tangent"
     if any(term in text for term in ("integral", "area under", "accumulation", "riemann")):
         return "calculus_area"
-    if any(term in text for term in ("force", "newton", "acceleration", "velocity", "momentum")):
-        return "physics_force"
-    if any(term in text for term in ("energy", "work", "potential", "kinetic")):
-        return "physics_energy"
-    if any(term in text for term in ("wave", "frequency", "amplitude", "oscillation")):
-        return "physics_wave"
-    if any(term in text for term in ("graph", "tree", "network", "path", "node", "edge")):
-        return "cs_graph"
-    if any(term in text for term in ("algorithm", "array", "sort", "search", "complexity", "runtime")):
-        return "cs_array"
-    if any(term in text for term in ("state", "automaton", "transition", "markov")):
-        return "state_machine"
     if any(term in text for term in ("probability", "bayes", "distribution", "random", "expectation")):
         return "probability"
     if any(term in text for term in ("reaction", "molecule", "atom", "equilibrium", "chemical")):
         return "chemistry_reaction"
     return "numeric_rule"
-
 
 def visual_data_for(short: dict[str, object], kind: str) -> dict[str, object]:
     data: dict[str, object] = {"numbers": extract_numbers(short_text(short))}
@@ -2412,11 +2751,56 @@ def text_block(self, lines, font_size=25, color="#EAF2FF", max_width=7.4, line_b
     group = VGroup(*[Text(line, font_size=font_size, color=color, disable_ligatures=True) for line in clean_lines]).arrange(DOWN, buff=line_buff)
     return self.fit_in(group, max_width=max_width, max_height=max_height)
 
+def formula_fallback_text(self, latex, plain):
+    fallback = str(latex or plain or "")
+    slash = chr(92)
+    slash_pattern = re.escape(slash)
+    fallback = re.sub(slash_pattern + r"operatorname\{([^{}]+)\}", r"\\1", fallback)
+    fallback = re.sub(slash_pattern + r"frac\{([^{}]+)\}\{([^{}]+)\}", r"(\\1)/(\\2)", fallback)
+    fallback = re.sub(slash_pattern + r"sqrt\{([^{}]+)\}", chr(8730) + r"(\\1)", fallback)
+    replacements = [
+        (slash + "subseteq", " " + chr(8838) + " "),
+        (slash + "subset", " " + chr(8834) + " "),
+        (slash + "notin", " " + chr(8713) + " "),
+        (slash + "in", " " + chr(8712) + " "),
+        (slash + "leq", " " + chr(8804) + " "),
+        (slash + "geq", " " + chr(8805) + " "),
+        (slash + "neq", " " + chr(8800) + " "),
+        (slash + "Rightarrow", " " + chr(8658) + " "),
+        (slash + "times", " " + chr(215) + " "),
+        (slash + "cdot", " " + chr(183) + " "),
+        (slash + "langle", "<"),
+        (slash + "rangle", ">"),
+        (slash + "mathbb", ""),
+        (slash + "mathcal", ""),
+        (slash + "mathbf", ""),
+        (slash + "vec", ""),
+        (slash + "hat", ""),
+    ]
+    for old, new in replacements:
+        fallback = fallback.replace(old, new)
+    fallback = re.sub(r"_\{([^{}]+)\}", r"_\\1", fallback)
+    fallback = re.sub(r"\^\{([^{}]+)\}", r"^\\1", fallback)
+    fallback = fallback.replace("{", "").replace("}", "")
+    fallback = fallback.replace(slash, "")
+    fallback = " ".join(fallback.split())
+    if not fallback:
+        fallback = " ".join(str(plain or "").replace(slash, " ").split()) or "formula cue"
+    return fallback
+
 def formula_block(self, latex, plain, font_size=32, color="#F7C948", max_width=7.6):
-    try:
-        mob = MathTex(str(latex), font_size=font_size, color=color)
-    except Exception:
-        mob = Text(str(plain or latex), font_size=font_size, color=color, disable_ligatures=True)
+    candidates = []
+    for candidate in (latex, str(latex).strip().strip("$")):
+        candidate = str(candidate).strip()
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+    for candidate in candidates:
+        try:
+            mob = MathTex(candidate, font_size=font_size, color=color)
+            return self.fit_in(mob, max_width=max_width, max_height=1.15)
+        except Exception:
+            pass
+    mob = Text(self.formula_fallback_text(latex, plain), font_size=font_size, color=color, disable_ligatures=True)
     return self.fit_in(mob, max_width=max_width, max_height=1.15)
 
 def section_label(self, text, color="#F7C948"):
@@ -2435,7 +2819,8 @@ def fade_all_except(self, keep=None, run_time=0.6):
         self.play(*[FadeOut(mob) for mob in fading], run_time=run_time)
     self._layout_registry = [mob for mob in keep if hasattr(mob, "get_left")]
 
-def active_hold(self, duration, focus=None):
+
+def semantic_beat_hold(self, duration, focus=None, label=None):
     remaining = max(0.0, float(duration or 0))
     if remaining <= 0.05:
         return
@@ -2445,17 +2830,21 @@ def active_hold(self, duration, focus=None):
     if not focus:
         self.wait(remaining)
         return
-    group = VGroup(*focus)
     index = 0
     while remaining > 0.05:
-        step = min(5.2, remaining)
-        direction = RIGHT * (0.34 if index % 2 == 0 else -0.34)
-        # Move the visible scene group together during long narration holds.
-        # Longer pulses keep frame-diff validation healthy without exploding
-        # Manim render time into dozens of tiny animations.
-        self.play(group.animate.shift(direction).scale(1.02), rate_func=there_and_back, run_time=step)
+        mob = focus[index % len(focus)]
+        step = min(1.25, remaining)
+        accent = self.palette(index)
+        if index % 3 == 2:
+            animation = Circumscribe(mob, color=accent, fade_out=True, time_width=0.35, buff=0.08)
+        else:
+            animation = Indicate(mob, scale_factor=1.035, color=accent)
+        self.play(animation, run_time=step)
         remaining -= step
         index += 1
+
+def active_hold(self, duration, focus=None):
+    self.semantic_beat_hold(duration, focus, "key beat")
 
 def matrix_block(self, rows, font_size=30, color="#EAF2FF", bracket_color="#8FD3FF", column_colors=None, cell_colors=None):
     row_groups = VGroup()
@@ -2820,6 +3209,97 @@ def play_group_visual(self, kind, phase, data, primary_lines, secondary_lines=No
     self.play(FadeIn(result, shift=UP * 0.08), Indicate(nodes[-1]), run_time=0.9)
 
 
+def play_algebra_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    result = self.text_block(result_lines or secondary_lines or ["verify the algebraic structure"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    if kind == "algebra_ideal":
+        ring = Circle(radius=1.65, color="#58A6FF", fill_opacity=0.08)
+        ideal = Circle(radius=0.72, color="#F7C948", fill_opacity=0.2).move_to(ring)
+        arrows = VGroup(*[Arrow(ring.get_center() + RIGHT * 2.7 + UP * y, ideal.get_center() + RIGHT * 0.42 + UP * (y * 0.35), buff=0.06, color=self.palette(i), stroke_width=4) for i, y in enumerate([-0.55, 0.0, 0.55])])
+        labels = VGroup(Text("R", font_size=30, color="#58A6FF").next_to(ring, UP), Text("I", font_size=28, color="#F7C948").move_to(ideal), Text("rI stays in I", font_size=24, color="#7EE787").next_to(ring, DOWN, buff=0.35))
+        diagram = VGroup(ring, ideal, arrows, labels)
+        self.safe_place(diagram, y=0.35, max_width=7.5, max_height=4.7, top=3.0, bottom=-2.65)
+        self.play(FadeIn(caption), Create(ring), FadeIn(ideal), run_time=1.0)
+        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in arrows], lag_ratio=0.15), FadeIn(labels), run_time=1.2)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(ideal), run_time=0.9)
+        return
+    if kind == "algebra_quotient_ring":
+        blocks = VGroup()
+        for i, label in enumerate(["0+I", "a+I", "b+I"]):
+            rect = RoundedRectangle(width=1.65, height=1.1, corner_radius=0.1, color=self.palette(i), fill_color="#101A33", fill_opacity=0.82)
+            blocks.add(VGroup(rect, Text(label, font_size=24, color=self.palette(i)).move_to(rect)))
+        blocks.arrange(RIGHT, buff=0.34)
+        collapse = Text("I -> 0", font_size=28, color="#F7C948").next_to(blocks, DOWN, buff=0.38)
+        diagram = VGroup(blocks, collapse)
+        self.safe_place(diagram, y=0.35, max_width=7.6, max_height=3.7, top=2.6, bottom=-2.0)
+        self.play(FadeIn(caption), LaggedStart(*[FadeIn(block, shift=UP * 0.08) for block in blocks], lag_ratio=0.14), run_time=1.1)
+        self.play(Write(collapse), blocks[0].animate.set_fill("#7EE787", opacity=0.35), run_time=1.0)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(collapse), run_time=0.9)
+        return
+    if kind == "algebra_factorization":
+        root = Text("a", font_size=34, color="#EAF2FF")
+        factors = VGroup(Text("u", font_size=28, color="#8FD3FF"), Text("p1", font_size=28, color="#F7C948"), Text("p2", font_size=28, color="#7EE787"), Text("p3", font_size=28, color="#FF7B72")).arrange(RIGHT, buff=0.35)
+        factors.next_to(root, DOWN, buff=1.2)
+        arrows = VGroup(*[Line(root.get_bottom(), factor.get_top(), color=self.palette(i), stroke_width=4) for i, factor in enumerate(factors)])
+        label = Text("unique up to order and units", font_size=24, color="#F7C948").next_to(factors, DOWN, buff=0.35)
+        diagram = VGroup(root, arrows, factors, label)
+        self.safe_place(diagram, y=0.35, max_width=7.5, max_height=4.4, top=2.9, bottom=-2.6)
+        self.play(FadeIn(caption), FadeIn(root), run_time=0.8)
+        self.play(LaggedStart(*[Create(arrow) for arrow in arrows], *[FadeIn(f) for f in factors], lag_ratio=0.09), Write(label), run_time=1.35)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(factors), run_time=0.9)
+        return
+    if kind in {"algebra_field_extension", "algebra_galois"}:
+        base = RoundedRectangle(width=2.2, height=0.8, corner_radius=0.1, color="#58A6FF", fill_opacity=0.15)
+        mid = RoundedRectangle(width=3.0, height=0.8, corner_radius=0.1, color="#F7C948", fill_opacity=0.15).next_to(base, UP, buff=0.55)
+        top = RoundedRectangle(width=3.8, height=0.8, corner_radius=0.1, color="#7EE787", fill_opacity=0.15).next_to(mid, UP, buff=0.55)
+        labels = VGroup(Text("F", font_size=26, color="#58A6FF").move_to(base), Text("F(alpha)", font_size=25, color="#F7C948").move_to(mid), Text("roots / K", font_size=25, color="#7EE787").move_to(top))
+        tower = VGroup(base, mid, top, labels)
+        if kind == "algebra_galois":
+            roots = VGroup(*[Dot(radius=0.08, color=self.palette(i)).move_to(top.get_center() + RIGHT * (i - 1) * 0.55) for i in range(3)])
+            arrow = CurvedArrow(roots[0].get_center() + UP * 0.25, roots[2].get_center() + UP * 0.25, radius=1.0, color="#F7C948")
+            tower.add(roots, arrow)
+        self.safe_place(tower, y=0.15, max_width=7.3, max_height=4.7, top=3.0, bottom=-2.6)
+        self.play(FadeIn(caption), FadeIn(base), run_time=0.8)
+        self.play(FadeIn(mid, shift=UP * 0.1), FadeIn(top, shift=UP * 0.1), FadeIn(labels), run_time=1.1)
+        if kind == "algebra_galois":
+            self.play(Create(arrow), Rotate(roots, angle=TAU / 3, about_point=top.get_center()), run_time=1.1)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(top), run_time=0.9)
+        return
+    nodes = VGroup(Text("+", font_size=34, color="#58A6FF"), Text("x", font_size=34, color="#F7C948"), Text("1", font_size=34, color="#7EE787"), Text("inverse?", font_size=26, color="#FF7B72")).arrange(RIGHT, buff=0.45)
+    frame = RoundedRectangle(width=6.7, height=1.45, corner_radius=0.1, color="#58A6FF", fill_color="#101A33", fill_opacity=0.7).move_to(nodes)
+    law = Text("closed operations + distributive law", font_size=24, color="#EAF2FF").next_to(frame, DOWN, buff=0.35)
+    diagram = VGroup(frame, nodes, law)
+    self.safe_place(diagram, y=0.35, max_width=7.7, max_height=3.8, top=2.7, bottom=-2.2)
+    self.play(FadeIn(caption), Create(frame), FadeIn(nodes), run_time=1.0)
+    self.play(Write(law), nodes[-1].animate.set_color("#7EE787"), run_time=1.1)
+    self.play(FadeIn(result, shift=UP * 0.08), Indicate(nodes), run_time=0.9)
+
+def play_game_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
+    self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
+    cells = VGroup()
+    payoffs = [["3,3", "0,5"], ["5,0", "1,1"]]
+    for r in range(2):
+        row = VGroup()
+        for c in range(2):
+            box = Square(1.05, color=self.palette(r * 2 + c), fill_opacity=0.14)
+            row.add(VGroup(box, Text(payoffs[r][c], font_size=24, color="#EAF2FF").move_to(box)))
+        row.arrange(RIGHT, buff=0.08)
+        cells.add(row)
+    cells.arrange(DOWN, buff=0.08)
+    row_labels = VGroup(Text("High", font_size=20, color="#F7C948"), Text("Low", font_size=20, color="#F7C948")).arrange(DOWN, buff=0.72).next_to(cells, LEFT, buff=0.25)
+    col_labels = VGroup(Text("High", font_size=20, color="#58A6FF"), Text("Low", font_size=20, color="#58A6FF")).arrange(RIGHT, buff=0.42).next_to(cells, UP, buff=0.18)
+    marker = SurroundingRectangle(cells[1][1], color="#7EE787", buff=0.06)
+    diagram = VGroup(cells, row_labels, col_labels, marker)
+    self.safe_place(diagram, y=0.35, max_width=7.4, max_height=4.6, top=3.0, bottom=-2.6)
+    result = self.text_block(result_lines or secondary_lines or ["best responses meet at a stable cell"], font_size=22, color="#7EE787")
+    self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
+    self.play(FadeIn(caption), FadeIn(cells), FadeIn(row_labels), FadeIn(col_labels), run_time=1.0)
+    self.play(Create(marker), Indicate(cells[1][1]), run_time=1.0)
+    self.play(FadeIn(result, shift=UP * 0.08), Flash(marker, color="#7EE787"), run_time=0.9)
+
 def play_econ_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
     caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
     self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
@@ -2827,6 +3307,28 @@ def play_econ_visual(self, kind, phase, data, primary_lines, secondary_lines=Non
     self.safe_place(result, y=-5.05, max_height=1.35, top=-4.2, bottom=-6.25)
     axes = Axes(x_range=[0, 10, 2], y_range=[0, 10, 2], x_length=6.4, y_length=4.7, tips=False, axis_config={"color": "#EAF2FF", "stroke_width": 2})
     self.safe_place(axes, y=0.4, max_width=7.0, max_height=5.0, top=3.0, bottom=-2.55)
+    if kind == "econ_tax_wedge":
+        demand = Line(axes.c2p(1, 8.4), axes.c2p(8.6, 1.7), color="#58A6FF", stroke_width=6)
+        supply = Line(axes.c2p(1.0, 1.4), axes.c2p(8.1, 7.8), color="#F7C948", stroke_width=6)
+        taxed_supply = Line(axes.c2p(1.0, 2.55), axes.c2p(8.1, 8.95), color="#FF7B72", stroke_width=6)
+        before = Dot(axes.c2p(4.75, 5.1), color="#7EE787", radius=0.1)
+        after = Dot(axes.c2p(4.05, 5.75), color="#FF7B72", radius=0.1)
+        seller_price = Dot(axes.c2p(4.05, 4.55), color="#F7C948", radius=0.08)
+        wedge = DoubleArrow(axes.c2p(4.05, 4.55), axes.c2p(4.05, 5.75), buff=0.03, color="#FF7B72", stroke_width=5, max_tip_length_to_length_ratio=0.18)
+        lost_trade = Polygon(axes.c2p(4.05, 4.55), axes.c2p(4.05, 5.75), axes.c2p(5.15, 4.85), color="#A371F7", fill_color="#A371F7", fill_opacity=0.28, stroke_width=3)
+        q_drop = Arrow(axes.c2p(4.75, 1.0), axes.c2p(4.05, 1.0), buff=0.02, color="#8FD3FF", stroke_width=4)
+        labels = VGroup(
+            Text("tax wedge", font_size=22, color="#FF7B72").next_to(wedge, RIGHT, buff=0.18),
+            Text("lost trades", font_size=21, color="#A371F7").next_to(lost_trade, DOWN, buff=0.2),
+            Text("quantity falls", font_size=20, color="#8FD3FF").next_to(q_drop, DOWN, buff=0.18),
+        )
+        self.safe_place(labels, y=-3.25, max_width=7.4, max_height=1.2, top=-2.55, bottom=-3.95)
+        self.play(FadeIn(caption), Create(axes), Create(demand), Create(supply), FadeIn(before, scale=1.2), run_time=1.15)
+        self.play(TransformFromCopy(supply, taxed_supply), before.animate.move_to(after), run_time=1.25)
+        self.play(GrowArrow(wedge), FadeIn(seller_price, scale=1.2), FadeIn(labels[0], shift=UP * 0.06), run_time=0.95)
+        self.play(Create(lost_trade), GrowArrow(q_drop), FadeIn(labels[1:], shift=UP * 0.06), run_time=1.05)
+        self.play(FadeIn(result, shift=UP * 0.08), Indicate(VGroup(wedge, lost_trade, after), scale_factor=1.08), run_time=0.95)
+        return
     if kind == "econ_budget":
         budget = Line(axes.c2p(0, 8), axes.c2p(8, 0), color="#F7C948", stroke_width=6)
         choice = Dot(axes.c2p(4.6, 3.4), color="#7EE787", radius=0.09)
@@ -2863,9 +3365,13 @@ def play_econ_visual(self, kind, phase, data, primary_lines, secondary_lines=Non
 
 
 def play_generic_visual(self, kind, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    if kind in {"algebra_ring_field", "algebra_ideal", "algebra_quotient_ring", "algebra_factorization", "algebra_field_extension", "algebra_galois"}:
+        return self.play_algebra_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
+    if kind == "game_payoff":
+        return self.play_game_visual(phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"group_structure", "group_cosets", "group_homomorphism", "group_action"}:
         return self.play_group_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
-    if kind in {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve"}:
+    if kind in {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve", "econ_tax_wedge"}:
         return self.play_econ_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"calculus_tangent", "calculus_area"}:
         return self.play_calculus_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
@@ -2891,7 +3397,16 @@ def play_intro_visual(self, kind, data):
     if kind in {"basis", "subspace", "transform_grid", "systems", "least_squares", "elimination", "matrix_factor", "projection", "eigen", "svd", "area", "dimension_bar", "quadratic"}:
         mapped = {"projection": "calculus_tangent", "area": "calculus_area", "quadratic": "calculus_tangent"}.get(kind, "numeric_rule")
         return self.play_generic_visual(mapped, "intro", data, ["visualize the structure"], ["follow the colored objects"], ["highlight the output"])
-    return self.play_generic_visual(kind, "intro", data, ["input -> rule -> output"], ["the diagram carries the example"], ["watch the state change"])
+    intro_lines = {
+        "algebra_ring_field": ["operations define the structure"],
+        "algebra_ideal": ["absorption makes quotients work"],
+        "algebra_quotient_ring": ["collapse an ideal to zero"],
+        "algebra_factorization": ["divisibility becomes structure"],
+        "algebra_field_extension": ["a larger field adds roots"],
+        "algebra_galois": ["symmetries move roots"],
+        "game_payoff": ["payoffs make incentives visible"],
+    }.get(kind, ["input -> rule -> output"])
+    return self.play_generic_visual(kind, "intro", data, intro_lines, ["follow the colored objects"], ["watch the key relation"])
 
 def play_example_visual(self, kind, data, setup_lines, calc_lines, takeaway_lines):
     if kind == "matrix_vector":
@@ -2924,8 +3439,10 @@ def manim_scene(short: dict[str, object], class_name: str) -> str:
     answer = screen_prose(short["question_prompt"]["answer"])
     visual_data = visual_data_for(short, visual_kind)
     pacing = short_video_pacing(short)
-    return f'''from manim import *
+    return f'''# generated_by: tools/stem_course.py; scene_metadata_version={SCENE_METADATA_VERSION}; visual_kind={visual_kind}; concept={str(short.get("concept", "")).replace(chr(10), " ")!r}
+from manim import *
 import math
+import re
 
 config.pixel_width = 1080
 config.pixel_height = 1920
@@ -2957,26 +3474,28 @@ class {class_name}(Scene):
         {visual_template(visual_kind, "intro")}
         self.fade_all_except([title, hook], run_time=0.45)
 
-        formula = self.formula_block({str(short["formula"])!r}, {screen_math(str(short["formula"]))!r}, font_size=32, color="#F7C948")
+        formula = self.formula_block({sanitize_formula_latex(str(short["formula"]))!r}, {screen_math(str(short["formula"]))!r}, font_size=32, color="#F7C948")
         self.safe_place(formula, y=-4.95, max_width=7.4, max_height=0.9, top=-4.45, bottom=-5.55)
         intuition = self.text_block({wrap(str(short["intuition"]), 42, 3)!r}, font_size=23, color="#EAF2FF", max_width=7.25, max_height=1.15)
         self.safe_place(intuition, y=-6.55, max_width=7.25, max_height=1.15, top=-5.9, bottom=-7.25)
         self.play(Write(formula), run_time=0.9)
         self.play(FadeIn(intuition, shift=UP * 0.12), run_time=0.9)
-        self.active_hold(pacing["intro_hold"], [formula, intuition])
+        self.semantic_beat_hold(pacing["intro_hold"], [formula, intuition], "formula")
         self.fade_all_except([title], run_time=0.7)
         self.play(title.animate.scale(0.72).to_edge(UP, buff=0.35), run_time=0.45)
 
         section = self.section_label("Worked example", "#F7C948")
         self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
         {visual_template(visual_kind, "example")}
-        self.active_hold(pacing["example_hold"])
+        self.semantic_beat_hold(pacing["example_hold"], label="example step")
         self.fade_all_except([title], run_time=0.7)
 
         section = self.section_label("Active recall", "#F7C948")
         self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
         {visual_template(visual_kind, "recall")}
-        self.active_hold(pacing["recall_hold"])
+        self.semantic_beat_hold(pacing["recall_hold"], label="recall check")
+        self.play(*[FadeOut(mob) for mob in self.mobjects], run_time=0.6)
+        self.wait(0.15)
 '''
 
 
@@ -3136,7 +3655,7 @@ def mux_voiceover(raw: Path, voice_file: Path, final: Path, raw_duration: float,
     audio_pad = max(0.0, target_duration - voice_duration)
     video_filter = f"[0:v]setpts={video_time_scale:.8f}*PTS"
     if video_tail_pad > 0.05:
-        video_filter += f",tpad=stop_mode=clone:stop_duration={video_tail_pad:.3f}"
+        video_filter += f",fade=t=out:st={max(0.0, scaled_video_duration - min(0.45, video_tail_pad)):.3f}:d={min(0.45, video_tail_pad):.3f},tpad=stop_mode=add:stop_duration={video_tail_pad:.3f}:color=0x0B1020"
     video_filter += "[v]"
     filter_complex = video_filter + ";[1:a]apad,asetpts=PTS-STARTPTS[a]"
     cmd = [
