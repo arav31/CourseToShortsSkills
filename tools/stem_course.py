@@ -221,6 +221,8 @@ DOMAIN_KEYWORDS: dict[str, dict[str, int]] = {
     "physics": {"8-01": 12, "classical mechanics": 12, "mechanics": 8, "newton": 7, "force": 5, "acceleration": 5, "momentum": 6, "kinematics": 7, "energy": 5, "oscillation": 6, "torque": 6},
     "economics": {"14.01": 12, "14-01": 12, "microeconomics": 12, "economics": 8, "supply": 4, "demand": 4, "elasticity": 7, "consumer": 5, "market": 5, "marginal": 5, "externality": 7, "game theory": 7},
     "linear_algebra": {"18-06": 12, "linear algebra": 12, "matrix": 5, "matrices": 5, "eigen": 7, "vector space": 6, "vectors": 4, "linear transformation": 7, "least squares": 7, "singular value": 7},
+    "calculus": {"calculus": 12, "derivative": 8, "tangent": 8, "slope": 5, "gradient": 5, "rate of change": 7, "integral": 8, "area under": 7, "riemann": 7, "accumulation": 6},
+    "probability": {"probability": 12, "distribution": 7, "random variable": 7, "expectation": 7, "bayes": 8, "conditional": 6, "markov": 8, "transition": 5, "variance": 5},
 }
 
 SOURCE_TERM_BLOCKLIST = {
@@ -548,7 +550,7 @@ def choose_concepts(pack: dict[str, object], max_shorts: int) -> list[Concept]:
     best_domain, best_score = ranked[0]
     second_score = ranked[1][1] if len(ranked) > 1 else 0
     if best_score >= 8 and best_score >= second_score:
-        concepts = list(DOMAIN_LIBRARY[best_domain])
+        concepts = list(DOMAIN_LIBRARY.get(best_domain, []))
         return fill_concepts_from_source(pack, concepts, max_shorts, best_domain)
     return fill_concepts_from_source(pack, [], max_shorts, None)
 
@@ -612,6 +614,46 @@ def source_term_concept(term: str, domain: str | None) -> Concept:
             "The example shows which structure is preserved and which assumptions matter.",
             f"How would {title} change the way you classify a finite example?",
             "Identify the objects, check the required property, and compare with a near-miss example.",
+            visual,
+        )
+    if domain == "calculus":
+        visual = "calculus_tangent"
+        formula = r"f'(x)=\lim_{h\to0}\frac{f(x+h)-f(x)}{h}"
+        prereqs = ["functions", "graphs", "limits"]
+        if any(word in lower for word in ("integral", "area", "riemann", "accumulation")):
+            visual, formula, prereqs = "calculus_area", r"\int_a^b f(x)\,dx", ["functions", "area", "limits"]
+        return Concept(
+            title,
+            f"{title} is a visual calculus idea about how a quantity changes or accumulates.",
+            f"Study {title} by animating the graph, the local tangent or the accumulated area, and the limiting motion that makes the formula true.",
+            formula,
+            prereqs,
+            "Do not treat the notation as the idea; the moving tangent or growing area is the idea.",
+            f"Choose a simple curve and mark the geometric object controlled by {title}.",
+            "Move the point, secant, tangent, or area rectangles and watch the limiting quantity settle.",
+            "The example connects the symbolic rule to a visible motion on the graph.",
+            f"Which visual object changes when {title} changes?",
+            "Track the tangent/area object first, then read the formula from the picture.",
+            visual,
+        )
+    if domain == "probability":
+        visual = "probability"
+        formula = r"P(A\mid B)=\frac{P(A\cap B)}{P(B)}"
+        prereqs = ["sets", "fractions", "counting"]
+        if any(word in lower for word in ("markov", "transition", "state")):
+            visual, formula, prereqs = "markov", r"p_{t+1}=Pp_t", ["probability", "matrices", "states"]
+        return Concept(
+            title,
+            f"{title} describes how uncertainty is split, moved, or updated.",
+            f"Study {title} by drawing the sample space or states, moving probability mass, and highlighting what is conditioned or updated.",
+            formula,
+            prereqs,
+            "Do not leave probability as an abstract number; show the mass or region it measures.",
+            f"Build a small two-state or two-event example involving {title}.",
+            "Shade the relevant region or move probability mass between states, then compute the updated quantity.",
+            "The example makes the probability operation visible before the formula appears.",
+            f"What region or state mass does {title} refer to?",
+            "Identify the total space, the highlighted part, and the update rule.",
             visual,
         )
     if domain == "economics":
@@ -2648,12 +2690,15 @@ def infer_visual_kind(short: dict[str, object]) -> str:
         (("elasticity",), "econ_elasticity"),
         (("income", "substitution", "comparative statics", "cost", "production", "returns", "marginal product", "marginal cost", "average cost", "shutdown", "competition", "monopoly", "revenue", "price discrimination", "adverse selection", "moral hazard", "coase"), "econ_curve"),
     )
-    inferred = next((kind for terms, kind in concept_visuals if any(term in concept for term in terms)), None) or semantic_visual_kind(text)
+    concept_inferred = next((kind for terms, kind in concept_visuals if any(term in concept for term in terms)), None)
     generic_fallbacks = {"", "generic", "numeric_rule", "state_machine"}
-    if inferred:
-        return inferred
+    if concept_inferred:
+        return concept_inferred
     if explicit and explicit not in generic_fallbacks:
         return explicit
+    inferred = semantic_visual_kind(text)
+    if inferred:
+        return inferred
     if any(term in text for term in ("matrix", "linear system", "ax=", "a\\vec", "row operation")):
         return "matrix_vector"
     if "vector" in text or "coordinate" in text:

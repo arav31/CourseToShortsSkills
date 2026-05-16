@@ -30,6 +30,13 @@ ECON_VISUAL_KINDS = {"econ_supply_demand", "econ_elasticity", "econ_budget", "ec
 GEOMETRY_VISUAL_KINDS = {"sphere_surface_area"}
 REQUIRED_SYNC_FIELDS = ("raw_duration", "voice_duration", "target_duration", "final_duration", "video_time_scale")
 NUMERIC_RULE_DOMAINS = ("algebra", "group", "econ", "economics", "micro")
+GENERIC_VISUAL_TYPES = {"", "generic", "numeric_rule", "state_machine"}
+VISUAL_TYPE_ALIASES: dict[str, set[str]] = {
+    "markov": {"markov", "probability"},
+    "projection": {"projection", "calculus_tangent"},
+    "area": {"area", "calculus_area"},
+    "quadratic": {"quadratic", "calculus_tangent"},
+}
 CONCEPT_VISUAL_FAMILIES: list[tuple[tuple[str, ...], set[str]]] = [
     (("coset",), {"group_cosets"}),
     (("homomorphism",), {"group_homomorphism"}),
@@ -374,12 +381,28 @@ class CourseRunValidator:
             script = self.run / "scripts" / f"short_{index:02d}_{slug}.md"
 
             visual_kind = self.validate_scene(scene, index, normalized_sources)
+            self.validate_planned_visual_type(short, visual_kind, scene)
             scene_visuals.append({"path": scene, "visual_kind": visual_kind, "concept": concept})
             self.validate_caption(caption, index, expected_duration=parse_float(short.get("target_duration_seconds")))
             self.validate_script(script, index)
 
         self.detect_repeated_scene_sources(normalized_sources)
         self.validate_scene_visual_quality(scene_visuals, domain_text)
+
+    def validate_planned_visual_type(self, short: dict[str, Any], visual_kind: str, scene: Path) -> None:
+        planned = str(short.get("visual_type") or "").strip().lower()
+        actual = str(visual_kind or "").strip().lower()
+        if planned in GENERIC_VISUAL_TYPES or not actual:
+            return
+        acceptable = VISUAL_TYPE_ALIASES.get(planned, {planned})
+        if actual not in acceptable:
+            index = short.get("index", "?")
+            self.fail(
+                "scene.visual-routing",
+                f"Short {index} planned visual_type={planned!r}, but generated scene declares visual_kind={actual!r}.",
+                scene,
+                fix="Regenerate the scene or update visual-kind inference so the planned course-specific visual is honored.",
+            )
 
     def scene_asset_stage_present(self, shorts: list[dict[str, Any]]) -> bool:
         if any((self.run / dirname).exists() for dirname in ("scenes", "scripts", "captions")):
