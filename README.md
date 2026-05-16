@@ -5,8 +5,8 @@ A shareable Codex skill pack for turning course links and course files into:
 - extracted course material packs
 - comprehensive LaTeX notes with definitions, formulas, examples, questions, and a compiled `notes.pdf`
 - beginner-safe short-video lesson plans
-- concept-specific Manim scenes in a 3Blue1Brown-inspired style
-- rendered vertical shorts with subtitles and real voiceover support
+- animation-planned Manim scenes in a 3Blue1Brown-inspired style
+- rendered vertical silent shorts by default, with subtitles metadata and optional real voiceover support
 - Instagram Reels series queues and optional API publishing
 
 ## Requirements
@@ -22,7 +22,7 @@ pip install -r requirements.txt
 python tools/stem_course.py all "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/" --out runs/linear-algebra --max-shorts 8
 ```
 
-For real voiceover, configure one of:
+Videos render silently by default with `--voice-engine none`; this is a supported final-output mode when the animation carries the explanation. For real voiceover, configure one of:
 
 - `--voice-engine openai` with `OPENAI_API_KEY`
 - `--voice-engine edge-tts` with `edge-tts` installed
@@ -48,7 +48,7 @@ python tools/stem_course.py extract COURSE_URL --out runs/course
 python tools/stem_course.py plan --run runs/course --max-shorts 12
 python tools/stem_course.py notes --run runs/course --compile
 python tools/stem_course.py manim --run runs/course
-python tools/stem_course.py render --run runs/course --voice-engine openai
+python tools/stem_course.py render --run runs/course --voice-engine none
 python tools/validate_course_run.py runs/course
 python tools/stem_course.py queue --run runs/course --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
 python tools/stem_course.py publish --run runs/course --dry-run
@@ -70,7 +70,7 @@ Instagram cannot publish a private local MP4 directly through this API; host the
 
 ## Validation
 
-Run `python tools/validate_course_run.py runs/<course>` before treating a course run as upload-ready. It checks notes/PDF provenance, LaTeX formatting red flags, scene/script/caption coverage, final video existence, duration, vertical orientation, blank/static sampled frames, and audio streams. Use `--draft` while iterating before final render/audio.
+Run `python tools/validate_course_run.py runs/<course>` before treating a course run as upload-ready. It checks notes/PDF provenance, LaTeX formatting red flags, scene/script/caption coverage, final video existence, duration, vertical orientation, blank/static sampled frames, and audio streams when a voice engine was selected. Silent final MP4s pass when `render_report.json` records `--voice-engine none`. Use `--draft` while iterating before final render.
 
 
 ## Notes PDF

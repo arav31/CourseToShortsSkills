@@ -12,7 +12,8 @@ Generate Manim scenes that are specific to each concept and its worked example. 
 ## Workflow
 
 1. Make sure `short_plan.json` exists.
-2. Generate scene code, scripts, and captions:
+2. For new visual families, use `course-animation-planner` first: define the claim, objects, transformations, invariant, reveal, and failure check.
+3. Generate scene code, scripts, and captions:
 
 ```bash
 python tools/stem_course.py manim --run runs/<course>
@@ -42,7 +43,8 @@ python tools/validate_course_run.py runs/<course> --draft
 ## Visual Standard
 
 - Do not reuse the same generic animation for every short.
-- The worked example must be visible, not only narrated.
+- No voiceover is required; generated MP4s should stand alone as silent visual explanations with sparse labels and captions metadata.
+- The worked example must be visible, not only narrated or captioned.
 - Setup, calculation, takeaway, and active recall should each move or transform mathematical/diagram objects; static text-only cards are a failure mode.
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.
 - Keep vertical 9:16 composition readable on a phone.

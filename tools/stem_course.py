@@ -573,6 +573,21 @@ def fill_concepts_from_source(pack: dict[str, object], concepts: list[Concept], 
 def source_term_concept(term: str, domain: str | None) -> Concept:
     title = re.sub(r"\s+", " ", term).strip().title()
     lower = title.lower()
+    if any(word in lower for word in ("sphere surface area", "surface area of sphere", "sphere area", "archimedes", "4 pi r", "4\pi r")):
+        return Concept(
+            title,
+            "A sphere's area can be seen by matching latitude bands to a cylinder around it.",
+            "Slice the sphere into thin horizontal bands, project each band to a matching cylinder band, then stack the bands to reveal the area.",
+            r"A=4\pi R^2",
+            ["circles", "area", "cylinders"],
+            "Do not treat the formula as magic; the band matching is the reason the factor 4 appears.",
+            "Put a sphere of radius R inside a cylinder of radius R and height 2R.",
+            "Match each thin sphere band to the cylinder band at the same height; the band areas agree in the limiting picture.",
+            "The cylinder side has area circumference times height, so 2 pi R times 2R equals 4 pi R squared.",
+            "What visual object has the same area as the sphere?",
+            "The side of the enclosing cylinder, not its top and bottom caps.",
+            "sphere_surface_area",
+        )
     if domain == "group_theory":
         visual = "group_structure"
         formula = r"(G,*)"
@@ -1618,6 +1633,7 @@ def visual_label(value: object) -> str:
         "econ_budget": "budget-line diagram",
         "econ_curve": "economic curve diagram",
         "econ_tax_wedge": "tax wedge and deadweight-loss diagram",
+        "sphere_surface_area": "sphere-to-cylinder surface-area proof",
     }
     key = str(value or "concept diagram").strip().lower()
     if key in labels:
@@ -2276,7 +2292,7 @@ def screen_prose(text: object) -> str:
 
 WORDS_PER_SECOND = 2.35
 MIN_SHORT_VIDEO_SECONDS = 24.0
-SCENE_METADATA_VERSION = "2026-05-11-video-rootfix2"
+SCENE_METADATA_VERSION = "2026-05-16-silent-3b1b-v1"
 
 
 def spoken_word_count(text: object) -> int:
@@ -2319,11 +2335,15 @@ def short_video_pacing(short: dict[str, object]) -> dict[str, float]:
         total_weight = sum(weights) or 1
         durations = [floors[i] + remaining * weights[i] / total_weight for i in range(3)]
     else:
-        durations = [
-            duration_for_texts(intro_texts, minimum=floors[0], animation_budget=6.4),
-            duration_for_texts(example_texts, minimum=floors[1], animation_budget=5.6),
-            duration_for_texts(recall_texts, minimum=floors[2], animation_budget=4.8),
+        raw_durations = [
+            duration_for_texts(intro_texts, minimum=floors[0], animation_budget=3.6),
+            duration_for_texts(example_texts, minimum=floors[1], animation_budget=3.4),
+            duration_for_texts(recall_texts, minimum=floors[2], animation_budget=2.8),
         ]
+        # Silent shorts should be paced visually, not as if every script line must be spoken.
+        # Cap each act so the animation stays close to the reference short-video rhythm.
+        silent_caps = [21.0, 24.0, 18.0]
+        durations = [min(silent_caps[i], max(floors[i], raw_durations[i])) for i in range(3)]
         target_total = sum(durations)
 
     intro_duration, example_duration, recall_duration = durations
@@ -2576,6 +2596,8 @@ def text_has_any(text: str, terms: tuple[str, ...]) -> bool:
 
 
 def semantic_visual_kind(text: str) -> str | None:
+    if text_has_any(text, ("sphere surface area", "surface area of a sphere", "4\pi r", "4 pi r", "sphere's surface", "sphere area", "cylinder band", "archimedes sphere")):
+        return "sphere_surface_area"
     if text_has_any(text, ("payoff", "nash", "dominant strateg", "best response", "game theory", "oligopoly", "strategic interaction", "prisoner")):
         return "game_payoff"
     if text_has_any(text, ("galois", "automorphism", "root symmetr", "gal(")):
@@ -2612,6 +2634,7 @@ def infer_visual_kind(short: dict[str, object]) -> str:
     text = short_text(short).lower()
     concept = str(short.get("concept", "")).lower()
     concept_visuals = (
+        (("sphere surface area", "surface area of a sphere", "sphere area", "4\pi r", "4 pi r", "archimedes"), "sphere_surface_area"),
         (("galois",), "algebra_galois"),
         (("field extension", "algebraic element", "finite field"), "algebra_field_extension"),
         (("quotient ring", "polynomial ring"), "algebra_quotient_ring"),
@@ -2653,6 +2676,8 @@ def visual_data_for(short: dict[str, object], kind: str) -> dict[str, object]:
         data["vector"] = vector_example_data(short)
     if kind == "linear_combination":
         data["linear_combo"] = linear_combo_data(short)
+    if kind == "sphere_surface_area":
+        data["geometry"] = {"radius_label": "R", "result": "4 pi R^2"}
     return data
 
 
@@ -2769,6 +2794,7 @@ def formula_fallback_text(self, latex, plain):
         (slash + "Rightarrow", " " + chr(8658) + " "),
         (slash + "times", " " + chr(215) + " "),
         (slash + "cdot", " " + chr(183) + " "),
+        (slash + "pi", chr(960)),
         (slash + "langle", "<"),
         (slash + "rangle", ">"),
         (slash + "mathbb", ""),
@@ -2783,6 +2809,8 @@ def formula_fallback_text(self, latex, plain):
     fallback = re.sub(r"\^\{([^{}]+)\}", r"^\\1", fallback)
     fallback = fallback.replace("{", "").replace("}", "")
     fallback = fallback.replace(slash, "")
+    fallback = re.sub(r"\s*=\s*", " = ", fallback)
+    fallback = re.sub(r"(?<=[0-9])([A-Za-z])", r" \1", fallback)
     fallback = " ".join(fallback.split())
     if not fallback:
         fallback = " ".join(str(plain or "").replace(slash, " ").split()) or "formula cue"
@@ -3276,6 +3304,57 @@ def play_algebra_visual(self, kind, phase, data, primary_lines, secondary_lines=
     self.play(Write(law), nodes[-1].animate.set_color("#7EE787"), run_time=1.1)
     self.play(FadeIn(result, shift=UP * 0.08), Indicate(nodes), run_time=0.9)
 
+def play_sphere_surface_area_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
+    caption = self.text_block(primary_lines[:2] if primary_lines else ["surface area comes from matching bands"], font_size=20, color="#8FD3FF", max_width=7.1, max_height=0.9)
+    self.safe_place(caption, y=4.55, max_height=0.9, top=5.1, bottom=3.9)
+    result = self.text_block(result_lines or secondary_lines or ["all bands match the cylinder", "so the area is 4 pi R^2"], font_size=21, color="#7EE787", max_width=7.2, max_height=1.15)
+    self.safe_place(result, y=-5.15, max_height=1.3, top=-4.35, bottom=-6.2)
+
+    R = 1.55
+    center = LEFT * 1.55 + UP * 0.45
+    sphere = Circle(radius=R, color="#58A6FF", stroke_width=5, fill_color="#58A6FF", fill_opacity=0.08).move_to(center)
+    cylinder = Rectangle(width=2 * R, height=2 * R, color="#8FD3FF", stroke_width=3).move_to(center)
+    cylinder.set_stroke(opacity=0.55)
+    axis = DashedLine(center + DOWN * (R + 0.22), center + UP * (R + 0.22), color="#EAF2FF", stroke_opacity=0.55)
+    radius = Line(center, center + RIGHT * R, color="#F7C948", stroke_width=4)
+    radius_label = Text("R", font_size=24, color="#F7C948").next_to(radius, UP, buff=0.08)
+
+    band_ys = [-1.12, -0.56, 0.0, 0.56, 1.12]
+    bands = VGroup()
+    guides = VGroup()
+    strips = VGroup()
+    for i, y in enumerate(band_ys):
+        half = math.sqrt(max(0.0, R * R - y * y))
+        color = self.palette(i)
+        band = Line(center + LEFT * half + UP * y, center + RIGHT * half + UP * y, color=color, stroke_width=8)
+        guide = DashedLine(center + LEFT * R + UP * y, center + RIGHT * R + UP * y, color=color, stroke_opacity=0.32, stroke_width=2)
+        strip = Rectangle(width=3.75, height=0.22, color=color, fill_color=color, fill_opacity=0.32, stroke_width=3)
+        strip.move_to(RIGHT * 2.15 + UP * (1.35 - i * 0.39))
+        bands.add(band)
+        guides.add(guide)
+        strips.add(strip)
+
+    arrow_group = VGroup()
+    for i, band in enumerate(bands):
+        arrow_group.add(Arrow(band.get_right() + RIGHT * 0.1, strips[i].get_left() + LEFT * 0.08, buff=0.05, color=bands[i].get_color(), stroke_width=3, max_tip_length_to_length_ratio=0.12))
+
+    strip_frame = SurroundingRectangle(strips, color="#7EE787", buff=0.18, stroke_width=3)
+    strip_label = Text("same-height cylinder bands", font_size=20, color="#7EE787").next_to(strip_frame, DOWN, buff=0.18)
+    formula_text = "A = 2R " + chr(215) + " 2" + chr(960) + "R = 4" + chr(960) + "R" + chr(178)
+    formula = Text(formula_text, font_size=28, color="#F7C948", disable_ligatures=True)
+    self.fit_in(formula, max_width=7.3, max_height=0.85)
+    self.safe_place(formula, y=-3.35, max_width=7.3, max_height=0.85, top=-2.82, bottom=-3.9)
+
+    diagram = VGroup(cylinder, sphere, axis, radius, radius_label, guides, bands, strips, arrow_group, strip_frame, strip_label)
+    self.safe_place(diagram, y=0.35, max_width=8.0, max_height=6.1, top=3.55, bottom=-2.6)
+
+    self.play(FadeIn(caption), Create(cylinder), Create(sphere), Create(axis), GrowFromPoint(radius, center), FadeIn(radius_label), run_time=1.2)
+    self.play(LaggedStart(*[Create(g) for g in guides], lag_ratio=0.08), LaggedStart(*[Create(b) for b in bands], lag_ratio=0.12), run_time=1.45)
+    self.play(LaggedStart(*[GrowArrow(a) for a in arrow_group], lag_ratio=0.08), run_time=1.05)
+    self.play(LaggedStart(*[TransformFromCopy(bands[i], strips[i]) for i in range(len(bands))], lag_ratio=0.12), run_time=1.55)
+    self.play(Create(strip_frame), FadeIn(strip_label, shift=UP * 0.08), Write(formula), run_time=1.25)
+    self.play(FadeIn(result, shift=UP * 0.08), Circumscribe(strips, color="#7EE787", buff=0.12), Indicate(formula, scale_factor=1.06), run_time=1.15)
+
 def play_game_visual(self, phase, data, primary_lines, secondary_lines=None, result_lines=None):
     caption = self.text_block(primary_lines, font_size=21, color="#8FD3FF")
     self.safe_place(caption, y=4.55, max_height=1.0, top=5.1, bottom=3.85)
@@ -3371,6 +3450,8 @@ def play_generic_visual(self, kind, phase, data, primary_lines, secondary_lines=
         return self.play_game_visual(phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"group_structure", "group_cosets", "group_homomorphism", "group_action"}:
         return self.play_group_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
+    if kind == "sphere_surface_area":
+        return self.play_sphere_surface_area_visual(phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve", "econ_tax_wedge"}:
         return self.play_econ_visual(kind, phase, data, primary_lines, secondary_lines, result_lines)
     if kind in {"calculus_tangent", "calculus_area"}:
@@ -3405,6 +3486,7 @@ def play_intro_visual(self, kind, data):
         "algebra_field_extension": ["a larger field adds roots"],
         "algebra_galois": ["symmetries move roots"],
         "game_payoff": ["payoffs make incentives visible"],
+        "sphere_surface_area": ["match each sphere band to a cylinder strip"],
     }.get(kind, ["input -> rule -> output"])
     return self.play_generic_visual(kind, "intro", data, intro_lines, ["follow the colored objects"], ["watch the key relation"])
 

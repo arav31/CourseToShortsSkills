@@ -27,6 +27,7 @@ MIN_ANY_VIDEO_DURATION_SECONDS = 3.0
 TARGET_ASPECT_RATIO = 9 / 16
 GROUP_VISUAL_KINDS = {"group_structure", "group_cosets", "group_homomorphism", "group_action"}
 ECON_VISUAL_KINDS = {"econ_supply_demand", "econ_elasticity", "econ_budget", "econ_curve", "econ_tax_wedge"}
+GEOMETRY_VISUAL_KINDS = {"sphere_surface_area"}
 REQUIRED_SYNC_FIELDS = ("raw_duration", "voice_duration", "target_duration", "final_duration", "video_time_scale")
 NUMERIC_RULE_DOMAINS = ("algebra", "group", "econ", "economics", "micro")
 CONCEPT_VISUAL_FAMILIES: list[tuple[tuple[str, ...], set[str]]] = [
@@ -62,6 +63,7 @@ class CourseRunValidator:
         self.ffprobe = shutil.which("ffprobe")
         self.ffmpeg = shutil.which("ffmpeg")
         self.video_cache: dict[Path, dict[str, Any]] = {}
+        self.silent_final_allowed = False
 
     def validate(self) -> list[Issue]:
         if not self.run.exists():
@@ -414,6 +416,8 @@ class CourseRunValidator:
             self.fail("scene.visual", f"Group-theory visual `{visual_kind}` falls through without a domain-specific group renderer.", path, fix="Regenerate scenes after updating the Manim skill helpers.")
         if visual_kind in ECON_VISUAL_KINDS and "def play_econ_visual" not in text:
             self.fail("scene.visual", f"Economics visual `{visual_kind}` falls through without a domain-specific economics renderer.", path, fix="Regenerate scenes after updating the Manim skill helpers.")
+        if visual_kind in GEOMETRY_VISUAL_KINDS and "def play_sphere_surface_area_visual" not in text:
+            self.fail("scene.visual", f"Geometry visual `{visual_kind}` falls through without its proof-style renderer.", path, fix="Regenerate scenes after updating the Manim skill helpers.")
 
         play_count = len(re.findall(r"\bself\.play\s*\(", text))
         if play_count == 0:
@@ -548,6 +552,9 @@ class CourseRunValidator:
 
     def validate_videos(self, plan: Any) -> None:
         shorts = plan_shorts(plan)
+        render_report = self.load_json(self.run / "render_report.json", required=False)
+        self.silent_final_allowed = self.render_report_allows_silent(render_report)
+
         if shorts and self.render_outputs_expected(shorts):
             self.validate_expected_render_outputs(shorts)
 
@@ -561,9 +568,22 @@ class CourseRunValidator:
                 continue
             self.validate_video_file(video, role="manim")
 
-        render_report = self.load_json(self.run / "render_report.json", required=False)
         if render_report is not None:
             self.validate_render_report(render_report)
+
+    def render_report_allows_silent(self, report: Any) -> bool:
+        if not isinstance(report, dict):
+            return False
+        results = report.get("results")
+        if not isinstance(results, list):
+            return False
+        for result in results:
+            if not isinstance(result, dict):
+                continue
+            voice = result.get("voiceover")
+            if isinstance(voice, dict) and (voice.get("status") == "skipped" or voice.get("engine") == "none"):
+                return True
+        return False
 
     def render_outputs_expected(self, shorts: list[dict[str, Any]]) -> bool:
         if (self.run / "videos").exists() or (self.run / "render_report.json").exists() or (self.run / "instagram_publish_queue.json").exists():
@@ -626,13 +646,13 @@ class CourseRunValidator:
             if status != "rendered":
                 self.fail("render-report", f"Render result for short {result.get('index')} is {status!r}.", self.run / "render_report.json", fix="Fix the failed render stage and rerun rendering.")
             voice = result.get("voiceover")
-            if isinstance(voice, dict) and voice.get("status") not in {"ok", None}:
+            if isinstance(voice, dict) and voice.get("status") not in {"ok", "skipped", None}:
                 severity = self.warn if self.draft else self.fail
                 severity(
                     "render-report.audio",
                     f"Voiceover for short {result.get('index')} is {voice.get('status')!r}: {voice.get('message', voice.get('engine', 'unknown engine'))}.",
                     self.run / "render_report.json",
-                    fix="Use a working voice engine before treating the video as upload-ready.",
+                    fix="Use a working voice engine or render intentionally with --voice-engine none.",
                 )
             sync = result.get("sync")
             if isinstance(voice, dict) and voice.get("status") == "ok":
@@ -702,9 +722,9 @@ class CourseRunValidator:
         else:
             self.fail("video.probe", "Video stream width/height could not be read.", path)
 
-        if not has_audio and role == "final":
+        if not has_audio and role == "final" and not self.silent_final_allowed:
             message = f"{role} video has no audio stream."
-            fix = "Render with a working voice engine; silent files are drafts, not upload-ready videos."
+            fix = "Render with a working voice engine, or render intentionally with --voice-engine none so the report marks silence as expected."
             if not self.draft:
                 self.fail("video.audio", message, path, fix=fix)
             else:
