@@ -40,7 +40,7 @@ python tools/validate_course_run.py runs/<course> --allow-fallback-pdf
 
 - Notes: `notes.tex`, `notes.md`, `notes.pdf`, and `notes_compile_report.json`, including a depth check for full-course coverage and a ban on source inventory/checklist placeholders.
 - LaTeX quality: prose/Python-list matrices, escaped exponent text, bare powers outside math mode, and prose `sqrt(...)` expressions.
-- Scene assets: expected Manim scene files, script markdown, SRT captions, Python syntax, vertical scene config, sparse animation, repeated-looking scene source, domain-specific group/economics renderer routing, and matrix/list notation leaking into on-screen text.
+- Scene assets: expected Manim scene files, script markdown, SRT captions, Python syntax, vertical scene config, sparse animation, repeated-looking scene source, active-recall-section leakage, domain-specific group/economics renderer routing, and matrix/list notation leaking into on-screen text.
 - Videos: expected final MP4s, Manim MP4s when scenes exist, duration, vertical orientation, blank sampled frames, static sampled frames, audio streams, and render-report sync proving the final MP4 is not shorter than narration.
 - Visual audit: contact sheets and frame-density metrics from `visual_frame_audit.json`; use them to catch overlap, crowded diagrams, formula glyph boxes, and text crossed by diagram lines before upload.
 - Publish queue: local video file existence and public URL warnings for API publishing.

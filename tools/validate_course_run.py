@@ -433,6 +433,8 @@ class CourseRunValidator:
             self.fail("scene.layout-helper", "Scene is missing the collision-aware safe placement helper.", path, fix="Regenerate Manim scenes after updating the course-manim skill.")
         if "avoid_layout_collisions" not in text:
             self.fail("scene.stale-template", "Scene source is missing the current avoid_layout_collisions marker.", path, fix="Regenerate Manim scenes with the current template.")
+        if "Active recall" in text:
+            self.fail("scene.structure", "Scene still contains an active recall section.", path, fix="Regenerate Manim scenes with the current concept-plus-example video template.")
 
         visual_match = re.search(r"visual_kind\s*=\s*['\"]([^'\"]+)['\"]", text)
         visual_kind = visual_match.group(1) if visual_match else ""
@@ -537,6 +539,8 @@ class CourseRunValidator:
             return
         self.check_nonempty(path, "caption")
         text = path.read_text(encoding="utf-8", errors="replace")
+        if re.search(r"\b(Active recall|Recognition cue|Common trap|Try this|Answer:)\b", text):
+            self.fail("caption.structure", "Caption file still contains active-recall wording.", path, fix="Regenerate captions with the current concept-plus-example timing model.")
         cues = parse_srt_cues(text)
         if not cues:
             self.fail("caption", f"SRT caption for short {index:02d} has no parseable cues.", path, fix="Regenerate captions or repair the SRT timestamps.")
@@ -561,6 +565,8 @@ class CourseRunValidator:
             return
         self.check_nonempty(path, "script")
         text = path.read_text(encoding="utf-8", errors="replace")
+        if re.search(r"\b(Active recall|Recognition cue|Common trap|Try this|recall question)\b", text):
+            self.fail("script.structure", "Script still contains active-recall wording.", path, fix="Regenerate scripts with the current concept-plus-example timing model.")
         word_count = len(re.findall(r"\b[\w'-]+\b", text))
         if word_count < 45:
             self.warn("script", f"Script for short {index:02d} is very short ({word_count} words).", path)

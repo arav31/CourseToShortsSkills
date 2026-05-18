@@ -2330,11 +2330,12 @@ def screen_prose(text: object) -> str:
     normalized = re.sub(r"\s+([,.;:])", r"\\1", normalized)
     normalized = re.sub(r"([,;:])(?=\S)", r"\1 ", normalized)
     normalized = re.sub(r"\s+", " ", normalized).strip()
+    normalized = re.sub(r"\bLet ([A-Za-z]\w*) is\b", r"Let \1 be", normalized)
     return normalized
 
 WORDS_PER_SECOND = 2.35
 MIN_SHORT_VIDEO_SECONDS = 24.0
-SCENE_METADATA_VERSION = "2026-05-16-silent-3b1b-v1"
+SCENE_METADATA_VERSION = "2026-05-19-concept-example-paced-v1"
 
 
 def spoken_word_count(text: object) -> int:
@@ -2350,6 +2351,75 @@ def duration_for_texts(texts: list[object], minimum: float, animation_budget: fl
     return max(minimum, speech + animation_budget + 1.2)
 
 
+def duration_for_beat(text: object, *, minimum: float, animation_budget: float) -> float:
+    return max(minimum, estimate_spoken_seconds(text) + animation_budget + 0.8)
+
+
+def video_timed_beats(short: dict[str, object]) -> list[dict[str, object]]:
+    ex = short["worked_example"] if isinstance(short.get("worked_example"), dict) else {}
+    visual_kind = infer_visual_kind(short)
+    formula = video_formula_text(short, visual_kind)
+    intuition = screen_prose(short.get("intuition", ""))
+    concept_text = ". ".join(part.rstrip(".") for part in [formula, intuition] if part).strip()
+    if concept_text and concept_text[-1] not in ".!?":
+        concept_text += "."
+    beats = [
+        {
+            "phase": "concept",
+            "label": "Hook",
+            "text": screen_prose(short.get("hook", "")),
+            "minimum": 4.0,
+            "animation_budget": 1.5,
+        },
+        {
+            "phase": "concept",
+            "label": "Core idea",
+            "text": concept_text,
+            "minimum": 6.0,
+            "animation_budget": 2.0,
+        },
+        {
+            "phase": "example",
+            "label": "Example setup",
+            "text": f"Example: {screen_prose(ex.get('setup', ''))}",
+            "minimum": 4.8,
+            "animation_budget": 1.4,
+        },
+        {
+            "phase": "example",
+            "label": "Calculation",
+            "text": screen_prose(ex.get("calculation", "")),
+            "minimum": 5.2,
+            "animation_budget": 1.8,
+        },
+        {
+            "phase": "example",
+            "label": "Takeaway",
+            "text": f"Takeaway: {screen_prose(ex.get('takeaway', ''))}",
+            "minimum": 4.5,
+            "animation_budget": 1.2,
+        },
+    ]
+    timed: list[dict[str, object]] = []
+    for beat in beats:
+        text = beat["text"]
+        duration = duration_for_beat(
+            text,
+            minimum=float(beat["minimum"]),
+            animation_budget=float(beat["animation_budget"]),
+        )
+        timed.append(
+            {
+                "phase": beat["phase"],
+                "label": beat["label"],
+                "text": text,
+                "duration": round(duration, 2),
+                "read_seconds": round(estimate_spoken_seconds(text), 2),
+            }
+        )
+    return timed
+
+
 
 def float_or_zero(value: object) -> float:
     try:
@@ -2360,46 +2430,30 @@ def float_or_zero(value: object) -> float:
 
 
 def short_video_pacing(short: dict[str, object]) -> dict[str, float]:
-    ex = short["worked_example"] if isinstance(short.get("worked_example"), dict) else {}
-    qp = short["question_prompt"] if isinstance(short.get("question_prompt"), dict) else {}
-    intro_texts = [short.get("hook", ""), short.get("intuition", ""), short.get("key_concept", ""), short.get("concept_explanation", ""), short.get("plain_formula", short.get("formula", ""))]
-    example_texts = [ex.get("setup", ""), ex.get("calculation", ""), ex.get("takeaway", "")]
-    recall_texts = [short.get("recognition_cue", ""), short.get("misconception", ""), qp.get("question", ""), qp.get("answer", "")]
-    groups = [intro_texts, example_texts, recall_texts]
-    floors = [14.0, 15.0, 11.5]
-    fixed_motion = [7.7, 6.1, 5.3]
+    beats = video_timed_beats(short)
+    hook_duration = float(beats[0]["duration"]) if len(beats) > 0 else 4.0
+    core_duration = float(beats[1]["duration"]) if len(beats) > 1 else 6.0
+    example_raw = sum(float(beat["duration"]) for beat in beats if beat["phase"] == "example")
+    intro_duration = max(13.5, hook_duration * 0.45 + core_duration)
+    example_duration = max(13.5, example_raw * 0.65)
+    fixed_motion = [7.7, 6.1]
 
     voice_target = float_or_zero(short.get("voice_duration_seconds") or short.get("narration_duration_seconds"))
     if voice_target > 0:
-        target_total = max(sum(floors), MIN_SHORT_VIDEO_SECONDS, min(92.0, voice_target + 0.35))
-        weights = [max(1, sum(spoken_word_count(text) for text in group)) for group in groups]
-        remaining = max(0.0, target_total - sum(floors))
-        total_weight = sum(weights) or 1
-        durations = [floors[i] + remaining * weights[i] / total_weight for i in range(3)]
-    else:
-        raw_durations = [
-            duration_for_texts(intro_texts, minimum=floors[0], animation_budget=3.6),
-            duration_for_texts(example_texts, minimum=floors[1], animation_budget=3.4),
-            duration_for_texts(recall_texts, minimum=floors[2], animation_budget=2.8),
-        ]
-        # Silent shorts should be paced visually, not as if every script line must be spoken.
-        # Cap each act so the animation stays close to the reference short-video rhythm.
-        silent_caps = [21.0, 24.0, 18.0]
-        durations = [min(silent_caps[i], max(floors[i], raw_durations[i])) for i in range(3)]
-        target_total = sum(durations)
+        target_total = max(MIN_SHORT_VIDEO_SECONDS, min(92.0, voice_target + 0.35))
+        current_total = max(0.01, intro_duration + example_duration)
+        scale = target_total / current_total
+        intro_duration *= scale
+        example_duration *= scale
 
-    intro_duration, example_duration, recall_duration = durations
     intro_hold = max(0.8, intro_duration - fixed_motion[0])
     example_hold = max(0.8, example_duration - fixed_motion[1])
-    recall_hold = max(0.8, recall_duration - fixed_motion[2])
-    total = fixed_motion[0] + intro_hold + fixed_motion[1] + example_hold + fixed_motion[2] + recall_hold
+    total = fixed_motion[0] + intro_hold + fixed_motion[1] + example_hold + 0.75
     return {
         "intro_duration": round(fixed_motion[0] + intro_hold, 2),
         "example_duration": round(fixed_motion[1] + example_hold, 2),
-        "recall_duration": round(fixed_motion[2] + recall_hold, 2),
         "intro_hold": round(intro_hold, 2),
         "example_hold": round(example_hold, 2),
-        "recall_hold": round(recall_hold, 2),
         "total": round(total, 2),
     }
 
@@ -2423,47 +2477,15 @@ def distribute_cue_durations(total: float, texts: list[object], minimum: float =
 
 
 def caption_cues(short: dict[str, object], target_duration: float | None = None) -> list[tuple[str, str, str]]:
-    ex = short["worked_example"] if isinstance(short.get("worked_example"), dict) else {}
-    qp = short["question_prompt"] if isinstance(short.get("question_prompt"), dict) else {}
-    pacing = short_video_pacing(short)
-    groups = [
-        (
-            pacing["intro_duration"],
-            [
-                screen_prose(short.get("hook", "")),
-                screen_prose(short.get("intuition", "")),
-                screen_prose(short.get("key_concept", "")),
-                screen_prose(short.get("concept_explanation", "")),
-                screen_prose(short.get("plain_formula", short.get("formula", ""))),
-            ],
-        ),
-        (
-            pacing["example_duration"],
-            [
-                f"Example: {screen_prose(ex.get('setup', ''))}",
-                screen_prose(ex.get("calculation", "")),
-                f"Takeaway: {screen_prose(ex.get('takeaway', ''))}",
-            ],
-        ),
-        (
-            pacing["recall_duration"],
-            [
-                f"Recognition cue: {screen_prose(short.get('recognition_cue', ''))}",
-                f"Common trap: {screen_prose(short.get('misconception', ''))}",
-                f"Try this: {screen_prose(qp.get('question', ''))}",
-                f"Answer: {screen_prose(qp.get('answer', ''))}",
-            ],
-        ),
-    ]
     raw_cues: list[tuple[float, float, str]] = []
     cursor = 0.0
-    for total, texts in groups:
-        for duration, cue_text in zip(distribute_cue_durations(total, texts), texts):
-            start = cursor
-            cursor += duration
-            raw_cues.append((start, cursor, cue_text))
-    if target_duration and cursor > 0:
-        scale = max(0.25, float(target_duration) / cursor)
+    for beat in video_timed_beats(short):
+        start = cursor
+        cursor += float(beat["duration"])
+        raw_cues.append((start, cursor, str(beat["text"])))
+    desired_duration = float(target_duration) if target_duration else short_video_pacing(short)["total"]
+    if desired_duration and cursor > 0:
+        scale = max(0.25, desired_duration / cursor)
         raw_cues = [(start * scale, end * scale, cue_text) for start, end, cue_text in raw_cues]
     return [(srt_timestamp(start), srt_timestamp(end), cue_text) for start, end, cue_text in raw_cues]
 
@@ -2945,21 +2967,11 @@ def semantic_beat_hold(self, duration, focus=None, label=None):
     focus = [mob for mob in (focus or []) if hasattr(mob, "animate") and not self.is_text_like(mob)]
     if not focus:
         focus = [mob for mob in self.mobjects if hasattr(mob, "animate") and not self.is_text_like(mob) and getattr(mob, "width", 0) > 0.2 and getattr(mob, "height", 0) > 0.2]
-    if not focus:
-        self.wait(remaining)
-        return
-    index = 0
-    while remaining > 0.05:
-        mob = focus[index % len(focus)]
-        step = min(1.25, remaining)
-        accent = self.palette(index)
-        if index % 3 == 2:
-            animation = Circumscribe(mob, color=accent, fade_out=True, time_width=0.35, buff=0.08)
-        else:
-            animation = Indicate(mob, scale_factor=1.035, color=accent)
-        self.play(animation, run_time=step)
-        remaining -= step
-        index += 1
+    if focus and remaining > 0.9:
+        pulse_time = min(0.65, remaining * 0.2)
+        self.play(Indicate(focus[0], scale_factor=1.025, color=self.palette(0)), run_time=pulse_time)
+        remaining -= pulse_time
+    self.wait(remaining)
 
 def active_hold(self, duration, focus=None):
     self.semantic_beat_hold(duration, focus, "key beat")
@@ -3001,14 +3013,16 @@ def matrix_column_combo(self, data, font_size=24, include_output=True):
     return parts.arrange(RIGHT, buff=0.14)
 
 def play_matrix_vector_intro(self, data):
-    equation = self.matrix_equation(data, font_size=30)
-    self.safe_place(equation, y=1.55, max_width=8.0, max_height=2.25, top=3.95, bottom=-0.35)
-    combo = self.matrix_column_combo(data, font_size=24)
-    self.safe_place(combo, y=-1.65, max_width=8.15, max_height=2.35, top=0.0, bottom=-3.65)
-    box = SurroundingRectangle(combo[-1], color="#7EE787", buff=0.12)
-    self.play(FadeIn(equation, shift=UP * 0.1), run_time=1.0)
-    self.play(LaggedStart(*[FadeIn(mob, shift=UP * 0.08) for mob in combo], lag_ratio=0.12), run_time=1.5)
-    self.play(Create(box), Indicate(combo[-1]), run_time=0.9)
+    col_colors = [self.palette(i) for i in range(max(1, len(data.get("columns", []))))]
+    matrix = self.matrix_block(data["matrix"], font_size=30, bracket_color="#58A6FF", column_colors=col_colors)
+    self.safe_place(matrix, y=1.45, max_width=5.2, max_height=2.35, top=3.35, bottom=0.0)
+    labels = VGroup(*[Text(f"column {i + 1}", font_size=21, color=col_colors[i]) for i in range(len(col_colors))]).arrange(RIGHT, buff=0.38)
+    self.safe_place(labels, y=-0.65, max_width=7.2, max_height=0.5, top=-0.35, bottom=-1.05)
+    cue = self.text_block(["x chooses the weights", "Ax mixes the columns"], font_size=24, color="#EAF2FF", max_width=7.1, max_height=1.15)
+    self.safe_place(cue, y=-2.35, max_width=7.1, max_height=1.15, top=-1.65, bottom=-3.15)
+    self.play(FadeIn(matrix, shift=UP * 0.1), run_time=1.0)
+    self.play(LaggedStart(*[FadeIn(label, shift=UP * 0.08) for label in labels], lag_ratio=0.14), run_time=0.9)
+    self.play(FadeIn(cue, shift=UP * 0.08), Indicate(matrix[1]), run_time=0.9)
 
 def play_matrix_vector_example(self, data, setup_lines, calc_lines, takeaway_lines):
     setup_caption = Text("Let the matrix A act on the input vector x.", font_size=20, color="#8FD3FF")
@@ -3079,10 +3093,19 @@ def vector_plane_objects(self, data):
     return plane, x_leg, y_leg, vec, labels
 
 def play_vector_intro(self, data):
-    plane, x_leg, y_leg, vec, labels = self.vector_plane_objects(data)
-    self.play(Create(plane), GrowArrow(x_leg), GrowArrow(y_leg), run_time=1.1)
-    self.play(GrowArrow(vec), FadeIn(labels), run_time=1.2)
-    self.play(Indicate(labels[2]), run_time=0.8)
+    plane = NumberPlane(x_range=[-1, 3, 1], y_range=[-1, 3, 1], x_length=5.7, y_length=4.2, background_line_style={"stroke_color": "#1F3558", "stroke_width": 1, "stroke_opacity": 0.65})
+    self.safe_place(plane, y=0.9, max_width=6.4, max_height=4.4, top=3.6, bottom=-1.7)
+    origin = plane.c2p(0, 0)
+    x_axis = Arrow(origin, plane.c2p(2.1, 0), buff=0, color="#F7C948", stroke_width=7)
+    y_axis = Arrow(origin, plane.c2p(0, 2.1), buff=0, color="#7EE787", stroke_width=7)
+    labels = VGroup(Text("x amount", font_size=24, color="#F7C948").next_to(x_axis, DOWN), Text("y amount", font_size=24, color="#7EE787").next_to(y_axis, RIGHT))
+    for label in labels:
+        self.add_readability_backplate(label, opacity=0.64, buff=0.055)
+    cue = self.text_block(["coordinates say how far", "along each direction"], font_size=24, color="#EAF2FF", max_width=7.0)
+    self.safe_place(cue, y=-3.05, max_width=7.0, max_height=1.0, top=-2.45, bottom=-3.75)
+    self.play(Create(plane), GrowArrow(x_axis), GrowArrow(y_axis), run_time=1.1)
+    self.play(FadeIn(labels, shift=UP * 0.08), run_time=0.9)
+    self.play(FadeIn(cue, shift=UP * 0.08), run_time=0.9)
 
 def play_vector_example(self, data, setup_lines, calc_lines, takeaway_lines):
     setup = self.text_block(setup_lines, font_size=21, color="#8FD3FF")
@@ -3125,10 +3148,22 @@ def linear_combo_objects(self, data):
     return plane, a, b, first, second, target, label
 
 def play_linear_combo_intro(self, data):
-    plane, a, b, first, second, target, label = self.linear_combo_objects(data)
+    ax, ay = [float(v) for v in data["a"]]
+    bx, by = [float(v) for v in data["b"]]
+    x_max = max(4, int(max(abs(ax), abs(bx), abs(ax * 2 + bx))) + 1)
+    y_max = max(4, int(max(abs(ay), abs(by), abs(ay * 2 + by))) + 1)
+    plane = NumberPlane(x_range=[-1, x_max, 1], y_range=[-1, y_max, 1], x_length=6.3, y_length=4.4, background_line_style={"stroke_color": "#1F3558", "stroke_width": 1, "stroke_opacity": 0.65})
+    self.safe_place(plane, y=0.85, max_width=6.8, max_height=4.7, top=3.5, bottom=-1.8)
+    origin = plane.c2p(0, 0)
+    a = Arrow(origin, plane.c2p(ax, ay), buff=0, color="#58A6FF", stroke_width=7)
+    b = Arrow(origin, plane.c2p(bx, by), buff=0, color="#F7C948", stroke_width=7)
+    a2 = Arrow(origin, plane.c2p(ax * 2, ay * 2), buff=0, color="#58A6FF", stroke_width=5, stroke_opacity=0.45)
+    b2 = Arrow(plane.c2p(ax * 2, ay * 2), plane.c2p(ax * 2 + bx, ay * 2 + by), buff=0, color="#F7C948", stroke_width=5, stroke_opacity=0.45)
+    cue = self.text_block(["scale each direction", "then add the arrows"], font_size=24, color="#EAF2FF", max_width=7.0)
+    self.safe_place(cue, y=-3.05, max_width=7.0, max_height=1.0, top=-2.45, bottom=-3.75)
     self.play(Create(plane), GrowArrow(a), GrowArrow(b), run_time=1.1)
-    self.play(TransformFromCopy(a, first), TransformFromCopy(b, second), FadeIn(target, scale=1.3), run_time=1.25)
-    self.play(FadeIn(label), Flash(target, color="#7EE787"), run_time=0.9)
+    self.play(GrowArrow(a2), GrowArrow(b2), run_time=1.0)
+    self.play(FadeIn(cue, shift=UP * 0.08), run_time=0.9)
 
 def play_linear_combo_example(self, data, setup_lines, calc_lines, takeaway_lines):
     setup = self.text_block(setup_lines, font_size=21, color="#8FD3FF")
@@ -3613,8 +3648,6 @@ def manim_scene(short: dict[str, object], class_name: str) -> str:
     setup = screen_prose(short["worked_example"]["setup"])
     calc = screen_prose(short["worked_example"]["calculation"])
     takeaway = screen_prose(short["worked_example"]["takeaway"])
-    question = screen_prose(short["question_prompt"]["question"])
-    answer = screen_prose(short["question_prompt"]["answer"])
     visual_data = visual_data_for(short, visual_kind)
     pacing = short_video_pacing(short)
     return f'''# generated_by: tools/stem_course.py; scene_metadata_version={SCENE_METADATA_VERSION}; visual_kind={visual_kind}; concept={str(short.get("concept", "")).replace(chr(10), " ")!r}
@@ -3640,8 +3673,6 @@ class {class_name}(Scene):
         setup_lines = {wrap(setup, 30, 3)!r}
         calc_lines = {wrap(calc, 30, 3)!r}
         takeaway_lines = {wrap(takeaway, 30, 3)!r}
-        question_lines = {wrap(question, 40, 3)!r}
-        answer_lines = {wrap(answer, 40, 3)!r}
 
         title = Text({short["concept"]!r}, font_size=45, weight="BOLD", color="#EAF2FF", disable_ligatures=True)
         self.safe_place(title, y=7.08, max_width=8.1, max_height=0.8, top=7.48, bottom=6.58)
@@ -3666,12 +3697,6 @@ class {class_name}(Scene):
         self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
         {visual_template(visual_kind, "example")}
         self.semantic_beat_hold(pacing["example_hold"], label="example step")
-        self.fade_all_except([title], run_time=0.7)
-
-        section = self.section_label("Active recall", "#F7C948")
-        self.play(FadeIn(section, shift=DOWN * 0.08), run_time=0.45)
-        {visual_template(visual_kind, "recall")}
-        self.semantic_beat_hold(pacing["recall_hold"], label="recall check")
         self.play(*[FadeOut(mob) for mob in self.mobjects], run_time=0.6)
         self.wait(0.15)
 '''
@@ -3724,18 +3749,18 @@ def script_clock(timestamp: str) -> str:
 def script_markdown(short: dict[str, object]) -> str:
     target_seconds = short_video_pacing(short)["total"]
     rows = []
-    for start, end, cue_text in caption_cues(short):
+    for (start, end, cue_text), beat in zip(caption_cues(short), video_timed_beats(short)):
         cleaned = str(cue_text).replace("|", "-")
-        rows.append(f"| {script_clock(start)}-{script_clock(end)} | {cleaned} |")
+        rows.append(f"| {script_clock(start)}-{script_clock(end)} | {beat['label']} | {beat['read_seconds']}s | {cleaned} |")
     beat_rows = "\n".join(rows)
     return f"""# Short {short['index']:02d}: {short['concept']}
 
-Target length: about {target_seconds:.0f} seconds from script-paced captions; keep going until the concept, worked example, and recall question are clear.
+Target length: about {target_seconds:.0f} seconds from script-paced captions; keep going until the concept and worked example are clear.
 
 ## Beats
 
-| Time | Beat |
-| --- | --- |
+| Time | Beat | Read time | Text |
+| --- | --- | ---: | --- |
 {beat_rows}
 """
 

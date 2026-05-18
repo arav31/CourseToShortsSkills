@@ -54,20 +54,22 @@ Treat crowded frames, labels crossed by diagram strokes, formula glyph boxes, or
 - Do not reuse the same generic animation for every short.
 - No voiceover is required; generated MP4s should stand alone as silent visual explanations with sparse labels and captions metadata.
 - The worked example must be visible, not only narrated or captioned.
-- Setup, calculation, takeaway, and active recall should each move or transform mathematical/diagram objects; static text-only cards are a failure mode.
+- Setup, calculation, and takeaway should each move or transform mathematical/diagram objects; static text-only cards are a failure mode.
+- Do not add an active-recall section to videos. Practice questions can remain in notes or queues, but the rendered video should focus on the concept and worked example.
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.
 - Keep vertical 9:16 composition readable on a phone.
 - Use generator safe-area/layout helpers before rendering; top titles, bottom formulas, and captions must fit inside the vertical frame with visible breathing room between bands.
 - Use simplified screen formulas in videos. Keep exact notation in the notes, but do not render dense LaTeX strings on screen when a readable cue like `A x = weighted sum of columns` communicates the point.
 - Put subtle background backplates behind screen text and labels so arrows, axes, curves, and grid lines cannot visually run through words.
-- Do not hard-code scene length with fixed waits. Pace Manim waits and SRT cues from the generated script/caption text so short videos can be shorter or longer than the old roughly 38-second default.
-- Clear or fade prior visual text before placing formulas, takeaways, or recall answers in the same lower safe area.
+- Do not hard-code scene length with fixed waits. Pace Manim waits and SRT cues from the generated script/caption text so each visible beat stays up long enough to read and inspect.
+- Avoid filler emphasis loops. Holds should be mostly calm reading/viewing time with at most one gentle visual pulse per beat.
+- Clear or fade prior visual text before placing formulas and takeaways in the same lower safe area.
 - Normalize screen text before rendering: preserve spaces around operators, subscripts, products, and matrix/vector prose; avoid labels like `2*4`, `Ax=b`, or `x_1` collapsing into hard-to-read text.
 - Avoid tiny formulas. If a formula is long, animate it in parts.
 - Render matrices and vectors as stacked mathematical objects, not single-line Python lists.
 - For non-linear-algebra topics, choose a visual family such as calculus, physics, CS, probability, chemistry, group theory, economics, or a numeric input-rule-output diagram instead of the generic placeholder.
 - Group-theory and economics visual types must route to domain-specific renderers; do not let them fall through to the generic numeric rule diagram.
-- Do not force a one-minute cap; keep pacing long enough for concept, worked example, and active recall to land clearly.
+- Do not force a one-minute cap; keep pacing long enough for the concept and worked example to land clearly.
 
 ## Output
 
