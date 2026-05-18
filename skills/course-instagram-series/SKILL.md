@@ -29,7 +29,7 @@ If videos are already hosted at a public base URL, include it so the queue can b
 python tools/stem_course.py queue --run runs/<course> --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
 ```
 
-3. Inspect `runs/<course>/instagram_publish_queue.json`. Captions should include the worked example and active-recall question.
+3. Inspect `runs/<course>/instagram_publish_queue.json`. Captions should include the worked example and, when useful, the application question from `question_prompt`.
 4. Publish only when the user explicitly wants API publishing and has configured:
 
 - `IG_USER_ID`

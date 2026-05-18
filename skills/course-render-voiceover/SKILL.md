@@ -42,7 +42,7 @@ python tools/validate_course_run.py runs/<course>
 
 ## Quality Bar
 
-- Final videos should not be forced to one minute or the old short default; they should run as long as needed for the concept, example, and recall question.
+- Final videos should not be forced to one minute or the old short default; they should run as long as needed for the concept and worked example.
 - Never mux final voiceover output with `ffmpeg -shortest`. Pad the shorter stream instead: clone-pad video when narration is longer, audio-pad when narration is shorter, and record raw, voice, target, final, and pad durations in `render_report.json`.
 - Clear each scene's generated Manim media before rendering and retry once after a Manim failure; interrupted partial movie caches must not poison later full runs.
 - Captions must be regenerated or stretched to the final muxed duration so SRT timing, audio, and video end together.

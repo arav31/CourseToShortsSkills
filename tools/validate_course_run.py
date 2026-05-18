@@ -355,6 +355,7 @@ class CourseRunValidator:
             self.fail("short-plan", "short_plan.json has no shorts array.", self.run / "short_plan.json")
             return
         required_fields = ["index", "concept", "hook", "intuition", "worked_example", "question_prompt", "visual_type"]
+        example_signatures: dict[str, int] = {}
         for pos, short in enumerate(shorts, start=1):
             if not isinstance(short, dict):
                 self.fail("short-plan", f"Short item {pos} is not an object.", self.run / "short_plan.json")
@@ -362,6 +363,68 @@ class CourseRunValidator:
             for field in required_fields:
                 if field not in short:
                     self.fail("short-plan", f"Short {short.get('index', pos)} is missing `{field}`.", self.run / "short_plan.json")
+            self.validate_worked_example(short, pos, example_signatures)
+
+    def validate_worked_example(self, short: dict[str, Any], pos: int, signatures: dict[str, int]) -> None:
+        index = short.get("index", pos)
+        example = short.get("worked_example")
+        if not isinstance(example, dict):
+            self.fail("short-plan.example", f"Short {index} has no worked_example object.", self.run / "short_plan.json")
+            return
+        fields = [str(example.get(key, "")).strip() for key in ("setup", "calculation", "takeaway")]
+        if any(not field for field in fields):
+            self.fail("short-plan.example", f"Short {index} has an incomplete worked_example.", self.run / "short_plan.json")
+            return
+
+        combined = " ".join(fields)
+        word_count = len(re.findall(r"\b[\w'-]+\b", combined))
+        if word_count < 16:
+            self.fail(
+                "short-plan.example",
+                f"Short {index} worked_example is too thin ({word_count} words).",
+                self.run / "short_plan.json",
+                fix="Give setup, calculation, and interpretation with concrete values or a concrete symbolic object.",
+            )
+        if not re.search(r"\d|=|->|\{|\}|\(|\)|\[|\]|\bmod\b|\b[A-Z]\s*-\s*[A-Z]\b", combined):
+            self.fail(
+                "short-plan.example",
+                f"Short {index} worked_example has no concrete numbers, equations, sets, vectors, or symbolic objects.",
+                self.run / "short_plan.json",
+                fix="Add at least one teachable concrete example, even for theoretical concepts.",
+            )
+
+        placeholder_pattern = (
+            r"\b("
+            r"pick a small|choose a small|build a small|set up a small|"
+            r"work through one|work through the definition|representative example|"
+            r"the example should|the calculation should|mini-example template"
+            r")\b"
+        )
+        if re.search(placeholder_pattern, combined, flags=re.I):
+            self.fail(
+                "short-plan.example",
+                f"Short {index} worked_example still reads like an example placeholder.",
+                self.run / "short_plan.json",
+                fix="Replace it with a specific example that teaches the concept through values, objects, and a conclusion.",
+            )
+
+        signature = re.sub(r"[^a-z0-9=]+", " ", " ".join(fields[:2]).lower()).strip()
+        signature = re.sub(r"\b(short|concept|example|takeaway)\b", " ", signature)
+        signature = re.sub(r"\s+", " ", signature)
+        if signature:
+            previous = signatures.get(signature)
+            if previous is not None:
+                self.fail(
+                    "short-plan.example",
+                    f"Short {index} repeats the worked example from short {previous}.",
+                    self.run / "short_plan.json",
+                    fix="Use a new example for each video so the series teaches rather than recycles.",
+                )
+            else:
+                try:
+                    signatures[signature] = int(index)
+                except Exception:
+                    signatures[signature] = pos
 
     def validate_scene_script_caption_assets(self, plan: Any) -> None:
         shorts = plan_shorts(plan)

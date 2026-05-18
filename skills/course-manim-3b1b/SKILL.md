@@ -52,8 +52,9 @@ Treat crowded frames, labels crossed by diagram strokes, formula glyph boxes, or
 ## Visual Standard
 
 - Do not reuse the same generic animation for every short.
-- No voiceover is required; generated MP4s should stand alone as silent visual explanations with sparse labels and captions metadata.
-- The worked example must be visible, not only narrated or captioned.
+- Raw Manim scenes do not embed voiceover; the render/voiceover stage attaches narration when a voice engine is selected. The scene still needs enough sparse labels and captions metadata to make the visual logic clear.
+- The worked example must be visible, not only narrated or captioned, and it must be new for that video rather than a recycled generic example.
+- Even theoretical concepts need a concrete example: a small group, set, graph, proof object, counterexample, or symbolic case that teaches the concept by doing one check.
 - Setup, calculation, and takeaway should each move or transform mathematical/diagram objects; static text-only cards are a failure mode.
 - Do not add an active-recall section to videos. Practice questions can remain in notes or queues, but the rendered video should focus on the concept and worked example.
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.

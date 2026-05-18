@@ -34,16 +34,17 @@ python tools/stem_course.py plan --run runs/<course> --max-shorts 30
 - `formula` and `plain_formula`
 - `prerequisites`
 - `misconception`
-- `worked_example` with actual numbers or a concrete symbolic example
+- `worked_example` with actual numbers or a concrete symbolic example that is new for this video
 - `question_prompt` with an application question and answer
 - `visual_type`
 
 ## Shorts Standard
 
-- No fixed one-minute limit; choose the length needed to explain the concept, numeric example, visual interpretation, and active-recall answer clearly.
-- Every short needs one concrete worked example.
-- Every example should be visualizable in Manim.
-- Every short needs active recall, not only passive explanation.
+- No fixed one-minute limit; choose the length needed to explain the concept, concrete example, and visual interpretation clearly.
+- Every short needs one concrete worked example, including theoretical concepts.
+- Every example should be visualizable in Manim and should teach the concept by naming inputs/objects, applying the rule/property, and stating the conclusion.
+- Do not reuse the same example shape across adjacent shorts unless the point is explicitly to compare the concepts; changing only the concept title around the same numbers is still a repeat.
+- Every short keeps a `question_prompt` for notes, captions, and queues, but videos should not add a separate active-recall section.
 - Avoid repeating the same visual template for consecutive concepts.
 
 ## Outputs
