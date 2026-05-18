@@ -2471,8 +2471,11 @@ def caption_cues(short: dict[str, object], target_duration: float | None = None)
 def numeric_literals(text: str) -> list[object]:
     values: list[object] = []
     pairs = {"[": "]", "(": ")"}
+    covered_ranges: list[tuple[int, int]] = []
     for start, opener in enumerate(text):
         if opener not in pairs:
+            continue
+        if any(left <= start < right for left, right in covered_ranges):
             continue
         closer = pairs[opener]
         depth = 0
@@ -2486,6 +2489,7 @@ def numeric_literals(text: str) -> list[object]:
                     candidate = text[start : end + 1]
                     try:
                         values.append(ast.literal_eval(candidate))
+                        covered_ranges.append((start, end + 1))
                     except Exception:
                         pass
                     break
@@ -2726,6 +2730,22 @@ def visual_data_for(short: dict[str, object], kind: str) -> dict[str, object]:
     return data
 
 
+def video_formula_text(short: dict[str, object], visual_kind: str) -> str:
+    """Return a phone-readable formula cue for Manim."""
+    visual = visual_kind.strip().lower()
+    if visual == "matrix_vector":
+        return "A x = weighted sum of columns"
+    if visual == "linear_combination":
+        return "c1 v1 + c2 v2 + ... + ck vk"
+    if visual == "vector_components":
+        return "x = (x1, x2, ..., xn)"
+    formula = screen_math(str(short.get("formula", short.get("plain_formula", ""))))
+    formula = formula.replace("ldots", "...").replace("cdots", "...")
+    formula = re.sub(r"\b([A-Za-z]+)_([A-Za-z0-9]+)\b", r"\1\2", formula)
+    formula = re.sub(r"\s+", " ", formula).strip()
+    return textwrap.shorten(formula or "formula cue", width=62, placeholder="...")
+
+
 MANIM_SCENE_HELPERS = '''
 def fmt(self, value):
     text = str(value)
@@ -2740,6 +2760,17 @@ def fmt(self, value):
 def palette(self, index):
     colors = ["#58A6FF", "#F7C948", "#7EE787", "#FF7B72", "#A371F7"]
     return colors[index % len(colors)]
+
+def add_readability_backplate(self, mob, opacity=0.72, buff=0.08):
+    if getattr(mob, "_has_readability_backplate", False):
+        return mob
+    try:
+        mob.add_background_rectangle(color="#0B1020", opacity=opacity, buff=buff)
+        mob._has_readability_backplate = True
+        mob._is_protected_text = True
+    except Exception:
+        pass
+    return mob
 
 def fit_in(self, mob, max_width=7.8, max_height=6.0):
     if mob.width > max_width:
@@ -2818,7 +2849,9 @@ def text_block(self, lines, font_size=25, color="#EAF2FF", max_width=7.4, line_b
     clean_lines = [str(line).strip() for line in lines if str(line).strip()]
     if not clean_lines:
         clean_lines = [""]
-    group = VGroup(*[Text(line, font_size=font_size, color=color, disable_ligatures=True) for line in clean_lines]).arrange(DOWN, buff=line_buff)
+    text_lines = VGroup(*[self.add_readability_backplate(Text(line, font_size=font_size, color=color, disable_ligatures=True), opacity=0.68, buff=0.055) for line in clean_lines])
+    group = text_lines.arrange(DOWN, buff=line_buff)
+    group._is_protected_text = True
     return self.fit_in(group, max_width=max_width, max_height=max_height)
 
 def formula_fallback_text(self, latex, plain):
@@ -2870,14 +2903,19 @@ def formula_block(self, latex, plain, font_size=32, color="#F7C948", max_width=7
     for candidate in candidates:
         try:
             mob = MathTex(candidate, font_size=font_size, color=color)
+            self.add_readability_backplate(mob, opacity=0.70, buff=0.075)
+            mob._is_protected_text = True
             return self.fit_in(mob, max_width=max_width, max_height=1.15)
         except Exception:
             pass
     mob = Text(self.formula_fallback_text(latex, plain), font_size=font_size, color=color, disable_ligatures=True)
+    self.add_readability_backplate(mob, opacity=0.70, buff=0.075)
+    mob._is_protected_text = True
     return self.fit_in(mob, max_width=max_width, max_height=1.15)
 
 def section_label(self, text, color="#F7C948"):
     label = Text(text, font_size=30, weight="BOLD", color=color)
+    self.add_readability_backplate(label, opacity=0.72, buff=0.08)
     return self.safe_place(label, y=5.7, max_width=7.6, max_height=0.65, top=6.05, bottom=5.15)
 
 def fade_all_except(self, keep=None, run_time=0.6):
@@ -2893,13 +2931,20 @@ def fade_all_except(self, keep=None, run_time=0.6):
     self._layout_registry = [mob for mob in keep if hasattr(mob, "get_left")]
 
 
+def is_text_like(self, mob):
+    if getattr(mob, "_is_protected_text", False) or mob.__class__.__name__ in {"Text", "MarkupText", "MathTex", "Tex", "Paragraph"}:
+        return True
+    children = getattr(mob, "submobjects", [])
+    return bool(children) and any(self.is_text_like(child) for child in children)
+
+
 def semantic_beat_hold(self, duration, focus=None, label=None):
     remaining = max(0.0, float(duration or 0))
     if remaining <= 0.05:
         return
-    focus = [mob for mob in (focus or []) if hasattr(mob, "animate")]
+    focus = [mob for mob in (focus or []) if hasattr(mob, "animate") and not self.is_text_like(mob)]
     if not focus:
-        focus = [mob for mob in self.mobjects if hasattr(mob, "animate") and getattr(mob, "width", 0) > 0.2 and getattr(mob, "height", 0) > 0.2]
+        focus = [mob for mob in self.mobjects if hasattr(mob, "animate") and not self.is_text_like(mob) and getattr(mob, "width", 0) > 0.2 and getattr(mob, "height", 0) > 0.2]
     if not focus:
         self.wait(remaining)
         return
@@ -2978,6 +3023,8 @@ def play_matrix_vector_example(self, data, setup_lines, calc_lines, takeaway_lin
     equation = self.matrix_equation(data, font_size=27)
     self.safe_place(equation, y=2.55, max_width=8.05, max_height=2.0, top=3.8, bottom=1.25)
     row_group = VGroup(*[Text(line, font_size=25, color=self.palette(i)) for i, line in enumerate(data.get("row_calcs", []))]).arrange(DOWN, buff=0.22)
+    for row in row_group:
+        self.add_readability_backplate(row, opacity=0.64, buff=0.055)
     self.safe_place(row_group, y=0.0, max_width=7.8, max_height=1.45, top=0.9, bottom=-1.0)
     combo = self.matrix_column_combo(data, font_size=23)
     self.safe_place(combo, y=-2.55, max_width=8.1, max_height=2.15, top=-1.25, bottom=-4.0)
@@ -3027,6 +3074,8 @@ def vector_plane_objects(self, data):
     y_leg = Arrow(x_end, end, buff=0, color="#7EE787", stroke_width=7)
     vec = Arrow(origin, end, buff=0, color="#58A6FF", stroke_width=8)
     labels = VGroup(Text(str(data["vector"][0]), font_size=26, color="#F7C948").next_to(x_leg, DOWN), Text(str(data["vector"][1]), font_size=26, color="#7EE787").next_to(y_leg, RIGHT), Text("length " + str(data["length"]), font_size=26, color="#8FD3FF").next_to(vec, UP))
+    for label in labels:
+        self.add_readability_backplate(label, opacity=0.64, buff=0.055)
     return plane, x_leg, y_leg, vec, labels
 
 def play_vector_intro(self, data):
@@ -3039,7 +3088,8 @@ def play_vector_example(self, data, setup_lines, calc_lines, takeaway_lines):
     setup = self.text_block(setup_lines, font_size=21, color="#8FD3FF")
     self.safe_place(setup, y=4.65, max_height=0.85, top=5.1, bottom=4.0)
     plane, x_leg, y_leg, vec, labels = self.vector_plane_objects(data)
-    formula = Text(f"{data['vector'][0]}^2 + {data['vector'][1]}^2 -> length {data['length']}", font_size=27, color="#F7C948")
+    formula = Text(f"sqrt({data['vector'][0]}^2 + {data['vector'][1]}^2) = {data['length']}", font_size=27, color="#F7C948")
+    self.add_readability_backplate(formula, opacity=0.68, buff=0.06)
     self.safe_place(formula, y=-3.4, max_width=7.4, max_height=0.55, top=-3.05, bottom=-3.8)
     takeaway = self.text_block(takeaway_lines, font_size=23, color="#7EE787")
     self.safe_place(takeaway, y=-5.45, max_height=1.0, top=-4.8, bottom=-6.3)
@@ -3070,6 +3120,7 @@ def linear_combo_objects(self, data):
     second = Arrow(first.get_end(), plane.c2p(tx, ty), buff=0, color="#F7C948", stroke_width=8)
     target = Dot(plane.c2p(tx, ty), radius=0.09, color="#7EE787")
     label = Text(f"{data['weights'][0]}a + {data['weights'][1]}b = ({data['target'][0]}, {data['target'][1]})", font_size=25, color="#7EE787")
+    self.add_readability_backplate(label, opacity=0.66, buff=0.06)
     self.safe_place(label, y=-3.35, max_width=7.4, max_height=0.55, top=-3.05, bottom=-3.8)
     return plane, a, b, first, second, target, label
 
@@ -3601,7 +3652,7 @@ class {class_name}(Scene):
         {visual_template(visual_kind, "intro")}
         self.fade_all_except([title, hook], run_time=0.45)
 
-        formula = self.formula_block({sanitize_formula_latex(str(short["formula"]))!r}, {screen_math(str(short["formula"]))!r}, font_size=32, color="#F7C948")
+        formula = self.formula_block("", {video_formula_text(short, visual_kind)!r}, font_size=32, color="#F7C948")
         self.safe_place(formula, y=-4.95, max_width=7.4, max_height=0.9, top=-4.45, bottom=-5.55)
         intuition = self.text_block({wrap(str(short["intuition"]), 42, 3)!r}, font_size=23, color="#EAF2FF", max_width=7.25, max_height=1.15)
         self.safe_place(intuition, y=-6.55, max_width=7.25, max_height=1.15, top=-5.9, bottom=-7.25)

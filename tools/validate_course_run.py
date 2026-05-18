@@ -87,6 +87,7 @@ class CourseRunValidator:
         self.validate_short_plan(plan)
         self.validate_scene_script_caption_assets(plan)
         self.validate_videos(plan)
+        self.validate_visual_frame_audit(plan)
         self.validate_publish_queue()
         return self.issues
 
@@ -706,6 +707,68 @@ class CourseRunValidator:
                     self.fail("render-report.sync", f"Final video {final:.1f}s is not aligned to voiceover length {voice_dur:.1f}s.", self.run / "render_report.json", fix="Time-scale the rendered video to the narration duration before padding the short tail.")
                 if raw > 0 and voice_dur > 0 and abs(raw - voice_dur) > 1.0 and parse_float(sync.get("video_time_scale")) == 1.0 and parse_float(sync.get("video_pad_seconds")) <= 0:
                     self.fail("render-report.sync", "Raw Manim duration and voiceover duration differ, but no time scaling or padding was recorded.", self.run / "render_report.json", fix="Use the voice-first render flow and record video_time_scale in render_report.json.")
+
+    def validate_visual_frame_audit(self, plan: Any) -> None:
+        final_videos = sorted((self.run / "videos").glob("*_final.mp4"))
+        if not final_videos and not self.render_outputs_expected(plan_shorts(plan)):
+            return
+
+        report_path = self.run / "visual_frame_audit.json"
+        if not report_path.exists():
+            self.warn(
+                "visual-audit",
+                "visual_frame_audit.json is missing, so overlap/crowding contact-sheet review is not recorded.",
+                report_path,
+                fix="Run `python tools/audit_video_frames.py <run>` after rendering and inspect the contact sheets.",
+            )
+            return
+
+        report = self.load_json(report_path, required=True)
+        if not isinstance(report, dict):
+            self.fail("visual-audit", "visual_frame_audit.json must be an object.", report_path)
+            return
+        videos = report.get("videos")
+        if not isinstance(videos, list) or not videos:
+            self.fail("visual-audit", "visual_frame_audit.json has no videos array.", report_path)
+            return
+
+        audited: set[str] = set()
+        for item in videos:
+            if not isinstance(item, dict):
+                self.fail("visual-audit", "Visual audit video entry must be an object.", report_path)
+                continue
+            video_rel = str(item.get("video") or "")
+            if video_rel:
+                audited.add(video_rel)
+            contact_rel = str(item.get("contact_sheet") or "")
+            if contact_rel and not (self.run / contact_rel).exists():
+                self.fail("visual-audit", f"Contact sheet is missing for {video_rel or 'a video'}.", self.run / contact_rel)
+            elif not contact_rel:
+                self.fail("visual-audit", f"No contact sheet recorded for {video_rel or 'a video'}.", report_path)
+
+            metrics = item.get("metrics")
+            if not isinstance(metrics, dict):
+                self.fail("visual-audit", f"No frame metrics recorded for {video_rel or 'a video'}.", report_path)
+                continue
+            sampled = int(parse_float(metrics.get("sampled_frames")))
+            if sampled < 3:
+                self.warn("visual-audit", f"Only {sampled} frame(s) sampled for {video_rel or 'a video'}.", report_path)
+            flags = metrics.get("review_flags")
+            if isinstance(flags, list) and flags:
+                self.fail(
+                    "visual-audit",
+                    f"Frame audit flagged {video_rel or 'a video'} for {', '.join(str(flag) for flag in flags)}.",
+                    report_path,
+                    fix="Open the contact sheet, patch the relevant visual family, rerender, and rerun `tools/audit_video_frames.py`.",
+                )
+
+        for final in final_videos:
+            try:
+                rel = str(final.relative_to(self.run))
+            except ValueError:
+                rel = str(final)
+            if rel not in audited:
+                self.warn("visual-audit", f"Final video {final.name} is not represented in visual_frame_audit.json.", report_path)
 
     def validate_video_file(self, path: Path, *, role: str) -> None:
         path = path.resolve()

@@ -94,7 +94,8 @@ python tools/stem_course.py render --run runs/course --voice-engine say
 
 ```bash
 python -m py_compile tools/stem_course.py
-python tools/stem_course.py all --sample linear_algebra --out runs/demo --max-shorts 6 --no-render --pdf-engine latex
+python tools/stem_course.py all --sample linear_algebra --out runs/demo --max-shorts 6 --voice-engine none --pdf-engine latex
+python tools/audit_video_frames.py runs/demo
 python tools/validate_course_run.py runs/demo --draft
 python - <<'PY'
 import fitz

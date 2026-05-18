@@ -49,6 +49,7 @@ python tools/stem_course.py plan --run runs/course --max-shorts 12
 python tools/stem_course.py notes --run runs/course --compile
 python tools/stem_course.py manim --run runs/course
 python tools/stem_course.py render --run runs/course --voice-engine none
+python tools/audit_video_frames.py runs/course
 python tools/validate_course_run.py runs/course
 python tools/stem_course.py queue --run runs/course --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
 python tools/stem_course.py publish --run runs/course --dry-run
@@ -70,7 +71,7 @@ Instagram cannot publish a private local MP4 directly through this API; host the
 
 ## Validation
 
-Run `python tools/validate_course_run.py runs/<course>` before treating a course run as upload-ready. It checks notes/PDF provenance, LaTeX formatting red flags, scene/script/caption coverage, final video existence, duration, vertical orientation, blank/static sampled frames, and audio streams when a voice engine was selected. Silent final MP4s pass when `render_report.json` records `--voice-engine none`. Use `--draft` while iterating before final render.
+Run `python tools/audit_video_frames.py runs/<course>` after rendering, inspect the generated contact sheets in `visual_audit/`, then run `python tools/validate_course_run.py runs/<course>` before treating a course run as upload-ready. The validator checks notes/PDF provenance, LaTeX formatting red flags, scene/script/caption coverage, final video existence, duration, vertical orientation, blank/static sampled frames, visual-audit review flags, and audio streams when a voice engine was selected. Silent final MP4s pass when `render_report.json` records `--voice-engine none`. Use `--draft` while iterating before final render.
 
 
 ## Notes PDF

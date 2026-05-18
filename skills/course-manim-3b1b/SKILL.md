@@ -31,7 +31,16 @@ python tools/stem_course.py manim --run runs/<course>
 python tools/validate_course_run.py runs/<course> --draft
 ```
 
-5. Improve generated Manim where the course demands it. Prefer domain-specific visuals:
+5. Render a visual QA pass and inspect the contact sheets before publishing:
+
+```bash
+python tools/stem_course.py render --run runs/<course> --voice-engine none --quality l
+python tools/audit_video_frames.py runs/<course>
+```
+
+Treat crowded frames, labels crossed by diagram strokes, formula glyph boxes, or overlapping text as generator bugs. Patch the visual family, regenerate scenes, rerender, and rerun the frame audit until the contact sheets are clean.
+
+6. Improve generated Manim where the course demands it. Prefer domain-specific visuals:
 
 - Linear algebra: number planes, vectors, bases, projections, transformed grids, eigendirections, areas.
 - Calculus: moving tangent lines, accumulated area, slope fields, Taylor approximations.
@@ -49,6 +58,8 @@ python tools/validate_course_run.py runs/<course> --draft
 - Use color meaningfully: one color for inputs, one for transformation/rule, one for result.
 - Keep vertical 9:16 composition readable on a phone.
 - Use generator safe-area/layout helpers before rendering; top titles, bottom formulas, and captions must fit inside the vertical frame with visible breathing room between bands.
+- Use simplified screen formulas in videos. Keep exact notation in the notes, but do not render dense LaTeX strings on screen when a readable cue like `A x = weighted sum of columns` communicates the point.
+- Put subtle background backplates behind screen text and labels so arrows, axes, curves, and grid lines cannot visually run through words.
 - Do not hard-code scene length with fixed waits. Pace Manim waits and SRT cues from the generated script/caption text so short videos can be shorter or longer than the old roughly 38-second default.
 - Clear or fade prior visual text before placing formulas, takeaways, or recall answers in the same lower safe area.
 - Normalize screen text before rendering: preserve spaces around operators, subscripts, products, and matrix/vector prose; avoid labels like `2*4`, `Ax=b`, or `x_1` collapsing into hard-to-read text.
