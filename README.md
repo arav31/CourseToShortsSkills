@@ -78,6 +78,3 @@ Run `python tools/audit_video_frames.py runs/<course>` after rendering, inspect 
 
 `notes --compile` and `all` generate `notes.pdf`. The CLI tries `latexmk`, `pdflatex`, or `tectonic` first, including common TeX install paths such as `/Library/TeX/texbin`. If no TeX engine is installed, it uses the PyMuPDF fallback from the same generated notes data and writes `notes_compile_report.json` so you can see which engine produced the PDF. The LaTeX template is now a black-and-white article-style definitions/formulas document matching the supplied reference structure: title page, numbered sections, compact tables, full topic explanations, examples, and question banks.
 
-## Video Length
-
-Generated Manim explainers no longer have a one-minute cap. Scripts and captions are paced for longer concept-complete videos, and matrix/vector visuals are rendered as stacked math objects instead of cramped one-line lists.
