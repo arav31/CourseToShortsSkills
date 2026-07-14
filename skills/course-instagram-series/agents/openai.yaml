@@ -1,4 +1,4 @@
 interface:
   display_name: "Course Instagram Series"
   short_description: "Package Instagram Reels queues."
-  default_prompt: "Package this rendered course series for Instagram Reels."
+  default_prompt: "Use $course-instagram-series to prepare a validated course series for Instagram Reels."

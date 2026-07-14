@@ -1,4 +1,4 @@
 interface:
   display_name: "Course LaTeX Notes"
-  short_description: "Write formula-rich course notes."
-  default_prompt: "Generate comprehensive LaTeX course notes from this course pack."
+  short_description: "Write source-grounded LaTeX notes."
+  default_prompt: "Use $course-latex-notes to write and compile comprehensive course notes."

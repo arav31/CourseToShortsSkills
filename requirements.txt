@@ -1,5 +1,7 @@
 beautifulsoup4>=4.12
 pymupdf>=1.24
 requests>=2.31
+PyYAML>=6.0
 manim>=0.18
 edge-tts>=6.1; python_version >= "3.9"
+piper-tts==1.4.2

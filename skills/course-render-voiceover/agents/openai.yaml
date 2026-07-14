@@ -1,4 +1,4 @@
 interface:
   display_name: "Course Render Voiceover"
-  short_description: "Render shorts with voiceover."
-  default_prompt: "Render these Manim shorts with voiceover and subtitles."
+  short_description: "Render silent or voiced course shorts."
+  default_prompt: "Use $course-render-voiceover to render and audit a production course-shorts run."

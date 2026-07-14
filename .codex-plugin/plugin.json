@@ -1,0 +1,32 @@
+{
+  "name": "course-shorts-skills-quality",
+  "version": "0.1.0+codex.20260714232957",
+  "description": "Turn course sources into comprehensive notes and validated visual explainer videos.",
+  "author": {
+    "name": "Arav"
+  },
+  "keywords": [
+    "education",
+    "course-notes",
+    "manim",
+    "video",
+    "latex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Course to Shorts",
+    "shortDescription": "Create course notes and visual explainers.",
+    "longDescription": "Extract course material, write comprehensive LaTeX notes, plan and render visual explainers, and validate production output.",
+    "developerName": "Arav",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Turn this course into comprehensive notes and a visual shorts plan.",
+      "Generate and render validated Manim explainers for this course.",
+      "Validate this course run before publishing."
+    ]
+  }
+}

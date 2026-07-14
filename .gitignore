@@ -1,8 +1,11 @@
-.venv/
+.venv*/
 __pycache__/
 *.pyc
 runs/
 media/
+artifacts/
+tmp/
+models/
 .DS_Store
 *.mp4
 *.mp3

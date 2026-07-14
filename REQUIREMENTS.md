@@ -32,7 +32,9 @@ The CLI searches normal PATH plus `/Library/TeX/texbin`, `/opt/homebrew/bin`, an
 - `pymupdf` for PDF text extraction and fallback PDF generation
 - `manim` for animation generation
 - `requests` and `beautifulsoup4` for web extraction helpers
+- `PyYAML` for skill, plugin, and workflow configuration validation
 - `edge-tts` for optional local-ish voiceover
+- `piper-tts` for the optional fully local open-source voiceover path
 
 The validator uses the system `ffprobe`/`ffmpeg` commands from FFmpeg for video metadata and sampled-frame checks.
 
@@ -41,9 +43,9 @@ The validator uses the system `ffprobe`/`ffmpeg` commands from FFmpeg for video 
 For a real course, extract broadly before generating notes:
 
 ```bash
-python tools/stem_course.py extract COURSE_URL --out runs/course --max-pages 160 --max-pdfs 100
-python tools/stem_course.py plan --run runs/course --max-shorts 40
-python tools/stem_course.py notes --run runs/course --compile --pdf-engine latex
+scripts/course-shorts extract COURSE_URL --out runs/course --max-pages 160 --max-pdfs 100
+scripts/course-shorts plan --run runs/course --max-shorts 40 --allow-partial-plan
+scripts/course-shorts notes --run runs/course --compile --pdf-engine latex
 ```
 
 Before rendering videos, inspect `runs/course/source_pack.json`:
@@ -94,9 +96,9 @@ python tools/stem_course.py render --run runs/course --voice-engine say
 
 ```bash
 python -m py_compile tools/stem_course.py
-python tools/stem_course.py all --sample linear_algebra --out runs/demo --max-shorts 6 --voice-engine none --pdf-engine latex
-python tools/audit_video_frames.py runs/demo
-python tools/validate_course_run.py runs/demo --draft
+scripts/course-shorts all --sample linear_algebra --out runs/demo --max-shorts 6 --allow-partial-plan --voice-engine none --pdf-engine latex
+scripts/course-shorts-audit runs/demo
+scripts/course-shorts-validate runs/demo --draft
 python - <<'PY'
 import fitz
 pdf = 'runs/demo/notes.pdf'

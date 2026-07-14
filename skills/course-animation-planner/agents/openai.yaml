@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Animation Planner"
+  short_description: "Plan continuous visual explanations."
+  default_prompt: "Use $course-animation-planner to storyboard continuous visual arguments for every short."

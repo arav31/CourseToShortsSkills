@@ -1,4 +1,4 @@
 interface:
   display_name: "Course Manim 3B1B"
   short_description: "Generate visual Manim explainers."
-  default_prompt: "Generate Manim shorts for this course plan using visual examples."
+  default_prompt: "Use $course-manim-3b1b to generate silent-first visual Manim scenes."

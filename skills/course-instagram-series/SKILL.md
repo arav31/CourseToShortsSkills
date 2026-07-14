@@ -9,28 +9,36 @@ description: Use when preparing or publishing a rendered course-shorts series as
 
 Create a publish queue for a course video series, then optionally publish Reels through the Instagram/Meta API when the user has a Business/Creator setup, access token, Instagram user ID, and publicly reachable video URLs.
 
+Set `COURSE_SHORTS_ROOT` to the absolute plugin root before running a wrapper. The wrappers resolve their bundled tools from their own location; set `COURSE_SHORTS_PYTHON` when the correct interpreter is not `python3`.
+
 ## Workflow
 
 1. Make sure rendering is complete, `render_report.json` shows finished videos, and strict validation passes:
 
 ```bash
-python tools/validate_course_run.py runs/<course>
+"$COURSE_SHORTS_ROOT/scripts/course-shorts-validate" runs/<course>
 ```
 
 2. Create the queue:
 
 ```bash
-python tools/stem_course.py queue --run runs/<course> --playlist "Course Name"
+"$COURSE_SHORTS_ROOT/scripts/course-shorts" queue --run runs/<course> --playlist "Course Name"
 ```
 
 If videos are already hosted at a public base URL, include it so the queue can be published by API:
 
 ```bash
-python tools/stem_course.py queue --run runs/<course> --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
+"$COURSE_SHORTS_ROOT/scripts/course-shorts" queue --run runs/<course> --playlist "Course Name" --public-base-url "https://cdn.example.com/course/"
 ```
 
 3. Inspect `runs/<course>/instagram_publish_queue.json`. Captions should include the worked example and, when useful, the application question from `question_prompt`.
-4. Publish only when the user explicitly wants API publishing and has configured:
+4. Re-run strict validation so the queue itself is checked against the approved artifact identities:
+
+```bash
+"$COURSE_SHORTS_ROOT/scripts/course-shorts-validate" runs/<course>
+```
+
+5. Publish only when the user explicitly wants API publishing and has configured:
 
 - `IG_USER_ID`
 - `META_ACCESS_TOKEN` or `IG_ACCESS_TOKEN`
@@ -39,13 +47,13 @@ python tools/stem_course.py queue --run runs/<course> --playlist "Course Name" -
 Dry-run first:
 
 ```bash
-python tools/stem_course.py publish --run runs/<course> --dry-run
+"$COURSE_SHORTS_ROOT/scripts/course-shorts" publish --run runs/<course> --dry-run
 ```
 
 Then publish:
 
 ```bash
-python tools/stem_course.py publish --run runs/<course>
+"$COURSE_SHORTS_ROOT/scripts/course-shorts" publish --run runs/<course>
 ```
 
 ## Important Constraints
@@ -53,6 +61,7 @@ python tools/stem_course.py publish --run runs/<course>
 - Instagram's API fetches video from a public URL. A local file path is not enough.
 - API publishing is for eligible professional accounts and requires the right permissions.
 - Treat the queue as the source of truth for captions, order, playlist label, examples, and questions.
+- The `queue` and `publish` commands fail closed when strict validation does not pass; do not bypass that gate.
 - If publishing fails, keep the status and error message in `instagram_publish_results.json`.
 
 ## Outputs

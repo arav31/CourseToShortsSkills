@@ -11,18 +11,18 @@ Turn a course link or course files into a structured `source_pack.json` that lat
 
 ## Workflow
 
-1. Locate this repository's shared CLI. From the repo root it is `tools/stem_course.py`. If the skills were copied into `~/.codex/skills`, use the cloned repository path from the workspace or the `COURSE_SHORTS_HOME` environment variable.
+1. Set `COURSE_SHORTS_ROOT` to this plugin's absolute root and call its root-resolving wrapper. Set `COURSE_SHORTS_PYTHON` to the dependency-equipped interpreter when `python3` is not the right one. Do not assume the current directory is the repository root.
 2. Create one run directory per course under `runs/<course-slug>`.
 3. Extract the source pack:
 
 ```bash
-python tools/stem_course.py extract "COURSE_URL" --out runs/<course-slug> --max-pages 160 --max-pdfs 100
+"$COURSE_SHORTS_ROOT/scripts/course-shorts" extract "COURSE_URL" --out runs/<course-slug> --max-pages 160 --max-pdfs 100
 ```
 
 For offline validation:
 
 ```bash
-python tools/stem_course.py extract --sample linear_algebra --out runs/sample-linear-algebra
+"$COURSE_SHORTS_ROOT/scripts/course-shorts" extract --sample linear_algebra --out runs/sample-linear-algebra
 ```
 
 4. Inspect `runs/<course-slug>/source_pack.json` before continuing. Check that it includes enough pages/PDFs to represent the full course.

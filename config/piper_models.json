@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "default_model": "en_US-ljspeech-medium",
+  "models": {
+    "en_US-ljspeech-medium": {
+      "piper_tts_version": "1.4.2",
+      "source": {
+        "repository": "rhasspy/piper-voices",
+        "revision": "bae641dcb5a608cff81ccaf7ff018baaca1a33e1"
+      },
+      "files": [
+        {
+          "role": "model",
+          "filename": "en_US-ljspeech-medium.onnx",
+          "size_bytes": 63531379,
+          "sha256": "6f52a751e2349abe7a76735eb09dc1875298c77ea2342ffd2fef79ff81b87f22",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/bae641dcb5a608cff81ccaf7ff018baaca1a33e1/en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx"
+        },
+        {
+          "role": "config",
+          "filename": "en_US-ljspeech-medium.onnx.json",
+          "size_bytes": 4972,
+          "sha256": "141d612cc0a95ed7efc1ca936b845c2364967f2e9217c5dbfcf69fc4d6c65860",
+          "url": "https://huggingface.co/rhasspy/piper-voices/resolve/bae641dcb5a608cff81ccaf7ff018baaca1a33e1/en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx.json"
+        }
+      ]
+    }
+  }
+}
