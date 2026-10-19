@@ -76,8 +76,9 @@ def contact_sheets(video: Path, out_dir: Path, every: float | None = None,
     if times and duration - times[-1] > 0.4:
         times.append(round(max(0.0, duration - 0.15), 2))
     out_dir.mkdir(parents=True, exist_ok=True)
-    for old in out_dir.glob(f"{prefix}-*.png"):
-        old.unlink()
+    for pattern in (f"{prefix}-*.png", "sheet-*.png"):  # sheet-*.png: pre-2.1 naming
+        for old in out_dir.glob(pattern):
+            old.unlink()
     font = _font(22)
     label_h = 30
     sheets: list[Path] = []
@@ -119,7 +120,7 @@ def motion_scan(video: Path, sample_fps: float = 4.0) -> dict:
     """Find long static stretches and blank frames from small grayscale samples."""
     import numpy as np
 
-    w, h = 72, 128
+    w, h = 108, 192
     proc = subprocess.run(
         ["ffmpeg", "-v", "error", "-i", str(video), "-vf", f"fps={sample_fps},scale={w}:{h}",
          "-pix_fmt", "gray", "-f", "rawvideo", "-"],
@@ -130,7 +131,7 @@ def motion_scan(video: Path, sample_fps: float = 4.0) -> dict:
     if n < 2:
         return {"samples": n, "static_runs": [], "longest_static": 0.0, "blank_seconds": 0.0, "motion_ratio": 0.0}
     frames = frames[: n * w * h].reshape(n, h, w).astype(np.int16)
-    changed = (np.abs(np.diff(frames, axis=0)) > 12).mean(axis=(1, 2)) > 0.0015
+    changed = (np.abs(np.diff(frames, axis=0)) > 8).mean(axis=(1, 2)) > 0.0004  # sensitive to thin strokes
     step = 1.0 / sample_fps
     runs, start = [], None
     for i, moving in enumerate(list(changed) + [True]):

@@ -15,7 +15,9 @@ and `sources/` from course-plan (run that first if they are missing).
 
 1. **Set up.** Copy [assets/notes-template.tex](assets/notes-template.tex) to
    `runs/<course>/notes/notes.tex`. Fill the title page, "About these notes" and the notation
-   table, and add one `\input{units/uNN}` line per outline unit, in order.
+   table, and add one `\input{units/uNN}` line per outline unit, in order. Compile this skeleton
+   once (with stub unit files) before writing or handing out units, so preamble problems surface
+   early. Write maths in `\part`/`\section` titles as `\texorpdfstring{$...$}{plain}`.
 2. **Write each unit** as `notes/units/uNN.tex`, following
    [references/notes-style.md](references/notes-style.md). For every unit:
    - read the source files listed in `outline.json` (and `grep` the sources for its key ideas),
@@ -30,7 +32,7 @@ and `sources/` from course-plan (run that first if they are missing).
    A compile error prints the TeX error with file and line. Lint ERRORs (placeholders,
    code-style maths, a unit without a worked example, unsolved exercises, repeated
    boilerplate, undefined references, missing glyphs) must be fixed; read the warnings too.
-4. **Look at the pages.** Open `notes/preview/sheet-*.png` (8 pages per sheet). Check the
+4. **Look at the pages.** Open `notes/preview/sheet-*.png` (6 pages per sheet). Check the
    title page, figure placement, tables, and that no page is nearly empty. For a closer look:
    `build_notes.py runs/<course> --pages 1 12 13`, then open `notes/preview/page-012.png`.
 5. **Finish** with the formula-sheet appendix, a final build with no errors, and a quick read
@@ -49,7 +51,8 @@ A `--units` build compiles the shared preamble with just those units into
 agents can build in parallel without clobbering each other. If you can run subagents, set up
 `notes.tex` (preamble, macros, title page, all `\input` lines) first, then hand out units in
 parallel (each gets: run dir, unit ids, this skill's name). Unit writers must not edit
-`notes.tex`; they ask you for new macros. Finally run the full build and review the whole PDF.
+`notes.tex`; they add `\providecommand`s in their own unit file or ask you. Give each writer its own
+scratch folder. Finally run the full build and review the whole PDF.
 
 ## Quality bar
 

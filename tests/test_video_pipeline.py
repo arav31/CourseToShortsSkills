@@ -105,3 +105,13 @@ def test_tex_rules_become_filled_bars(tmp_path, monkeypatch):
     bars = [m for m in eq.family_members_with_points()
             if isinstance(m, shortkit.Rectangle) and m.get_fill_opacity() > 0.9 and m.width > 3 * m.height]
     assert len(bars) == 2, "fraction bar and square-root bar must be visible filled rules"
+
+
+def test_captions_never_join_sentences():
+    import render
+
+    tokens = "Feed a matrix every arrow on a circle. However messy the matrix, the result is an ellipse.".split()
+    cues = [" ".join(tokens[i] for i in cue) for cue in render._chunk_tokens(tokens)]
+    assert all(len(c) <= render.CAPTION_MAX_CHARS for c in cues)
+    assert not any("circle. However" in c for c in cues)
+    assert " ".join(cues) == " ".join(tokens)

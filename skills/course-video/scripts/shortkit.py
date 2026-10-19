@@ -67,6 +67,7 @@ import beatlib as _beatlib  # noqa: E402
 # Render settings
 # --------------------------------------------------------------------------
 
+SHORTKIT_VERSION = "2.1"
 QUALITY = _os.environ.get("SHORTKIT_QUALITY", "preview")
 _PRESETS = {"preview": (540, 960, 15), "final": (1080, 1920, 30)}
 _PX_W, _PX_H, _FPS = _PRESETS.get(QUALITY, _PRESETS["preview"])
@@ -420,6 +421,92 @@ def matrix_tex(rows, size: float = Size.BODY, color: str | None = None, kind: st
     return tex(rf"\begin{{{kind}}}{body}\end{{{kind}}}", size=size, color=color)
 
 
+class MatrixGrid(VGroup):
+    """A matrix whose entries, rows and columns can be addressed and animated.
+
+    ``m.entries[i][j]``, ``m.rows[i]``, ``m.cols[j]`` and ``m.brackets`` are mobjects, so
+    "point at row 2" or "slide column 1 out" is one line. Entries are typeset with tex();
+    pass strings for symbolic entries (e.g. r"\\lambda").
+    """
+
+    def __init__(self, rows, size: float = Size.BODY, color: str | None = None, col_colors=None,
+                 h_buff: float = 0.55, v_buff: float = 0.32):
+        super().__init__()
+        rows = [[r] for r in rows] if rows and not isinstance(rows[0], (list, tuple)) else rows
+        bodies = [_tex_body(_fmt(v) if not isinstance(v, str) else v, True) for row in rows for v in row]
+        _compile_tex(bodies)  # one engine run for every entry
+        self.entries = []
+        for row in rows:
+            cells = []
+            for j, v in enumerate(row):
+                c = (col_colors[j] if col_colors else None) or color
+                cells.append(tex(_fmt(v) if not isinstance(v, str) else v, size=size, color=c))
+            self.entries.append(cells)
+        n_rows, n_cols = len(self.entries), max(len(r) for r in self.entries)
+        cell_w = max(c.width for r in self.entries for c in r)
+        cell_h = max(c.height for r in self.entries for c in r)
+        for i, row in enumerate(self.entries):
+            for j, cell in enumerate(row):
+                cell.move_to(np.array([j * (cell_w + h_buff), -i * (cell_h + v_buff), 0.0]))
+        grid = VGroup(*[c for r in self.entries for c in r])
+        self.rows = [VGroup(*r) for r in self.entries]
+        self.cols = [VGroup(*[r[j] for r in self.entries if j < len(r)]) for j in range(n_cols)]
+        pad, tick = 0.12, 0.16
+        h = grid.height + 2 * pad
+        stroke = max(2.5, size / 12)
+        left = VMobject(stroke_color=color or INK, stroke_width=stroke).set_points_as_corners(
+            [[tick, h / 2, 0], [0, h / 2, 0], [0, -h / 2, 0], [tick, -h / 2, 0]])
+        right = left.copy().flip(UP)
+        left.next_to(grid, LEFT, buff=0.1)
+        right.next_to(grid, RIGHT, buff=0.1)
+        self.brackets = VGroup(left, right)
+        self.add(self.brackets, grid)
+        for cell in grid:
+            _mark_text(cell, size, getattr(cell, "_sk_label", ""))
+
+
+def matrix_grid(rows, size: float = Size.BODY, color: str | None = None, col_colors=None) -> MatrixGrid:
+    """Addressable matrix: matrix_grid([[2, 1], [1, 2]], col_colors=[BLUE_K, ORANGE_K])."""
+    return MatrixGrid(rows, size=size, color=color, col_colors=col_colors)
+
+
+class LiveText(VGroup):
+    """Text that re-reads a value every frame (a counter, a running total, a coordinate).
+
+    Rebuilds only when the string changes, keeps its left/centre/right edge fixed, and keeps
+    the layout checker's ownership marks correct. Uses text() (fast, no TeX run per value).
+    """
+
+    def __init__(self, fn, size: float = Size.BODY, color: str = INK, align: str = "center"):
+        super().__init__()
+        self._fn, self._size, self._color, self._align = fn, size, color, align
+        self._last = None
+        self._refresh(first=True)
+        self.add_updater(lambda m: m._refresh())
+
+    def _refresh(self, first: bool = False) -> None:
+        value = str(self._fn())
+        if value == self._last:
+            return
+        new = text(value, size=self._size, color=self._color)
+        if not first and self.submobjects:
+            old = self.submobjects[0]
+            edge = {"left": LEFT, "right": RIGHT}.get(self._align)
+            if edge is not None:
+                new.move_to(old, aligned_edge=edge)
+            else:
+                new.move_to(old.get_center())
+            new.set_opacity(old.get_fill_opacity())
+        self.submobjects = [new]
+        self._last = value
+        _mark_text(self, self._size, f"live:{value}")
+
+
+def live_text(fn, size: float = Size.BODY, color: str = INK, align: str = "center") -> LiveText:
+    """e.g. live_text(lambda: f"{tracker.get_value():.0f}") next to a moving object."""
+    return LiveText(fn, size=size, color=color, align=align)
+
+
 def _fmt(v) -> str:
     if isinstance(v, float) and v.is_integer():
         return str(int(v))
@@ -511,7 +598,7 @@ class ShortScene(Scene):
         self._title_mob: Mobject | None = None
         self._allowed_pairs: set[frozenset[int]] = set()
         self._trace = {
-            "scene": type(self).__name__, "quality": QUALITY, "fps": _FPS,
+            "scene": type(self).__name__, "quality": QUALITY, "fps": _FPS, "shortkit": SHORTKIT_VERSION,
             "resolution": [_PX_W, _PX_H], "captions": bool(self.captions),
             "beats": [], "issues": [],
         }
@@ -576,7 +663,7 @@ class ShortScene(Scene):
         """Seconds since the current beat started."""
         return self._now() - self._beat_start if self._active_beat else 0.0
 
-    def cue(self, word: str, nth: int = 0, offset: float = 0.0) -> None:
+    def cue(self, word: str, nth: int = 0, offset: float = 0.0, prefix: bool = False) -> None:
         """Wait until the narration of the current beat reaches ``word`` (its nth occurrence).
 
         Uses the word timings from edge-tts when available, otherwise an even-pace estimate,
@@ -584,7 +671,7 @@ class ShortScene(Scene):
         """
         if not self._active_beat:
             raise RuntimeError("cue() only works inside `with self.beat(...)`")
-        target = self._word_time(self._active_beat, word, nth)
+        target = self._word_time(self._active_beat, word, nth, prefix)
         if target is None:
             self._issue("warning", "cue", f"word {word!r} not found in beat {self._active_beat!r}")
             return
@@ -592,15 +679,20 @@ class ShortScene(Scene):
         if remaining > 1.0 / _FPS:
             self.wait(remaining)
 
-    def _word_time(self, beat_id: str, word: str, nth: int) -> float | None:
+    def _word_time(self, beat_id: str, word: str, nth: int, prefix: bool = False) -> float | None:
         want = _re.sub(r"[^a-z0-9]", "", word.lower())
+
+        def match(token: str) -> bool:
+            got = _re.sub(r"[^a-z0-9]", "", str(token).lower())
+            return got.startswith(want) if prefix else got == want
+
         timed = self._words.get(beat_id)
         if timed:
-            hits = [t for t, _, w in timed if _re.sub(r"[^a-z0-9]", "", str(w).lower()).startswith(want)]
+            hits = [t for t, _, w in timed if match(w)]
             return float(hits[nth]) if len(hits) > nth else None
         text_ = next(b["text"] for b in self._beats if b["id"] == beat_id)
         tokens = text_.split()
-        hits = [i for i, tok in enumerate(tokens) if _re.sub(r"[^a-z0-9]", "", tok.lower()).startswith(want)]
+        hits = [i for i, tok in enumerate(tokens) if match(tok)]
         if len(hits) <= nth:
             return None
         spoken = self._spoken.get(beat_id, self._durations[beat_id])

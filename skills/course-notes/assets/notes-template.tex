@@ -24,6 +24,9 @@
 \fancyhead[R]{\small <<SHORT COURSE NAME>>}
 \fancyfoot[C]{\small\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
+% Maths in headings also goes into PDF bookmarks; give macros a plain-text meaning there
+% (or write headings as \texorpdfstring{$...$}{plain text}).
+\pdfstringdefDisableCommands{\def\R{R}\def\N{N}\def\Z{Z}\def\Q{Q}\def\C{C}}
 
 % Numbered environments share one counter per section: Definition 2.1, Theorem 2.2, ...
 \theoremstyle{definition}
@@ -84,6 +87,7 @@ Symbol & Meaning \\
 <<SYMBOL>> & <<MEANING>> \\
 \bottomrule
 \end{longtable}
+\addtocounter{table}{-1}% the notation table is not a numbered table
 \clearpage
 
 % One file per outline unit, in course order.

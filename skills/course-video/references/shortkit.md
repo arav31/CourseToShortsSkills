@@ -32,7 +32,7 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 - `self.title(s, *also)` sets/swaps the compact title, playing `also` animations with it so the
   first frame already shows the real object: `self.title("Bayes in a crowd", FadeIn(grid))`.
   `play=False` only registers it. Call it inside the first beat.
-- `self.cue("word", nth=0, offset=0.0)` waits until the narration reaches that word in the current
+- `self.cue("word", nth=0, offset=0.0, prefix=False)` waits until the narration reaches that whole word in the current
   beat (real word timings with edge-tts, an even-pace estimate otherwise), so motion lands on the
   spoken word. `self.beat_time()` is the time since the beat started.
 - `self.clear_stage(*keep)` fades out everything except the title and `keep`.
@@ -62,6 +62,8 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 | `label(s, math=False, backplate=True)` | short label on a backplate |
 | `plate(mob)` | rounded backplate behind text so lines never cross it |
 | `highlight(mob, color=YELLOW_K)` | outline (not a filled sweep) |
+| `matrix_grid([[2, 1], [1, 2]], col_colors=[BLUE_K, ORANGE_K])` | matrix with `.entries[i][j]`, `.rows[i]`, `.cols[j]`, `.brackets` to point at or move |
+| `live_text(lambda: f"{t.get_value():.1f}", align="left")` | a number/label that updates every frame (counters, readouts) |
 | `Size.TITLE 48, HEADLINE 46, BODY 38, LABEL 34, SMALL 30`, `MIN_FONT_SIZE 28` | font sizes |
 
 Colour inside LaTeX: `\cB{..}` blue (input), `\cY{..}` yellow (rule), `\cG{..}` green (result),
@@ -70,6 +72,17 @@ Unmarked glyphs are white. Example: `tex(r"\cB{x_1}\,a_1 + \cB{x_2}\,a_2 = \cG{b
 
 Palette constants: `BG, INK, MUTED, GRID, BLUE_K, YELLOW_K, GREEN_K, RED_K, PURPLE_K, ORANGE_K`
 and the semantic aliases `INPUT, RULE, RESULT, ALERT`.
+
+## Two panels at different scales
+
+When two pictures need different scales (a unit circle and its 10 x 5 image ellipse; a graph and
+its queue), split the stage and give each its own plane:
+
+```python
+top, bottom = STAGE.rows(1, 1.4)
+src = stage_plane((-1.5, 1.5, 1), (-1.5, 1.5, 1), zone=top)
+img = stage_plane((-11, 11, 5), (-6, 6, 5), zone=bottom)
+```
 
 ## Spoken numbers
 
@@ -86,6 +99,10 @@ assert "eighty-nine" in BEATS[3][1] and FP == 89
 - `tex()` glyphs come out in reading order of the typeset formula (for `\frac`: numerator, bar,
   denominator), so `eq[0:5]` selects the first five glyphs. Slices are fine to animate, but they
   are new groups: after `TransformFromCopy(a, eq[3:6])`, remove the loose copies and `self.add(eq)`.
+- `self.remove(group)` removes the group, not children you added to the scene separately (for
+  example by animating them one by one before grouping). Remove what you added: `self.remove(*group)`.
+- Do not build a live number by swapping submobjects in your own updater (stale glyphs) or with
+  `DecimalNumber`/`MathTex` (they need a `latex` binary); use `live_text()`.
 - Stroke widths are in Manim units where 1 = 0.01 scene units; on a 9-unit-wide frame the
   defaults look thick, and `vec()` already uses a phone-friendly width.
 

@@ -46,7 +46,8 @@ sheets → fix → final render → look again → approve. Short folders are
 
 After step 1, notes units and individual shorts are independent. If you can launch subagents,
 run them in parallel: one per short (or per 2–3 notes units), each told the run directory, its
-item id and the skill to use. You keep the editorial role: review every short's contact sheets
+item id, the skill to use, and its own scratch folder (parallel agents that share one scratch
+directory overwrite each other's helper files). You keep the editorial role: review every short's contact sheets
 and the notes previews yourself before approving, and keep the series consistent.
 
 ## 4. Gate

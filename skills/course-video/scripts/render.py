@@ -62,7 +62,10 @@ def ensure_timing(short_dir: Path, engine: str | None, voice: str | None, rate: 
         ):
             return timing
         engine = timing.get("engine") or "edge-tts"
-        voice = voice or timing.get("voice") or None
+        if engine == "none":
+            engine = "edge-tts"  # a past silent fallback should not stick; pass --voice none to choose silence
+        else:
+            voice = voice or timing.get("voice") or None
     if engine is None:
         engine = "edge-tts"
     try:
@@ -120,24 +123,48 @@ def _norm(word: str) -> str:
 
 
 def _chunk_tokens(tokens: list[str]) -> list[list[int]]:
-    """Group token indices into caption cues: <= CAPTION_MAX_CHARS, break after punctuation."""
-    cues, cur, length = [], [], 0
+    """Group token indices into caption cues of <= CAPTION_MAX_CHARS.
+
+    Sentences never share a cue; within a sentence, whole clauses (ending in , ; :) are packed
+    together, and a clause that is too long is split into evenly sized pieces.
+    """
+    def width(idx: list[int]) -> int:
+        return len(" ".join(tokens[i] for i in idx))
+
+    sentences, cur = [], []
     for i, tok in enumerate(tokens):
-        add = len(tok) + (1 if cur else 0)
-        if cur and length + add > CAPTION_MAX_CHARS:
-            cues.append(cur)
-            cur, length = [], 0
-            add = len(tok)
         cur.append(i)
-        length += add
-        if re.search(r"[.!?;:]$", tok) and length >= 14:
-            cues.append(cur)
-            cur, length = [], 0
+        if re.search(r"[.!?]['\")]*$", tok):
+            sentences.append(cur)
+            cur = []
     if cur:
-        if cues and length < 10 and len(" ".join(tokens[j] for j in cues[-1] + cur)) <= CAPTION_MAX_CHARS + 8:
-            cues[-1].extend(cur)
-        else:
-            cues.append(cur)
+        sentences.append(cur)
+    cues: list[list[int]] = []
+    for sent in sentences:
+        clauses, cl = [], []
+        for i in sent:
+            cl.append(i)
+            if re.search(r"[,;:]$", tokens[i]):
+                clauses.append(cl)
+                cl = []
+        if cl:
+            clauses.append(cl)
+        pieces: list[list[int]] = []
+        for clause in clauses:
+            if width(clause) <= CAPTION_MAX_CHARS:
+                pieces.append(clause)
+                continue
+            n = -(-width(clause) // CAPTION_MAX_CHARS)
+            size = -(-len(clause) // n)
+            pieces += [clause[k:k + size] for k in range(0, len(clause), size)]
+        packed: list[int] = []
+        for piece in pieces:
+            if packed and width(packed + piece) > CAPTION_MAX_CHARS:
+                cues.append(packed)
+                packed = []
+            packed = packed + piece
+        if packed:
+            cues.append(packed)
     return cues
 
 
@@ -331,7 +358,7 @@ def render(short_dir: Path, quality: str = "preview", engine: str | None = None,
     errors = [i for i in issues if i["severity"] == "error"]
     report = {
         "quality": quality, "video": video.name, "sha256": audit.sha256(video),
-        "duration": round(info["duration"], 2), "probe": info,
+        "duration": round(info["duration"], 2), "probe": info, "shortkit": trace.get("shortkit"),
         "narration": {"engine": timing.get("engine"), "voice": timing.get("voice"),
                       "seconds": timing.get("total_seconds")},
         "beats": trace.get("beats", []), "motion": motion, "issues": issues,
@@ -349,7 +376,7 @@ def render(short_dir: Path, quality: str = "preview", engine: str | None = None,
 
 
 def print_summary(short_dir: Path, report: dict) -> None:
-    print(f"\n{report['video']}: {report['duration']}s, {report['probe'].get('width')}x{report['probe'].get('height')}, "
+    print(f"\nshortkit {report.get('shortkit', '?')} | {report['video']}: {report['duration']}s, {report['probe'].get('width')}x{report['probe'].get('height')}, "
           f"narration={report['narration']['engine']}, motion_ratio={report['motion']['motion_ratio']}")
     for beat in report["beats"]:
         flag = f"  (+{beat['overrun']}s past narration)" if beat["overrun"] > 0.2 else ""

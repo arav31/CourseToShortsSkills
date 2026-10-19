@@ -51,8 +51,20 @@ Prose that explains why the definition is the right one, with the picture in wor
   has pseudocode, a trace and complexity; a modelling unit has assumptions, model, solution, interpretation.
 - State hypotheses and conclusions precisely. Pair each proof with the result it proves,
   by label, never by position.
-- Define every object before it is used. When a later unit relies on an earlier result, cite it
-  (`Theorem~\ref{thm:rank-nullity}`).
+- Define every object before it is used. When a later unit relies on an earlier result, cite it.
+- Labels carry their unit id so units written in parallel never collide and can cite each other:
+  `\label{sec:u10}` on the section, `\label{thm:u10-rank-nullity}`, `\label{fig:u10-subspaces}`;
+  elsewhere `Theorem~\ref{thm:u10-rank-nullity}`.
+
+## Exam and review units
+
+Exams and exam reviews in the outline become study material, not summaries of logistics:
+- **Exam units**: each question as an `exercise` with a complete `solution` (rephrase the question;
+  fix any errors you find in official solutions and say so in a `trap`). Add a short paragraph on
+  what the exam tested.
+- **Review units**: a compact recap of the part's main results (cite their sections), then solved
+  problems that combine ideas. A unit with at least three solved exercises does not also need an
+  `example` environment.
 
 ## Depth and grounding
 
@@ -62,7 +74,12 @@ Prose that explains why the definition is the right one, with the picture in wor
 - Every unit needs at least one fully worked example with numbers or a concrete small object,
   and every important result needs a proof, derivation or (when the course omits it) a clear
   sketch with a pointer to where a full proof lives.
-- Use the short's worked example (from short_plan.json) in the matching unit so notes and videos agree.
+- Use the short's worked example (from short_plan.json) in the matching unit so notes and videos agree;
+  when a short spans several units, the full example goes in its `primary_unit` (default: the first
+  unit listed) and the others refer to it.
+- Course materials contain slips (a wrong matrix entry in a recitation, a sign error in a posted
+  solution). Recompute every number you take from a source; when the source is wrong, give the
+  correct value and point out the slip in a `trap`.
 - Length follows content. A full semester course typically produces 50–120 pages. Never pad:
   no repeated boilerplate ("Remember to check your units"), no per-unit question templates.
 - Exercises: 2–5 per unit, distinct, each with a complete solution. Prefer the course's own
@@ -89,7 +106,8 @@ for plots) and check them in the page previews: labels must not collide or clip.
 
 - All mathematics in math mode: `\begin{bmatrix}`, `\sqrt{}`, `x^{2}`, `\frac{}{}`, `\cdot`.
   Never `[[1, 2], [3, 4]]`, `sqrt(2)`, `x**2` or `x^2` in text.
-- Headings with maths use `\(...\)`: `\subsection{Conjugation in \(S_n\)}`.
+- Headings with maths use `\texorpdfstring` so PDF bookmarks stay valid:
+  `\subsection{Conjugation in \texorpdfstring{$S_n$}{Sn}}`.
 - Use `align*` for multi-step derivations, `cases` for piecewise definitions, `booktabs` for tables.
 - Avoid hard page breaks inside a unit; let figures float (`[ht]`).
 

@@ -56,7 +56,7 @@ def compile_tex(notes_dir: Path, main: str = "notes.tex", outdir: Path | None = 
     if engine is None:
         raise SystemExit("No TeX engine found. Install tectonic (brew install tectonic) or a TeX distribution.")
     name, exe = engine
-    out = outdir or notes_dir
+    out = (outdir or notes_dir).resolve()
     out.mkdir(parents=True, exist_ok=True)
     if name == "tectonic":
         runs = [[exe, "-X", "compile", "--keep-logs", "--outdir", str(out), main]]
@@ -74,9 +74,8 @@ def compile_tex(notes_dir: Path, main: str = "notes.tex", outdir: Path | None = 
             if log_file.exists():
                 log += log_file.read_text(errors="replace")
             raise CompileError(name, log)
-    if log_file.exists():
-        log += log_file.read_text(errors="replace")
-    return name, log
+    # analyse the TeX log only (the console repeats the same warnings)
+    return name, log_file.read_text(errors="replace") if log_file.exists() else log
 
 
 class CompileError(RuntimeError):
@@ -139,6 +138,10 @@ def lint(files: list[Path], notes_dir: Path) -> tuple[list[dict], dict]:
             if CODE_MATH_RE.search(code):
                 issues.append({"severity": "error", "kind": "code-style-math", "where": f"{rel}:{i}",
                                "detail": "use LaTeX (bmatrix, \\sqrt{}, x^{2}) instead of code notation: " + code.strip()[:100]})
+            heading = re.match(r"\s*\\(part|(sub)*section)\*?\{(.*)\}", code)
+            if heading and "$" in heading.group(3) and "texorpdfstring" not in heading.group(3):
+                issues.append({"severity": "warning", "kind": "math-in-heading", "where": f"{rel}:{i}",
+                               "detail": "wrap heading maths as \\texorpdfstring{$...$}{plain} so PDF bookmarks work"})
             if ESCAPED_IN_HEADING_RE.search(code):
                 issues.append({"severity": "error", "kind": "escaped-math-in-heading", "where": f"{rel}:{i}",
                                "detail": "write maths in headings as \\(...\\), not escaped text"})
@@ -151,7 +154,7 @@ def lint(files: list[Path], notes_dir: Path) -> tuple[list[dict], dict]:
             sentences[re.sub(r"\s+", " ", s.lower())] += 1
         if f.parent.name == "units":
             words = len(re.findall(r"[A-Za-z]{2,}", re.sub(r"\\[a-zA-Z]+", " ", text)))
-            figures = envs["tikzpicture"] + envs["axis"] + len(re.findall(r"\\includegraphics", text))
+            figures = envs["tikzpicture"] + len(re.findall(r"\\includegraphics", text))  # axis lives inside tikzpicture
             results = sum(envs[k] for k in ("theorem", "proposition", "lemma", "corollary"))
             stat = {"file": rel, "words": words, "definitions": envs["definition"], "results": results,
                     "proofs": envs["proof"], "examples": envs["example"], "figures": figures,
@@ -160,7 +163,8 @@ def lint(files: list[Path], notes_dir: Path) -> tuple[list[dict], dict]:
             if words < 600:
                 issues.append({"severity": "warning", "kind": "thin-unit", "where": rel,
                                "detail": f"only {words} words; a unit should teach its material in full"})
-            if envs["example"] == 0:
+            solved = min(envs["exercise"], envs["solution"])
+            if envs["example"] == 0 and solved < 3:  # exam/review units may be solved-problem sets
                 issues.append({"severity": "error", "kind": "no-worked-example", "where": rel,
                                "detail": "every unit needs at least one fully worked example"})
             if figures == 0:
@@ -183,15 +187,34 @@ def lint(files: list[Path], notes_dir: Path) -> tuple[list[dict], dict]:
     return issues, {"environments": dict(counts), "units": unit_stats, "repeated_sentence_ratio": round(ratio, 4)}
 
 
-def log_issues(log: str) -> list[dict]:
+def undefined_refs(log: str) -> list[str]:
+    return sorted(set(re.findall(r"Reference `([^']+)' on page \d+ undefined", log)))
+
+
+def log_issues(log: str, units: set[str] | None = None) -> list[dict]:
+    """Issues from the TeX log. With ``units`` (a partial build), references into other units are ignored."""
     issues = []
-    over = [float(m.group(1)) for m in re.finditer(r"Overfull \\hbox \((\d+(?:\.\d+)?)pt too wide\)", log)]
-    bad = [o for o in over if o > 8]
-    if bad:
-        issues.append({"severity": "warning", "kind": "overfull-box", "where": "pdf",
-                       "detail": f"{len(bad)} lines stick into the margin by >8pt (max {max(bad):.0f}pt)"})
-    if re.search(r"There were undefined references|Reference `[^']+' on page \d+ undefined", log):
-        issues.append({"severity": "error", "kind": "undefined-reference", "where": "pdf", "detail": "fix \\ref/\\label pairs"})
+    current, seen = "notes.tex", set()
+    for line in log.splitlines():
+        opened = re.findall(r"\((?:\./)?(units/[\w-]+\.tex)", line)
+        if opened:
+            current = opened[-1]
+        m = re.search(r"Overfull \\hbox \((\d+(?:\.\d+)?)pt too wide\).*?lines (\d+)--(\d+)", line)
+        if m and float(m.group(1)) > 8:
+            key = (current, m.group(3))
+            if key not in seen:
+                seen.add(key)
+                issues.append({"severity": "warning", "kind": "overfull-box", "where": f"{current}:{m.group(3)}",
+                               "detail": f"line sticks into the margin by {float(m.group(1)):.0f}pt"})
+    refs = undefined_refs(log)
+    if units is not None:
+        def unit_of(key: str) -> str | None:
+            m = re.search(r"(u\d{2,3})", key)
+            return m.group(1) if m else None
+        refs = [r for r in refs if unit_of(r) is None or unit_of(r) in units]
+    if refs:
+        issues.append({"severity": "error", "kind": "undefined-reference", "where": "pdf",
+                       "detail": f"no \\label for: {', '.join(refs[:8])}"})
     missing = set(re.findall(r"Missing character: There is no (\S+)", log))
     if missing:
         issues.append({"severity": "error", "kind": "missing-glyph", "where": "pdf",
@@ -230,10 +253,10 @@ def previews(pdf: Path, out: Path, pages: list[int]) -> list[str]:
     with pymupdf.open(pdf) as doc:
         thumbs = []
         for i, page in enumerate(doc):
-            pix = page.get_pixmap(dpi=42)
+            pix = page.get_pixmap(dpi=60)
             img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
             thumbs.append((i + 1, img))
-        per, cols = 8, 4
+        per, cols = 6, 3
         for s in range(0, len(thumbs), per):
             chunk = thumbs[s:s + per]
             tw, th = chunk[0][1].size
@@ -256,7 +279,7 @@ def previews(pdf: Path, out: Path, pages: list[int]) -> list[str]:
 
 def build_partial(notes_dir: Path, units: list[str], pages: list[int], no_preview: bool) -> int:
     """Compile notes.tex with only the chosen units, in its own folder, without touching the full report."""
-    tag = "-".join(units) if len(units) <= 3 else f"{units[0]}-to-{units[-1]}"
+    tag = "-".join(units) if len(units) <= 3 else f"{units[0]}-to-{units[-1]}-{hashlib.sha1(' '.join(units).encode()).hexdigest()[:6]}"
     main_text = (notes_dir / "notes.tex").read_text(errors="replace")
     wanted = set(units)
 
@@ -265,6 +288,20 @@ def build_partial(notes_dir: Path, units: list[str], pages: list[int], no_previe
         return match.group(0) if unit in wanted else "% (partial build) " + match.group(0)
 
     partial = re.sub(r"^[^%\n]*\\input\{(units/[^}]+)\}", keep, main_text, flags=re.M)
+    partial = re.sub(r"\\appendix.*?(?=\\end\{document\})", "", partial, flags=re.S)  # no formula-sheet page
+    # drop \part headings that introduce no unit of this build (they would leave empty pages)
+    lines, out = partial.splitlines(), []
+    for i, line in enumerate(lines):
+        if re.match(r"\s*\\part\b", line):
+            following = []
+            for nxt in lines[i + 1:]:
+                if re.match(r"\s*\\part\b|\s*\\appendix|\s*\\end\{document\}", nxt):
+                    break
+                following.append(nxt)
+            if not any(re.match(r"\s*\\input\{units/", ln) for ln in following):
+                line = "% (partial build) " + line
+        out.append(line)
+    partial = "\n".join(out) + "\n"
     missing = [u for u in units if not (notes_dir / "units" / f"{u}.tex").exists()]
     if missing:
         print(f"error: no unit file for {', '.join(missing)} under {notes_dir / 'units'}", file=sys.stderr)
@@ -281,11 +318,16 @@ def build_partial(notes_dir: Path, units: list[str], pages: list[int], no_previe
         (notes_dir / main_name).unlink(missing_ok=True)
     files = [notes_dir / "units" / f"{u}.tex" for u in units]
     issues, stats = lint(files, notes_dir)
-    issues += [i for i in log_issues(log) if i["kind"] != "undefined-reference"]  # refs may point at other units
+    issues += log_issues(log, units=wanted)  # references into units outside this build are expected
     pdf = out / f"_partial_{tag}.pdf"
     pdf_issues, pdf_stats = pdf_checks(pdf)
+    pdf_issues = [i for i in pdf_issues if i["kind"] != "sparse-page"]  # front/back matter of a partial build
     sheets = [] if no_preview else previews(pdf, out / "preview", pages)
     print(f"partial build {tag}: {pdf_stats['pages']} pages via {engine} -> {pdf}")
+    print("  unit   words  defs results proofs examples figures exercises/solutions")
+    for u in stats["units"]:
+        print(f"  {Path(u['file']).stem:<6} {u['words']:>5} {u['definitions']:>5} {u['results']:>7} {u['proofs']:>6} "
+              f"{u['examples']:>8} {u['figures']:>7} {u['exercises']:>9}/{u['solutions']}")
     for i in issues + pdf_issues:
         print(f"  {i['severity'].upper():7} {i['kind']} [{i['where']}] {i['detail']}")
     for sheet in sheets:
@@ -301,7 +343,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--units", nargs="+", default=None,
                     help="compile only these unit ids (e.g. u03 u04) into notes/partial/; safe to run in parallel")
     args = ap.parse_args(argv)
-    notes_dir = args.run / "notes" if (args.run / "notes" / "notes.tex").exists() else args.run
+    run = args.run.resolve()
+    notes_dir = run / "notes" if (run / "notes" / "notes.tex").exists() else run
     if not (notes_dir / "notes.tex").exists():
         print(f"error: {args.run}/notes/notes.tex not found (start from assets/notes-template.tex)", file=sys.stderr)
         return 1

@@ -198,3 +198,14 @@ def test_status_gate_tracks_staleness(plan_run):
     # editing the plan makes the plan check stale
     (plan_run / "short_plan.json").write_text((plan_run / "short_plan.json").read_text() + "\n")
     assert run_status.status(plan_run)["stages"]["plan"]["state"] == "unchecked"
+
+
+@pytest.mark.skipif(not (HAS_TEX and HAS_PYMUPDF), reason="needs a TeX engine and pymupdf")
+def test_partial_build_with_relative_path(tmp_path, monkeypatch):
+    body = (r"% unit: u01" "\n" r"\section{Vectors}\label{sec:u01}" "\n" + ("Vectors add tip to tail. " * 40) +
+            "\n" r"\begin{example} \((1,2)+(3,4)=(4,6)\). See Section~\ref{sec:u02} and~\ref{thm:u01-missing}. \end{example}" "\n")
+    make_notes(tmp_path, body)
+    monkeypatch.chdir(tmp_path.parent)
+    code = build_notes.main([tmp_path.name, "--units", "u01", "--no-preview"])
+    assert code == 1, "a missing label inside the built unit must be reported"
+    assert (tmp_path / "notes" / "partial" / "u01" / "_partial_u01.pdf").exists()
