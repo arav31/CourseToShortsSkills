@@ -50,7 +50,7 @@ static stretches, blank frames) and contact-sheet paths. Then **open every
 to judge whether the picture teaches. For a closer look at a moment or a transition:
 
 ```bash
-$PY "$SKILL_DIR/scripts/audit.py" frames <short_dir>/preview.mp4 --at 12.5 13 13.5
+$PY "$SKILL_DIR/scripts/audit.py" frames <short_dir>/preview.mp4 --at 12.5 13 13.5 --montage
 ```
 
 Fix the scene and re-render until there are no errors and the sheets pass the quality bar.

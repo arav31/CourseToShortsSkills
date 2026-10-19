@@ -53,6 +53,7 @@ import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
 import textwrap as _textwrap
+import weakref as _weakref
 from dataclasses import dataclass as _dataclass
 from pathlib import Path as _Path
 
@@ -67,7 +68,7 @@ import beatlib as _beatlib  # noqa: E402
 # Render settings
 # --------------------------------------------------------------------------
 
-SHORTKIT_VERSION = "2.1"
+SHORTKIT_VERSION = "2.2"
 QUALITY = _os.environ.get("SHORTKIT_QUALITY", "preview")
 _PRESETS = {"preview": (540, 960, 15), "final": (1080, 1920, 30)}
 _PX_W, _PX_H, _FPS = _PRESETS.get(QUALITY, _PRESETS["preview"])
@@ -229,6 +230,19 @@ CAPTION_ZONE = Zone("caption", -4.0, 3.4, -4.9, -2.9)
 # --------------------------------------------------------------------------
 
 
+# glyph -> owning text object. Kept outside the mobjects on purpose: an attribute pointing from
+# every glyph back to its equation gets deep-copied by Manim's save_state()/copy(), which grows
+# exponentially (TransformMatchingShapes hung for minutes). Copies are simply not registered.
+_OWNERS: "_weakref.WeakKeyDictionary[Mobject, Mobject]" = _weakref.WeakKeyDictionary()
+
+
+def _owner_of(m: Mobject) -> Mobject | None:
+    try:
+        return _OWNERS.get(m)
+    except TypeError:
+        return None
+
+
 def _mark_text(mob: Mobject, font_size: float, label: str) -> Mobject:
     """Tag a text object and every glyph in it with its owner.
 
@@ -241,7 +255,7 @@ def _mark_text(mob: Mobject, font_size: float, label: str) -> Mobject:
     mob._sk_base_height = max(mob.height, 1e-6)
     mob._sk_label = label[:48]
     for member in mob.get_family():
-        member._sk_owner = mob
+        _OWNERS[member] = mob
     return mob
 
 
@@ -363,7 +377,9 @@ def _run_tex(todo: dict[str, str]) -> None:
             if pdf_doc.page_count != len(todo):
                 raise TexError(f"Expected {len(todo)} pages from LaTeX, got {pdf_doc.page_count}")
             for key, page in zip(todo, pdf_doc):
-                (_TEX_CACHE / f"{key}.svg").write_text(page.get_svg_image(text_as_path=True), encoding="utf-8")
+                tmp_svg = _TEX_CACHE / f".{key}.{_os.getpid()}.tmp"
+                tmp_svg.write_text(page.get_svg_image(text_as_path=True), encoding="utf-8")
+                _os.replace(tmp_svg, _TEX_CACHE / f"{key}.svg")  # atomic: parallel renders share the cache
 
 
 class TexSVG(SVGMobject):
@@ -570,6 +586,18 @@ def vec(plane: CoordinateSystem, coords, color: str = BLUE_K, start=(0, 0), widt
                  max_tip_length_to_length_ratio=0.18, max_stroke_width_to_length_ratio=12)
 
 
+def axis_numbers(axes: CoordinateSystem, x_values=(), y_values=(), size: float = Size.SMALL,
+                 color: str = MUTED) -> VGroup:
+    """Tick numbers typeset with tex() (Manim's include_numbers needs a `latex` binary)."""
+    _compile_tex([_tex_body(_fmt(v), True) for v in list(x_values) + list(y_values)])
+    labels = VGroup()
+    for v in x_values:
+        labels.add(tex(_fmt(v), size=size, color=color).next_to(axes.c2p(v, 0), DOWN, buff=0.12))
+    for v in y_values:
+        labels.add(tex(_fmt(v), size=size, color=color).next_to(axes.c2p(0, v), LEFT, buff=0.12))
+    return labels
+
+
 def background(mob: Mobject) -> Mobject:
     """Mark scenery (a translucent plane, a shaded region) so the layout checker ignores it."""
     for m in mob.get_family():
@@ -729,6 +757,11 @@ class ShortScene(Scene):
     def _now(self) -> float:
         return float(self.renderer.time)
 
+    def play(self, *args, **kwargs):
+        self._plays = getattr(self, "_plays", 0) + 1
+        print(f"[shortkit] play {self._plays} at {self._now():.2f}s beat={self._active_beat}", flush=True)
+        return super().play(*args, **kwargs)
+
     def beat_time(self) -> float:
         """Seconds since the current beat started."""
         return self._now() - self._beat_start if self._active_beat else 0.0
@@ -820,8 +853,8 @@ class ShortScene(Scene):
 
     def allow_overlap(self, a: Mobject, b: Mobject) -> None:
         """Declare an intentional overlap between two texts, or between a text and a shape."""
-        keys_a = {id(getattr(a, "_sk_owner", a))} | {id(m) for m in a.get_family()}
-        keys_b = {id(getattr(b, "_sk_owner", b))} | {id(m) for m in b.get_family()}
+        keys_a = {id(_owner_of(a) or a)} | {id(m) for m in a.get_family()}
+        keys_b = {id(_owner_of(b) or b)} | {id(m) for m in b.get_family()}
         for ka in keys_a:
             for kb in keys_b:
                 self._allowed_pairs.add(frozenset((ka, kb)))
@@ -847,7 +880,7 @@ class ShortScene(Scene):
             if id(m) in seen:
                 return
             seen.add(id(m))
-            owner = getattr(m, "_sk_owner", None)
+            owner = _owner_of(m)
             if owner is None and raw_owner is None and isinstance(m, _TEXT_TYPES):
                 raw_owner = m  # Manim text created directly, without shortkit helpers
             own = owner if owner is not None else raw_owner
@@ -911,7 +944,7 @@ class ShortScene(Scene):
         seen: set[int] = set()
 
         def visit(m: Mobject) -> None:
-            if id(m) in seen or id(m) in text_ids or getattr(m, "_sk_owner", None) is not None:
+            if id(m) in seen or id(m) in text_ids or _owner_of(m) is not None:
                 return
             seen.add(id(m))
             if (getattr(m, "_sk_background", False) or getattr(m, "_sk_pointer", False)
@@ -1086,19 +1119,33 @@ def _overlap_area(a, b) -> float:
     return w * h if w > 0 and h > 0 else 0.0
 
 
-def _path_enters(m: VMobject, box: tuple[float, float, float, float], samples: int = 48) -> bool:
+def _segment_hits_box(p, q, box) -> bool:
+    """Liang-Barsky: does segment p-q pass through the open box?"""
+    x0, y0, x1, y1 = box
+    dx, dy = q[0] - p[0], q[1] - p[1]
+    t0, t1 = 0.0, 1.0
+    for d, lo, hi, start in ((dx, x0, x1, p[0]), (dy, y0, y1, p[1])):
+        if abs(d) < 1e-12:
+            if not (lo < start < hi):
+                return False
+            continue
+        a, b = (lo - start) / d, (hi - start) / d
+        t0, t1 = max(t0, min(a, b)), min(t1, max(a, b))
+        if t0 >= t1:
+            return False
+    return True
+
+
+def _path_enters(m: VMobject, box: tuple[float, float, float, float], samples: int = 64) -> bool:
     if box[2] <= box[0] or box[3] <= box[1]:
         return False
     if _overlap_area(_bbox(m), box) <= 0:
         return False
-    for t in np.linspace(0, 1, samples):
-        try:
-            x, y, _ = m.point_from_proportion(t)
-        except Exception:
-            return False
-        if box[0] < x < box[2] and box[1] < y < box[3]:
-            return True
-    return False
+    try:
+        pts = [m.point_from_proportion(t) for t in np.linspace(0, 1, samples)]
+    except Exception:
+        return False
+    return any(_segment_hits_box(a, b, box) for a, b in zip(pts, pts[1:]))
 
 
 def _is_ancestor(a: Mobject, b: Mobject) -> bool:

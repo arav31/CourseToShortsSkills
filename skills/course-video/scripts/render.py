@@ -98,8 +98,17 @@ def run_manim(short_dir: Path, quality: str, timing_path: Path, trace_path: Path
     log_path = build / "manim.log"
     print(f"  manim: rendering {cls} ({quality}) ...", file=sys.stderr)
     started = time.time()
+    stall_limit = float(os.environ.get("SHORTKIT_STALL_SECONDS", 360))
     with log_path.open("w") as log:
-        proc = subprocess.run(cmd, cwd=short_dir, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=3600)
+        proc = subprocess.Popen(cmd, cwd=short_dir, env=env, stdout=log, stderr=subprocess.STDOUT)
+        while proc.poll() is None:
+            time.sleep(2)
+            idle = time.time() - log_path.stat().st_mtime
+            if idle > stall_limit:  # every play() writes a line; silence means a hang, not slowness
+                proc.kill()
+                last = [ln for ln in log_path.read_text(errors="replace").splitlines() if "[shortkit] play" in ln][-1:]
+                raise RenderError(f"the scene stalled: no progress for {idle:.0f}s after {last or ['start']}. "
+                                  "Look for an animation on a huge mobject (e.g. TransformMatchingShapes) there.")
     if proc.returncode != 0:
         text = log_path.read_text(errors="replace")
         summary = text.split("=== scene error ===")[-1].strip() if "=== scene error ===" in text else "\n".join(text.splitlines()[-40:])

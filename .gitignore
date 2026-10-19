@@ -3,8 +3,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
-runs/
-media/
+/runs/
+/media/
 build/
 *.aux
 *.log
@@ -14,4 +14,4 @@ build/
 *.mp3
 *.wav
 *.aiff
-!examples/**/*.mp4
+!docs/media/*.mp4

@@ -17,7 +17,7 @@ import ast
 import re
 from pathlib import Path
 
-WORDS_PER_SECOND = 2.6
+WORDS_PER_SECOND = 2.5  # edge-tts reads plain prose at ~2.9 w/s, but numbers and symbols are slower
 MIN_BEAT_SECONDS = 1.5
 BEAT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,40}$")
 

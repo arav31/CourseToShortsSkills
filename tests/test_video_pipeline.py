@@ -115,3 +115,20 @@ def test_captions_never_join_sentences():
     assert all(len(c) <= render.CAPTION_MAX_CHARS for c in cues)
     assert not any("circle. However" in c for c in cues)
     assert " ".join(cues) == " ".join(tokens)
+
+
+@pytest.mark.skipif(not (HAS_MANIM and HAS_TEX), reason="needs manim and a TeX engine")
+def test_copying_text_does_not_explode(tmp_path, monkeypatch):
+    """Ownership marks must not ride along in deep copies (save_state/TransformMatchingShapes)."""
+    import time
+
+    monkeypatch.setenv("SHORTKIT_CACHE", str(tmp_path / "cache"))
+    import shortkit
+
+    eq = shortkit.plate(shortkit.tex(r"A^{\mathsf T}(b - A\hat{x}) = 0 \quad\Longrightarrow\quad A^{\mathsf T}A\hat{x} = A^{\mathsf T}b"))
+    start = time.time()
+    for _ in range(8):
+        eq.save_state()
+        eq = eq.copy()
+    assert time.time() - start < 5, "copies grew: glyphs must not reference their owner"
+    assert shortkit._owner_of(eq) is None  # copies are not registered; the checker treats them as raw text

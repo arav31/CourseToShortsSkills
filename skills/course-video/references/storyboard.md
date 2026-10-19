@@ -32,7 +32,7 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
 | stretch / scale / shear / rotate | `.animate.scale/stretch/rotate`, `ApplyMatrix`, `plane.animate.apply_matrix(M)` |
 | morph one form into another | `Transform`, `ReplacementTransform`, `TransformMatchingShapes` (equations) |
 | split / partition / tile | `VGroup.animate.arrange(...)`, colouring blocks, `LaggedStart` of shifts |
-| accumulate | `ValueTracker` + `always_redraw` area/curve, `DecimalNumber` with updater |
+| accumulate | `ValueTracker` + `always_redraw` area/curve, `live_text()` for the running value |
 | compare | place two versions side by side, or `ghost = obj.copy().set_opacity(0.25)` |
 | trace / scan | `MoveAlongPath` of a dot, `Create` of a path, a cursor `Triangle` moving along cells |
 | point at | `highlight(obj)` outline, `Indicate` (once), `Circumscribe` (once); never a filled sweep |
@@ -52,7 +52,8 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
 
 - **Linear algebra:** number plane with basis arrows; `plane.apply_matrix` to show a map;
   unit square → parallelogram for determinants; eigen-directions staying on their own line;
-  projection as dropping a perpendicular; column arrows chaining tip-to-tail.
+  projection as dropping a perpendicular (in R^3 with `ortho()`, turning the view so each right
+  angle is seen square-on); column arrows chaining tip-to-tail.
 - **Calculus:** secant sliding into a tangent; Riemann rectangles thinning into area with a
   `ValueTracker`; a dot moving along a curve with its velocity arrow; Taylor polynomials
   hugging a curve one term at a time.

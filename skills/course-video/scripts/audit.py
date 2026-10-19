@@ -183,8 +183,13 @@ def final_video(short_dir: Path) -> Path:
     return short_dir / data["video"]
 
 
-def record_review(short_dir: Path, status: str, notes: str, reviewer: str) -> Path:
+def record_review(short_dir: Path, status: str, notes: str, reviewer: str, force: bool = False) -> Path:
     video = final_video(short_dir)
+    report = json.loads((short_dir / "render_report.json").read_text())
+    errors = [i for i in report.get("issues", []) if i.get("severity") == "error"]
+    if status == "approved" and errors and not force:
+        raise SystemExit(f"{short_dir}: the final render has {len(errors)} automatic error(s); fix them or pass --force "
+                         "with notes explaining why each is acceptable")
     review = {
         "status": status, "video": video.name, "sha256": sha256(video), "reviewer": reviewer,
         "reviewed_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "notes": notes,
@@ -205,6 +210,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("video", type=Path)
     p.add_argument("--at", type=float, nargs="+", required=True)
     p.add_argument("--out", type=Path, default=None)
+    p.add_argument("--montage", action="store_true", help="also tile the frames side by side in one image")
     p = sub.add_parser("scan")
     p.add_argument("video", type=Path)
     for name in ("approve", "reject"):
@@ -212,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("short_dir", type=Path)
         p.add_argument("--notes", required=True)
         p.add_argument("--reviewer", default="agent")
+        p.add_argument("--force", action="store_true", help="approve despite automatic errors (explain in --notes)")
     args = ap.parse_args(argv)
 
     if args.cmd == "sheet":
@@ -221,8 +228,25 @@ def main(argv: list[str] | None = None) -> int:
     elif args.cmd == "frames":
         out = args.out or args.video.parent / "review" / "frames"
         out.mkdir(parents=True, exist_ok=True)
-        for t in args.at:
-            print(grab_frame(args.video, t, out / f"frame-{t:07.2f}s.png"))
+        paths = [grab_frame(args.video, t, out / f"frame-{t:07.2f}s.png") for t in args.at]
+        for path in paths:
+            print(path)
+        if args.montage:
+            from PIL import Image, ImageDraw
+
+            imgs = [Image.open(p).convert("RGB") for p in paths]
+            w, h = imgs[0].size
+            scale = min(1.0, 1800 / (w * len(imgs)))
+            tw, th = int(w * scale), int(h * scale)
+            sheet = Image.new("RGB", (tw * len(imgs) + 6 * (len(imgs) + 1), th + 40), (40, 40, 40))
+            draw = ImageDraw.Draw(sheet)
+            for k, (t, img) in enumerate(zip(args.at, imgs)):
+                x = 6 + k * (tw + 6)
+                draw.text((x + 4, 8), f"{t:.2f}s", fill=(255, 220, 90), font=_font(24))
+                sheet.paste(img.resize((tw, th)), (x, 36))
+            mpath = out / f"montage-{args.at[0]:07.2f}-{args.at[-1]:07.2f}.png"
+            sheet.save(mpath)
+            print(mpath)
     elif args.cmd == "scan":
         info = probe(args.video)
         motion = motion_scan(args.video)
@@ -230,7 +254,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"probe": info, "motion": motion, "issues": scan_issues(info, motion, quality)}, indent=2))
     else:
         status = "approved" if args.cmd == "approve" else "changes_requested"
-        print(record_review(args.short_dir, status, args.notes, args.reviewer))
+        print(record_review(args.short_dir, status, args.notes, args.reviewer, getattr(args, "force", False)))
     return 0
 
 

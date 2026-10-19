@@ -52,7 +52,8 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 | `zone.rows(*weights, gap=0.25)`, `zone.cols(*weights, gap=0.25)` | split into sub-zones |
 | `zone.point(fx, fy)`, `zone.center`, `.left/.right/.top/.bottom/.width/.height` | positions |
 | `stage_plane(x_range, y_range, zone=STAGE)` | `NumberPlane` with equal x/y scale, as large as fits |
-| `vec(plane, (x, y), color, start=(0, 0))` | phone-thick arrow in plane coordinates |
+| `vec(plane, (x, y), color, start=(0, 0), width=7)` | phone-thick arrow in plane coordinates |
+| `axis_numbers(axes, x_values=[1, 2], y_values=[5])` | tick numbers via `tex()` (Manim's `include_numbers` needs a `latex` binary) |
 
 ## Text and maths
 
@@ -62,7 +63,7 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 | `tex(src, size=Size.BODY, color=None, math=True)` | LaTeX via tectonic/pdflatex → SVG; `math=False` for text with `$...$` |
 | `matrix_tex([[2, 1], [1, 3]])`, `matrix_tex([4, 2])` | bmatrix from numbers (column vector for a flat list) |
 | `label(s, math=False, backplate=True)` | short label on a backplate |
-| `plate(mob)` | rounded backplate behind text so lines never cross it |
+| `plate(mob, buff=0.12, opacity=0.88)` | rounded backplate behind text so lines never cross it |
 | `highlight(mob, color=YELLOW_K)` | outline (not a filled sweep) |
 | `matrix_grid([[2, 1], [1, 2]], col_colors=[BLUE_K, ORANGE_K])` | matrix with `.entries[i][j]`, `.rows[i]`, `.cols[j]`, `.brackets` to point at or move |
 | `live_text(lambda: f"{t.get_value():.1f}", align="left")` | a number/label that updates every frame (counters, readouts) |
@@ -102,12 +103,18 @@ assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
 
 ## Changelog (SHORTKIT_VERSION)
 
+- 2.2: `TransformMatchingShapes`/`save_state` no longer slow down (ownership kept outside mobjects);
+  exact line-versus-text checks; `axis_numbers()`; stalled renders are stopped with the last play
+  logged; `audit.py approve` refuses renders with errors; `audit.py frames --montage`.
 - 2.1: rules (fraction bars) render; `title(*also)`, `cue()`, `swap()`, `matrix_grid()`,
   `live_text()`, `clipped_line()`, `ortho()`, `background()`, `spoken()`; glyph-level overlap
   checks; text-over-geometry warnings; shadowing check; renders never use Manim's cache (sync).
 
 ## Manim gotchas worth knowing
 
+- `Create`, `FadeIn`, `FadeOut`, `GrowArrow` and the transforms pause updaters while they run, so an
+  `always_redraw` object built under old tracker values appears at a stale position and a fading
+  label detaches from its target: call `obj.update()` right before animating it.
 - `FadeIn` of an `always_redraw` object can crash ("zip() argument 2 is shorter") if its glyph
   count changed while hidden: call `obj.update()` first, or fade in a static copy.
 - After animating slices into a target (`TransformFromCopy(rows[0][-1], coord[1])`), remove the

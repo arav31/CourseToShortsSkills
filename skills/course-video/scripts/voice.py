@@ -151,6 +151,9 @@ def synthesize(short_dir: Path, engine: str = "edge-tts", voice: str | None = No
                rate: str = "+0%", quiet: bool = False) -> dict:
     scene = short_dir / "scene.py"
     beats = beatlib.read_beats(scene)
+    if not quiet:
+        estimate = sum(beatlib.estimate_seconds(b["text"]) for b in beats)
+        print(f"  narration estimate: ~{estimate:.0f}s for {len(beats)} beats", file=sys.stderr)
     voice = voice or DEFAULT_VOICES.get(engine, "")
     audio_dir = short_dir / "audio"
     audio_dir.mkdir(exist_ok=True)
