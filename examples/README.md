@@ -2,7 +2,7 @@
 
 Everything here was produced by agents following the skills in this repository, from short
 requests, and then reviewed. The rendered media (MP4s, GIFs, the compiled notes PDF) live in
-[`../docs/media`](../docs/media); [`../docs/index.html`](../docs/index.html) is a showcase page for them.
+[`../docs/media`](../docs/media) and on the [showcase page](https://arav31.github.io/CourseToShortsSkills/).
 
 ## `mit-18.06sc/`: one course, start to finish
 

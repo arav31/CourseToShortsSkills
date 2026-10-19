@@ -17,6 +17,8 @@
 </tr>
 </table>
 
+<p align="center"><b><a href="https://arav31.github.io/CourseToShortsSkills/">▶ Watch the shorts with sound and read the notes on the showcase page</a></b></p>
+
 <p align="center"><sub>Five narrated shorts made from <a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/">MIT 18.06SC Linear Algebra</a> by agents using these skills. Click a preview for the full video with sound (60–80 s each).</sub></p>
 
 <table>
