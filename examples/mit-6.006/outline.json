@@ -1,0 +1,455 @@
+{
+  "course": {
+    "title": "Introduction to Algorithms",
+    "code": "6.006",
+    "institution": "MIT OpenCourseWare",
+    "instructor": "Erik Demaine, Jason Ku, Justin Solomon",
+    "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/",
+    "level": "undergraduate; assumes Python programming (6.0001) and discrete mathematics (6.042J)",
+    "term": "Spring 2020",
+    "textbook": "Lecture and recitation notes; CLRS (Introduction to Algorithms, 3rd ed.) as optional reference",
+    "license": "CC BY-NC-SA 4.0",
+    "parts": [
+      "Data structures and sorting",
+      "Graph algorithms",
+      "Dynamic programming",
+      "Complexity and next steps"
+    ]
+  },
+  "units": [
+    {
+      "id": "u01",
+      "session": "Lecture 1",
+      "part": "Data structures and sorting",
+      "title": "Algorithms and Computation",
+      "summary": "What a computational problem and an algorithm are, how to argue correctness by induction (birthday matching) and efficiency with asymptotic notation, and the word-RAM model of computation that all later running times assume.",
+      "key_ideas": [
+        "problem as input-output relation",
+        "correctness by induction",
+        "asymptotic notation",
+        "word-RAM model"
+      ],
+      "sources": [
+        "sources/c16344-lecture-1-introduction-introduction-to-algorithms-6-006.txt",
+        "sources/8d2b3f-lecture-1-algorithms-and-computation-transcript.txt",
+        "sources/307be5-recitation-1-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u02",
+      "session": "Lecture 2",
+      "part": "Data structures and sorting",
+      "title": "Data Structures and Dynamic Arrays",
+      "summary": "Interfaces versus data structures: the Sequence and Set interfaces; arrays, linked lists and dynamic arrays, with amortized analysis showing why doubling the capacity gives O(1) appends.",
+      "key_ideas": [
+        "Sequence and Set interfaces",
+        "linked list",
+        "dynamic array",
+        "amortized O(1) append"
+      ],
+      "sources": [
+        "sources/124f07-lecture-2-data-structures-introduction-to-algorithms-6-006.txt",
+        "sources/c49d20-lecture-2-data-structures-and-dynamic-arrays-transcript.txt",
+        "sources/463c1e-recitation-2-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u03",
+      "session": "Lecture 3",
+      "part": "Data structures and sorting",
+      "title": "Sets and Sorting",
+      "summary": "Sorted arrays implement a Set with binary search; sorting algorithms permutation sort, selection sort, insertion sort and merge sort, with recurrences solved by substitution and recursion trees (merge sort in Theta(n log n)).",
+      "key_ideas": [
+        "binary search",
+        "selection and insertion sort",
+        "merge sort",
+        "recurrences"
+      ],
+      "sources": [
+        "sources/53a6e4-lecture-3-sorting-introduction-to-algorithms-6-006.txt",
+        "sources/b193da-lecture-3-sets-and-sorting-transcript.txt",
+        "sources/41eedd-recitation-3-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u04",
+      "session": "Lecture 4",
+      "part": "Data structures and sorting",
+      "title": "Hashing",
+      "summary": "The comparison-model lower bound Omega(log n) for search via decision trees, beaten by direct access arrays and hash tables; hashing with chaining and universal hash families give expected O(1) operations.",
+      "key_ideas": [
+        "decision-tree lower bound",
+        "direct access array",
+        "hash table with chaining",
+        "universal hashing"
+      ],
+      "sources": [
+        "sources/9c01a3-lecture-4-hashing-introduction-to-algorithms-6-006.txt",
+        "sources/276991-lecture-4-hashing-transcript.txt",
+        "sources/91893d-recitation-4-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u05",
+      "session": "Lecture 5",
+      "part": "Data structures and sorting",
+      "title": "Linear Sorting",
+      "summary": "Comparison sorting needs Omega(n log n) comparisons (log of n! leaves), but integer keys can be sorted faster: direct access array sort, counting sort (stable) and radix sort in linear time for polynomially bounded keys.",
+      "key_ideas": [
+        "Omega(n log n) sorting lower bound",
+        "counting sort",
+        "stability",
+        "radix sort"
+      ],
+      "sources": [
+        "sources/c7e294-lecture-5-linear-sorting-introduction-to-algorithms-6-006.txt",
+        "sources/f38911-lecture-5-linear-sorting-transcript.txt",
+        "sources/afaa66-recitation-5-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u06",
+      "session": "Lecture 6",
+      "part": "Data structures and sorting",
+      "title": "Binary Trees, Part 1",
+      "summary": "Binary trees as pointer-based structures: depth, height, traversal order, and O(h) operations (subtree first/last, successor, insert and delete) used to implement the Sequence and Set interfaces.",
+      "key_ideas": [
+        "traversal order",
+        "height h",
+        "successor / predecessor",
+        "binary search tree"
+      ],
+      "sources": [
+        "sources/c3b94e-lecture-6-binary-trees-part-1-introduction-to-algorithms-6-0.txt",
+        "sources/f25028-lecture-6-binary-trees-part-1-transcript.txt",
+        "sources/29ec4e-recitation-6-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u07",
+      "session": "Lecture 7",
+      "part": "Data structures and sorting",
+      "title": "Binary Trees, Part 2: AVL",
+      "summary": "Keeping height O(log n): rotations change tree shape but not traversal order; AVL trees maintain height balance by local rebalancing after each insert or delete, and subtree augmentation (sizes) gives O(log n) Sequence operations.",
+      "key_ideas": [
+        "rotations",
+        "AVL height balance",
+        "rebalancing",
+        "subtree augmentation"
+      ],
+      "sources": [
+        "sources/a1fb2e-lecture-7-binary-trees-part-2-avl-introduction-to-algorithms.txt",
+        "sources/dc886f-lecture-7-binary-trees-part-2-avl-transcript.txt",
+        "sources/2c6725-recitation-7-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u08",
+      "session": "Lecture 8",
+      "part": "Data structures and sorting",
+      "title": "Binary Heaps",
+      "summary": "Priority queues and priority-queue sort; a binary heap stores a complete binary tree in an array with the max-heap property, giving O(log n) insert and delete-max, linear-time build, and in-place heap sort.",
+      "key_ideas": [
+        "priority queue interface",
+        "array-based complete tree",
+        "heapify up / down",
+        "heap sort"
+      ],
+      "sources": [
+        "sources/74bb18-lecture-8-binary-heaps-introduction-to-algorithms-6-006.txt",
+        "sources/bcc454-lecture-8-binary-heaps-transcript.txt",
+        "sources/628d51-recitation-8-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u09",
+      "session": "Lecture 9",
+      "part": "Graph algorithms",
+      "title": "Breadth-First Search",
+      "summary": "Graphs, adjacency lists and paths; breadth-first search computes level sets L_i (all vertices at distance i) from L_(i-1), giving unweighted shortest-path distances and a parent tree in O(|V| + |E|) time.",
+      "key_ideas": [
+        "adjacency lists",
+        "level sets L_i",
+        "shortest-paths tree",
+        "O(|V|+|E|)"
+      ],
+      "sources": [
+        "sources/063645-lecture-9-breadth-first-search-introduction-to-algorithms-6-.txt",
+        "sources/a6cb62-lecture-9-breadth-first-search-transcript.txt",
+        "sources/97a595-recitation-9-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u10",
+      "session": "Lecture 10",
+      "part": "Graph algorithms",
+      "title": "Depth-First Search",
+      "summary": "Depth-first search visits outgoing neighbours recursively, solving reachability; Full-DFS finds connected components, its finishing order gives a topological sort of a DAG, and back edges detect cycles.",
+      "key_ideas": [
+        "recursive visit",
+        "connected components",
+        "topological sort",
+        "cycle detection"
+      ],
+      "sources": [
+        "sources/df9f98-lecture-10-depth-first-search-introduction-to-algorithms-6-0.txt",
+        "sources/11346f-lecture-10-depth-first-search-transcript.txt",
+        "sources/24a093-recitation-10-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u11",
+      "session": "Lecture 11",
+      "part": "Graph algorithms",
+      "title": "Weighted Shortest Paths",
+      "summary": "Weighted graphs and shortest-path weights; shortest-path trees recovered from distances, and DAG relaxation, which relaxes edges in topological order to solve single-source shortest paths in a DAG in linear time.",
+      "key_ideas": [
+        "path weight",
+        "relaxation",
+        "DAG relaxation",
+        "shortest-path tree"
+      ],
+      "sources": [
+        "sources/48638b-lecture-11-weighted-shortest-paths-introduction-to-algorithm.txt",
+        "sources/3f04af-lecture-11-weighted-shortest-paths-transcript.txt",
+        "sources/d24549-recitation-11-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u12",
+      "session": "Lecture 12",
+      "part": "Graph algorithms",
+      "title": "Bellman-Ford",
+      "summary": "Shortest paths with negative weights: negative-weight cycles make distances undefined; Bellman-Ford (as DAG relaxation on a |V|-layer duplicated graph) computes distances or finds a negative cycle in O(|V||E|).",
+      "key_ideas": [
+        "negative-weight cycles",
+        "simple shortest paths",
+        "graph duplication",
+        "O(|V||E|)"
+      ],
+      "sources": [
+        "sources/cbbf6b-lecture-12-bellman-ford-sssp-algorithm.txt",
+        "sources/11f884-lecture-12-bellman-ford-transcript.txt",
+        "sources/add335-recitation-12-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u13",
+      "session": "Lecture 13",
+      "part": "Graph algorithms",
+      "title": "Dijkstra's Algorithm",
+      "summary": "With non-negative weights, Dijkstra repeatedly removes the vertex with the smallest distance estimate from a changeable priority queue and relaxes its outgoing edges; estimates are final when removed, in O(|V| log |V| + |E|) with a Fibonacci heap.",
+      "key_ideas": [
+        "non-negative weights",
+        "delete-min",
+        "relax / decrease-key",
+        "correctness by induction"
+      ],
+      "sources": [
+        "sources/4b68f4-lecture-13-dijkstra-s-algorithm-sssp-algorithm.txt",
+        "sources/cbcd05-lecture-13-dijkstra-transcript.txt",
+        "sources/eed175-recitation-13-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u14",
+      "session": "Lecture 14",
+      "part": "Graph algorithms",
+      "title": "APSP and Johnson's Algorithm",
+      "summary": "All-pairs shortest paths: Johnson's algorithm reweights edges with potentials from one Bellman-Ford run so all weights become non-negative while shortest paths are preserved, then runs Dijkstra from every vertex.",
+      "key_ideas": [
+        "all-pairs shortest paths",
+        "reweighting with potentials",
+        "Bellman-Ford + |V| x Dijkstra"
+      ],
+      "sources": [
+        "sources/6c9b05-lecture-14-johnson-s-algorithm-sssp-algorithm.txt",
+        "sources/bcd5c1-lecture-14-apsp-and-johnson-transcript.txt",
+        "sources/f01ccd-recitation-14-sssp-algorithm.txt"
+      ]
+    },
+    {
+      "id": "u15",
+      "session": "Lecture 15",
+      "part": "Dynamic programming",
+      "title": "Dynamic Programming, Part 1: SRTBOT, Fib, DAGs, Bowling",
+      "summary": "Recursive algorithm design with SRTBOT (subproblems, relation, topological order, base cases, original problem, time); Fibonacci's exponential call tree collapses into a DAG of n+1 subproblems with memoization; DAG shortest paths and bowling as dynamic programs.",
+      "key_ideas": [
+        "SRTBOT",
+        "memoization",
+        "subproblem DAG",
+        "bowling"
+      ],
+      "sources": [
+        "sources/bba252-lecture-15-recursive-algorithms-introduction-to-algorithms-6.txt",
+        "sources/3a6173-lecture-15-dynamic-programming-part-1-srtbot-fib-dags-bowlin.txt",
+        "sources/19cc2d-recitation-15-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u16",
+      "session": "Lecture 16",
+      "part": "Dynamic programming",
+      "title": "Dynamic Programming, Part 2: LCS, LIS, Coins",
+      "summary": "Choosing subproblems from prefixes, suffixes and substrings: longest common subsequence on pairs of suffixes, longest increasing subsequence with a constraint added to the subproblem, and the alternating coin game.",
+      "key_ideas": [
+        "longest common subsequence",
+        "longest increasing subsequence",
+        "subproblem expansion",
+        "coin game"
+      ],
+      "sources": [
+        "sources/c1f062-lecture-16-dynamic-programming-subproblems-introduction-to-a.txt",
+        "sources/b33718-lecture-16-dynamic-programming-part-2-lcs-lis-coins-transcri.txt",
+        "sources/a8f3e5-recitation-16-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u17",
+      "session": "Lecture 17",
+      "part": "Dynamic programming",
+      "title": "Dynamic Programming, Part 3: APSP, Parens, Piano",
+      "summary": "Dynamic programs with richer state: all-pairs shortest paths by Floyd-Warshall-style subproblems, arithmetic parenthesization over substrings, and piano and guitar fingering that remember the previous finger.",
+      "key_ideas": [
+        "Floyd-Warshall",
+        "arithmetic parenthesization",
+        "piano fingering",
+        "partial state"
+      ],
+      "sources": [
+        "sources/7d05e3-lecture-17-dynamic-programming-part-3-introduction-to-algori.txt",
+        "sources/647555-lecture-17-dynamic-programming-part-3-apsp-parens-piano-tran.txt",
+        "sources/2cc1a4-recitation-17-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u18",
+      "session": "Lecture 18",
+      "part": "Dynamic programming",
+      "title": "Dynamic Programming, Part 4: Rods, Subset Sum, Pseudopolynomial",
+      "summary": "Subproblems indexed by integers: rod cutting and subset sum run in time polynomial in the numeric value S rather than its bit length, which is what pseudopolynomial means.",
+      "key_ideas": [
+        "rod cutting",
+        "subset sum",
+        "pseudopolynomial time"
+      ],
+      "sources": [
+        "sources/f9a481-lecture-18-pseudopolynomial-introduction-to-algorithms-6-006.txt",
+        "sources/df9e64-lecture-18-dynamic-programming-part-4-rods-subset-sum-pseudo.txt",
+        "sources/5ed080-recitation-18-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u19",
+      "session": "Lecture 19",
+      "part": "Complexity and next steps",
+      "title": "Complexity",
+      "summary": "Decision problems, decidability and the classes P, NP, EXP and R; reductions, NP-hardness and NP-completeness, with examples such as subset sum, 3-partition and Tetris.",
+      "key_ideas": [
+        "decision problems",
+        "P, NP, EXP, R",
+        "reductions",
+        "NP-completeness"
+      ],
+      "sources": [
+        "sources/2648f5-lecture-19-complexity-introduction-to-algorithms-6-006.txt",
+        "sources/d7fbe7-lecture-19-complexity-transcript.txt",
+        "sources/6b4c9b-recitation-19-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "id": "u20",
+      "session": "Lecture 20",
+      "part": "Complexity and next steps",
+      "title": "Course Review",
+      "summary": "A review of the course's two design strategies, reducing to known data structures and algorithms or designing a new recursive algorithm, and a map of the follow-on courses and research areas.",
+      "key_ideas": [
+        "reduce to a known problem",
+        "design a recursive algorithm",
+        "follow-on courses"
+      ],
+      "sources": [
+        "sources/4cc79f-lecture-20-course-review-introduction-to-algorithms-6-006.txt",
+        "sources/448996-lecture-20-course-review-transcript.txt"
+      ]
+    },
+    {
+      "id": "u21",
+      "session": "Lecture 21",
+      "part": "Complexity and next steps",
+      "title": "Algorithms: Next Steps",
+      "summary": "Where the course's ideas lead: the instructors' research in computational origami, geometry and graphics, showing algorithms applied to folding, reconfigurable structures and puzzles.",
+      "key_ideas": [
+        "computational origami",
+        "geometric folding algorithms",
+        "applications"
+      ],
+      "sources": [
+        "sources/80770e-lecture-21-algorithms-next-steps-transcript.txt",
+        "sources/3b3dc8-lecture-21-algorithms-next-steps.txt"
+      ]
+    }
+  ],
+  "assessments": [
+    {
+      "title": "Problem Sets 0-8 (with solutions)",
+      "sources": [
+        "sources/5a31c2-problem-set-0-mit6-006s20-ps0-questions.txt",
+        "sources/100ac0-problem-set-0-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/0a3bef-problem-set-1-introduction-to-algorithms-6-006.txt",
+        "sources/5995f2-problem-set-1-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/f06021-problem-set-2-introduction-to-algorithms-6-006.txt",
+        "sources/811e92-problem-set-2-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/52a1fb-problem-set-3-introduction-to-algorithms-6-006.txt",
+        "sources/29595d-problem-set-3-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/a7006d-problem-set-4-introduction-to-algorithms-6-006.txt",
+        "sources/1969f3-problem-set-4-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/74cb92-problem-set-5-introduction-to-algorithms-6-006.txt",
+        "sources/de7013-problem-set-5-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/431236-problem-set-6-introduction-to-algorithms-6-006.txt",
+        "sources/cd7a68-problem-set-6-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/00ff96-problem-set-7-introduction-to-algorithms-6-006.txt",
+        "sources/35e58c-problem-set-7-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/c4c07e-problem-set-8-introduction-to-algorithms-6-006.txt",
+        "sources/99477d-problem-set-8-solutions-introduction-to-algorithms-6-006.txt"
+      ]
+    },
+    {
+      "title": "Quiz 1 (with review and solutions)",
+      "sources": [
+        "sources/e62c07-quiz-1-introduction-to-algorithms.txt",
+        "sources/4ec418-quiz-1-solutions-introduction-to-algorithms.txt",
+        "sources/cf6432-quiz-1-review-introduction-to-algorithms-6-006.txt",
+        "sources/798cd6-quiz-1-review-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/d12ebd-quiz-1-review-transcript.txt"
+      ]
+    },
+    {
+      "title": "Quiz 2 (with review and solutions)",
+      "sources": [
+        "sources/a32142-quiz-2-introduction-to-algorithms.txt",
+        "sources/5f15fa-quiz-2-solutions-introduction-to-algorithms.txt",
+        "sources/667b42-quiz-2-review-introduction-to-algorithms-6-006.txt",
+        "sources/acc4f5-quiz-2-review-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/3247a0-quiz-2-review-transcript.txt"
+      ]
+    },
+    {
+      "title": "Quiz 3 (with review and solutions)",
+      "sources": [
+        "sources/730b8d-quiz-3-introduction-to-algorithms.txt",
+        "sources/bdbeb1-quiz-3-solutions-introduction-to-algorithms.txt",
+        "sources/ddd000-quiz-3-review-introduction-to-algorithms-6-006.txt",
+        "sources/957382-quiz-3-review-solutions-introduction-to-algorithms-6-006.txt",
+        "sources/d756ff-quiz-3-review-transcript.txt"
+      ]
+    },
+    {
+      "title": "Final Exam (with solutions)",
+      "sources": [
+        "sources/44c0aa-final-exam-introduction-to-algorithms.txt",
+        "sources/ed5474-final-exam-solutions-introduction-to-algorithms.txt"
+      ]
+    }
+  ]
+}

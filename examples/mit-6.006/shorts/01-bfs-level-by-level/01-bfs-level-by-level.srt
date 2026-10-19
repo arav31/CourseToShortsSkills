@@ -1,0 +1,135 @@
+1
+00:00:00,113 --> 00:00:03,112
+How far is every vertex from s?
+
+2
+00:00:03,112 --> 00:00:04,425
+And can some vertex
+
+3
+00:00:04,425 --> 00:00:05,375
+never be reached?
+
+4
+00:00:05,954 --> 00:00:08,329
+Level zero is just s,
+
+5
+00:00:08,329 --> 00:00:09,579
+at distance zero.
+
+6
+00:00:10,187 --> 00:00:12,488
+Level one is every unvisited
+
+7
+00:00:12,488 --> 00:00:14,300
+neighbour of level zero,
+
+8
+00:00:14,300 --> 00:00:15,300
+at distance one.
+
+9
+00:00:15,887 --> 00:00:17,788
+Level two grows only
+
+10
+00:00:17,788 --> 00:00:18,887
+from level one.
+
+11
+00:00:18,887 --> 00:00:21,775
+Edges back to s are rejected; b,
+
+12
+00:00:21,775 --> 00:00:23,487
+d and e are new.
+
+13
+00:00:24,087 --> 00:00:26,862
+Level three: only f is new,
+
+14
+00:00:26,862 --> 00:00:28,025
+found from d.
+
+15
+00:00:28,025 --> 00:00:30,950
+Every other edge, even e to f,
+
+16
+00:00:30,950 --> 00:00:31,813
+is rejected.
+
+17
+00:00:32,387 --> 00:00:34,887
+Level four is empty, so we stop.
+
+18
+00:00:34,887 --> 00:00:36,862
+g was never reached:
+
+19
+00:00:36,862 --> 00:00:38,762
+its distance is infinity.
+
+20
+00:00:39,367 --> 00:00:41,942
+Slide each vertex into its level.
+
+21
+00:00:41,942 --> 00:00:43,454
+No edge skips a level;
+
+22
+00:00:43,804 --> 00:00:45,892
+only d to e stays inside one.
+
+23
+00:00:46,500 --> 00:00:47,675
+So reaching f takes
+
+24
+00:00:47,675 --> 00:00:49,438
+at least three edges,
+
+25
+00:00:49,438 --> 00:00:50,150
+and the green tree
+
+26
+00:00:50,150 --> 00:00:52,350
+path uses exactly three.
+
+27
+00:00:52,980 --> 00:00:55,179
+The cost: eight edges,
+
+28
+00:00:55,179 --> 00:00:56,729
+each checked from both ends,
+
+29
+00:00:56,729 --> 00:00:58,380
+so sixteen checks.
+
+30
+00:00:58,380 --> 00:01:00,479
+Linear time, order V plus E.
+
+31
+00:01:01,067 --> 00:01:02,817
+Each level is the unvisited
+
+32
+00:01:02,817 --> 00:01:04,429
+neighbours of the level before,
+
+33
+00:01:04,829 --> 00:01:06,217
+and a vertex's level
+
+34
+00:01:06,217 --> 00:01:07,305
+is its distance.
