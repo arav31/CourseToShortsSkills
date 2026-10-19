@@ -1,32 +1,26 @@
 {
-  "name": "course-shorts-skills-quality",
-  "version": "0.1.0+codex.20260714232957",
-  "description": "Turn course sources into comprehensive notes and validated visual explainer videos.",
+  "name": "course-to-shorts",
+  "version": "2.0.0",
+  "description": "Turn a course link into complete LaTeX study notes and narrated 3Blue1Brown-style explainer shorts.",
   "author": {
-    "name": "Arav"
+    "name": "Arav",
+    "url": "https://github.com/arav31"
   },
-  "keywords": [
-    "education",
-    "course-notes",
-    "manim",
-    "video",
-    "latex"
-  ],
+  "homepage": "https://github.com/arav31/CourseToShortsSkills",
+  "repository": "https://github.com/arav31/CourseToShortsSkills",
+  "keywords": ["education", "course-notes", "manim", "explainer-video", "latex", "instagram-reels"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Course to Shorts",
-    "shortDescription": "Create course notes and visual explainers.",
-    "longDescription": "Extract course material, write comprehensive LaTeX notes, plan and render visual explainers, and validate production output.",
+    "shortDescription": "Course link to study notes and explainer reels",
+    "longDescription": "Ingest a course (MIT OpenCourseWare or any course site, PDFs, folders), plan a beginner-safe series of shorts with verified worked examples, write and compile complete LaTeX study notes, and storyboard, narrate, render and visually review vertical Manim explainers ready for Instagram Reels.",
     "developerName": "Arav",
     "category": "Productivity",
-    "capabilities": [
-      "Interactive",
-      "Write"
-    ],
+    "capabilities": ["Interactive", "Write"],
     "defaultPrompt": [
-      "Turn this course into comprehensive notes and a visual shorts plan.",
-      "Generate and render validated Manim explainers for this course.",
-      "Validate this course run before publishing."
+      "Turn https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/ into study notes and five explainer shorts.",
+      "Make a narrated explainer short showing why eigenvectors keep their direction.",
+      "Where does my course run stand, and is it ready to publish?"
     ]
   }
 }

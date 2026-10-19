@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course to Shorts"
+  short_description: "Course link to study notes and explainer reels"
+  default_prompt: "Use $course-to-shorts to turn this course into study notes and a series of explainer shorts."

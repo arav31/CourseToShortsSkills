@@ -1,4 +1,0 @@
-interface:
-  display_name: "Course Short Plan"
-  short_description: "Plan beginner-safe course shorts."
-  default_prompt: "Use $course-short-plan to create a full prerequisite-ordered course shorts plan."

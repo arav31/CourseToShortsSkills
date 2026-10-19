@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Reels"
+  short_description: "Queue and publish shorts as Instagram Reels"
+  default_prompt: "Use $course-reels to build the Instagram Reels queue for this course run."

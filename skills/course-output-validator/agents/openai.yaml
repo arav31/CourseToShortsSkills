@@ -1,4 +1,0 @@
-interface:
-  display_name: "Course Output Validator"
-  short_description: "Validate course notes and videos."
-  default_prompt: "Use $course-output-validator to validate this course run before queueing or publishing."

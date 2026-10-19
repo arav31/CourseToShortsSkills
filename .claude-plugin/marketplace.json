@@ -1,0 +1,16 @@
+{
+  "name": "course-to-shorts",
+  "owner": {
+    "name": "Arav",
+    "url": "https://github.com/arav31"
+  },
+  "description": "Skills that turn a course into study notes and explainer shorts.",
+  "plugins": [
+    {
+      "name": "course-to-shorts",
+      "source": "./",
+      "description": "Plan, notes, video and reels skills: course link in, LaTeX notes and narrated Manim shorts out.",
+      "category": "education"
+    }
+  ]
+}
