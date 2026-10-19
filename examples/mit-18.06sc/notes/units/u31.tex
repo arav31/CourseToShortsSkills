@@ -1,0 +1,362 @@
+% unit: u31
+% sources: sources/074-positive-definite-matrices-and-minima.txt, sources/053-lecture-27-positive-definite-matrices-and-minima.txt, sources/212-mit18-06scf11-ses3-3sum-pdf-download-file.txt, sources/054-problem-solving-positive-definite-matrices-and-minima.txt, sources/213-mit18-06scf11-ses3-3prob-pdf-download-file.txt, sources/214-mit18-06scf11-ses3-3sol-pdf-download-file.txt
+\section{Positive definite matrices and minima}\label{sec:u31}
+
+Section~\ref{sec:u29} defined a positive definite matrix as a symmetric matrix with positive
+eigenvalues and showed that positive pivots, or positive upper-left determinants, are
+equivalent tests. This unit adds the quantity that explains \emph{why} these matrices matter:
+the quadratic expression $\vb{x}\T A\vb{x}$. It gives a fourth test, which most books take as the
+definition, and it connects linear algebra to calculus (a minimum of a function of several
+variables) and to geometry (ellipses and ellipsoids). Pivots from the first week,
+determinants from the middle of the course and eigenvalues from the last weeks all meet here.
+All matrices in this unit are real and symmetric.
+
+\subsection{The energy \texorpdfstring{$\vb{x}\T A\vb{x}$}{xTAx} and four equivalent tests}
+
+\begin{definition}[Quadratic form; positive (semi)definite]\label{def:u31-form}
+The \emph{quadratic form} of a symmetric $n\times n$ matrix $A$ is
+$f(\vb{x})=\vb{x}\T A\vb{x}=\sum_{i,j}a_{ij}x_ix_j$. The matrix is \emph{positive definite} if
+$\vb{x}\T A\vb{x}>0$ for every $\vb{x}\ne\vb{0}$, and \emph{positive semidefinite} if $\vb{x}\T A\vb{x}\ge0$
+for every $\vb{x}$.
+\end{definition}
+
+For a $2\times2$ matrix the form is short enough to read off:
+\[
+  \begin{bmatrix}x&y\end{bmatrix}\begin{bmatrix}a&b\\b&c\end{bmatrix}\begin{bmatrix}x\\y\end{bmatrix}
+  =ax^2+2bxy+cy^2 .
+\]
+The diagonal entries multiply the pure squares and each off-diagonal pair produces a cross term.
+The form is purely quadratic: no linear terms, no constant. The squares $ax^2$ and $cy^2$ are
+positive when $a,c>0$; the cross term $2bxy$ can have either sign. Positive definiteness means
+the squares always win.
+
+\begin{theorem}[Four tests]\label{thm:u31-tests}
+For a symmetric matrix $A$ the following are equivalent; any one of them makes $A$ positive
+definite.
+\begin{enumerate}[(1)]
+  \item All eigenvalues are positive: $\lambda_i>0$.
+  \item All upper-left determinants are positive: $D_1>0,\dots,D_n>0$.
+  \item All pivots are positive (elimination without row exchanges): $d_i>0$.
+  \item $\vb{x}\T A\vb{x}>0$ for every $\vb{x}\ne\vb{0}$.
+\end{enumerate}
+For $A=\left[\begin{smallmatrix}a&b\\b&c\end{smallmatrix}\right]$ these read: $\lambda_1,\lambda_2>0$;
+$a>0$ and $ac-b^2>0$; pivots $a>0$ and $(ac-b^2)/a>0$; $ax^2+2bxy+cy^2>0$ unless $x=y=0$.
+\end{theorem}
+\begin{proof}
+Tests (1), (2), (3) were shown equivalent in Section~\ref{sec:u29}. It remains to connect (4)
+with (1). Write $A=Q\Lambda Q\T$ (spectral theorem) and $\vb{y}=Q\T\vb{x}$. Then
+\[
+  \vb{x}\T A\vb{x}=\vb{y}\T\Lambda\vb{y}=\lambda_1y_1^2+\lambda_2y_2^2+\cdots+\lambda_ny_n^2 .
+\]
+If every $\lambda_i>0$, this is positive whenever $\vb{y}\ne\vb{0}$, that is whenever $\vb{x}\ne\vb{0}$
+($Q$ is invertible). Conversely, if (4) holds and $A\vb{x}=\lambda\vb{x}$ with $\vb{x}\ne\vb{0}$, then
+$0<\vb{x}\T A\vb{x}=\lambda\,\vb{x}\T\vb{x}$, so $\lambda>0$.
+\end{proof}
+
+The same computation shows that $A$ is positive \emph{semi}definite exactly when all its
+eigenvalues are $\ge0$. A semidefinite matrix that is not definite is singular: it has the
+eigenvalue $0$, fewer than $n$ pivots, and a nonzero $\vb{x}$ with $\vb{x}\T A\vb{x}=0$.
+
+\begin{example}[One matrix, three regimes]\label{ex:u31-family}
+For which $c$ is $A_c=\begin{bmatrix}2&6\\6&c\end{bmatrix}$ positive definite? We do not want
+eigenvalues; the determinant test is fastest. $D_1=2>0$ always, and $D_2=2c-36>0$ exactly when
+$c>18$. Its form is $f_c(x,y)=2x^2+12xy+cy^2$.
+\begin{itemize}
+  \item $c=18$ is the borderline: $\det A_{18}=0$, so $A_{18}$ is singular with eigenvalues
+        $0$ and $20$ (the trace). It has one pivot, $2$, because row~2 is $3$ times row~1. Its form
+        is $2x^2+12xy+18y^2=2(x+3y)^2\ge0$, which vanishes along the line $x=-3y$, for instance at
+        $(3,-1)$. $A_{18}$ is positive semidefinite.
+  \item $c=7$ fails badly: $\det A_7=14-36=-22$, the pivots are $2$ and $-22/2=-11$, and the
+        eigenvalues (trace $9$, determinant $-22$) are $11$ and $-2$. The form goes negative:
+        $f_7(1,-1)=2-12+7=-3$. Its graph is a \emph{saddle}: up along some directions, down along
+        others.
+  \item $c=20$ passes: $D_2=40-36=4>0$, the pivots are $2$ and $4/2=2$, and the eigenvalues
+        have product $4$ and sum $22$, so both are positive. The graph of $f_{20}$ is a bowl.
+\end{itemize}
+\end{example}
+
+\begin{trap}
+Checking $\vb{x}\T A\vb{x}>0$ at a few convenient vectors proves nothing. The indefinite $A_7$ gives
+$f_7(1,0)=2$, $f_7(0,1)=7$ and $f_7(1,1)=21$, all positive, yet $f_7(1,-1)=-3$. Positive diagonal
+entries are necessary but far from sufficient: the cross term must be outweighed in every
+direction, which is what the determinant $ac-b^2>0$ measures.
+\end{trap}
+
+\subsection{Completing the square is elimination}
+
+How can we see that $f_{20}=2x^2+12xy+20y^2$ is positive everywhere except the origin? Write it
+as a sum of squares. Put all the $x$'s into one square: $2(x+3y)^2=2x^2+12xy+18y^2$ produces the
+first two terms correctly and $18y^2$. We have $20y^2$, so two are left over:
+\[
+  2x^2+12xy+20y^2=2(x+3y)^2+2y^2 ,
+\]
+a sum of squares with positive weights, zero only when $y=0$ and $x+3y=0$. For $c=7$ the same
+step leaves $7-18=-11$:
+\[
+  2x^2+12xy+7y^2=2(x+3y)^2-11y^2 ,
+\]
+negative for example at $(x,y)=(-3,1)$, where it equals $0-11=-11$. The number $18$ is exactly the
+borderline found by the determinant test.
+
+The numbers $2$, $3$, $2$ are not new. Elimination on $A_{20}$ subtracts $3$ times row~1 from row~2:
+\[
+  \begin{bmatrix}2&6\\6&20\end{bmatrix}\longrightarrow\begin{bmatrix}2&6\\0&2\end{bmatrix},
+  \qquad
+  L=\begin{bmatrix}1&0\\3&1\end{bmatrix},\quad D=\begin{bmatrix}2&0\\0&2\end{bmatrix}.
+\]
+The pivots stand outside the squares and the multiplier $3$ sits inside.
+
+\begin{proposition}[Sum of squares from \texorpdfstring{$A=LDL\T$}{A = LDLT}]\label{prop:u31-ldl}
+If $A=LDL\T$ (elimination without row exchanges, pivots $d_1,\dots,d_n$), then
+\[
+  \vb{x}\T A\vb{x}=d_1\,(\boldsymbol{\ell}_1\T\vb{x})^2+d_2\,(\boldsymbol{\ell}_2\T\vb{x})^2+\cdots+d_n\,(\boldsymbol{\ell}_n\T\vb{x})^2 ,
+\]
+where $\boldsymbol{\ell}_i$ is column $i$ of $L$. In particular positive pivots give
+$\vb{x}\T A\vb{x}>0$ for $\vb{x}\ne\vb{0}$, which proves test (3)$\Rightarrow$(4) directly.
+\end{proposition}
+\begin{proof}
+$\vb{x}\T LDL\T\vb{x}=\vb{z}\T D\vb{z}$ with $\vb{z}=L\T\vb{x}$, and component $i$ of $\vb{z}$ is
+$\boldsymbol{\ell}_i\T\vb{x}$. So $\vb{z}\T D\vb{z}=\sum d_iz_i^2$. If all $d_i>0$ this vanishes only for
+$\vb{z}=\vb{0}$, and since $L\T$ is invertible (ones on its diagonal) that means $\vb{x}=\vb{0}$.
+\end{proof}
+
+\begin{example}[A \texorpdfstring{$3\times3$}{3 by 3} example in every test]\label{ex:u31-K}
+Take the second-difference matrix
+\[
+  K=\begin{bmatrix}2&-1&0\\-1&2&-1\\0&-1&2\end{bmatrix}.
+\]
+\begin{itemize}
+  \item \emph{Determinants:} $D_1=2$, $D_2=4-1=3$, $D_3=2\cdot3-(-1)(-2)=4$. All positive.
+  \item \emph{Pivots:} $D_k/D_{k-1}$ gives $2,\ \tfrac32,\ \tfrac43$. Elimination uses multipliers
+        $\ell_{21}=-\tfrac12$ and $\ell_{32}=-\tfrac23$.
+  \item \emph{Eigenvalues:} $2-\sqrt2,\ 2,\ 2+\sqrt2$, all positive. Checks: their sum is $6=\tr K$
+        and their product is $(4-2)\cdot2=4=\det K$.
+  \item \emph{Energy:} $\vb{x}\T K\vb{x}=2x_1^2+2x_2^2+2x_3^2-2x_1x_2-2x_2x_3$, and completing squares with
+        the pivots outside and the multipliers inside,
+        \[
+          \vb{x}\T K\vb{x}=2\bigl(x_1-\tfrac12x_2\bigr)^2+\tfrac32\bigl(x_2-\tfrac23x_3\bigr)^2+\tfrac43x_3^2 .
+        \]
+        Expanding: $2x_1^2-2x_1x_2+\tfrac12x_2^2$, plus $\tfrac32x_2^2-2x_2x_3+\tfrac23x_3^2$, plus
+        $\tfrac43x_3^2$, which totals the form above.
+\end{itemize}
+Every test agrees: $K$ is positive definite, and the graph of $\vb{x}\T K\vb{x}$ over $\R^3$ is a bowl in
+four dimensions.
+\end{example}
+
+Figure~\ref{fig:u31-levels} shows what separates a bowl from a saddle, by drawing curves
+$f(x,y)=k$ on which the form is constant.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=0.72,>=Stealth]
+  \begin{scope}
+    \draw[->,gray] (-3.6,0) -- (3.6,0) node[right] {$x$};
+    \draw[->,gray] (0,-1.9) -- (0,1.9) node[above] {$y$};
+    \draw[thick,blue,domain=0:360,samples=90,smooth,variable=\t]
+      plot ({0.5*(cos(\t)-3*sin(\t))},{0.5*sin(\t)});
+    \draw[thick,blue!55,domain=0:360,samples=90,smooth,variable=\t]
+      plot ({1.0*(cos(\t)-3*sin(\t))},{1.0*sin(\t)});
+    \fill (0,0) circle (1.5pt);
+    \draw[blue] (-1.049,0.433) -- (-1.3,1.45) node[above,font=\scriptsize] {$f=0.5$};
+    \draw[blue!55] (-2.098,0.866) -- (-2.85,1.45) node[above,font=\scriptsize] {$f=2$};
+    \node[font=\small] at (0,-2.45) {$f_{20}=2(x+3y)^2+2y^2$: ellipses};
+  \end{scope}
+  \begin{scope}[xshift=8.6cm]
+    \begin{scope}
+      \clip (-3.7,-1.95) rectangle (3.7,1.95);
+      \draw[dashed,gray,domain=-3:3] plot ({-0.655*\x},{\x});
+      \draw[dashed,gray,domain=-0.7:0.7] plot ({-5.345*\x},{\x});
+      \foreach \s in {1,-1} {
+        \draw[thick,red!75!black,domain=-2.6:2.6,samples=90,smooth,variable=\t]
+          plot ({(\s)*cosh(\t)-3*0.4264*sinh(\t)},{0.4264*sinh(\t)});
+        \draw[thick,orange!85!black,domain=-2.6:2.6,samples=90,smooth,variable=\t]
+          plot ({sinh(\t)-3*(\s)*0.4264*cosh(\t)},{(\s)*0.4264*cosh(\t)});
+      }
+    \end{scope}
+    \draw[->,gray] (-3.6,0) -- (3.6,0) node[right] {$x$};
+    \draw[->,gray] (0,-1.9) -- (0,1.9) node[above] {$y$};
+    \fill (0,0) circle (1.5pt);
+    \node[red!75!black,font=\scriptsize,fill=white,inner sep=1pt] at (1.55,0.35) {$f=2$};
+    \node[orange!85!black,font=\scriptsize,fill=white,inner sep=1pt] at (-2.45,1.25) {$f=-2$};
+    \node[font=\small] at (0,-2.45) {$f_{7}=2(x+3y)^2-11y^2$: hyperbolas};
+  \end{scope}
+\end{tikzpicture}
+\caption{Level curves of two quadratic forms that differ only in the corner entry. Left: for the
+positive definite $A_{20}$ every level set $f=k>0$ is an ellipse around the minimum at the origin.
+Right: for the indefinite $A_7$ the level sets $f=\pm2$ are hyperbolas; along the dashed lines
+$x+3y=\pm\sqrt{11/2}\,y$ the form is zero, and between them it changes sign: a saddle point.}
+\label{fig:u31-levels}
+\end{figure}
+
+\subsection{Second derivatives decide a minimum}
+
+In one-variable calculus, $f'(x_0)=0$ makes $x_0$ a critical point and $f''(x_0)>0$ makes it a
+minimum: the slope is increasing as we pass through. For $f(x_1,\dots,x_n)$ the first
+derivatives must all vanish, and the role of $f''$ is played by the \emph{matrix of second
+derivatives} (the Hessian)
+\[
+  H=\begin{bmatrix}\dfrac{\partial^2f}{\partial x_i\,\partial x_j}\end{bmatrix},
+  \qquad\text{for two variables}\quad
+  H=\begin{bmatrix}f_{xx}&f_{xy}\\f_{yx}&f_{yy}\end{bmatrix}.
+\]
+It is symmetric because mixed partial derivatives can be taken in either order: $f_{xy}=f_{yx}$.
+
+\begin{proposition}[Second-derivative test]\label{prop:u31-hessian}
+Let $f$ have continuous second derivatives near $\vb{x}_0$, with all first derivatives zero at
+$\vb{x}_0$. If $H(\vb{x}_0)$ is positive definite, $\vb{x}_0$ is a strict local minimum. If
+$H(\vb{x}_0)$ has a negative eigenvalue, $\vb{x}_0$ is not a minimum.
+\end{proposition}
+\begin{proof}[Sketch]
+Taylor's formula gives $f(\vb{x}_0+\vb{h})=f(\vb{x}_0)+\tfrac12\vb{h}\T H(\vb{x}_0)\vb{h}+r(\vb{h})$ with
+$r(\vb{h})/\|\vb{h}\|^2\to0$ as $\vb{h}\to\vb{0}$; the linear term is absent because the gradient is zero.
+If $H$ is positive definite with smallest eigenvalue $\lambda_{\min}>0$, then
+$\tfrac12\vb{h}\T H\vb{h}\ge\tfrac12\lambda_{\min}\|\vb{h}\|^2$ (expand $\vb{h}$ in the orthonormal
+eigenvectors), which beats $r(\vb{h})$ for small $\vb{h}\ne\vb{0}$, so $f(\vb{x}_0+\vb{h})>f(\vb{x}_0)$. If
+$H\vb{q}=\lambda\vb{q}$ with $\lambda<0$, moving along $\vb{h}=t\vb{q}$ gives
+$f(\vb{x}_0+t\vb{q})-f(\vb{x}_0)=\tfrac12\lambda t^2\|\vb{q}\|^2+r(t\vb{q})<0$ for small $t\ne0$.
+The full $\varepsilon$--$\delta$ details belong to multivariable calculus.
+\end{proof}
+
+For two variables the determinant test for $H$ is the familiar calculus rule: a minimum when
+$f_{xx}>0$ and $f_{xx}f_{yy}>f_{xy}^2$. Linear algebra extends it to any number of variables,
+where it is applied through pivots, determinants or eigenvalues of $H$. For a pure quadratic
+$f(\vb{x})=\vb{x}\T A\vb{x}$ the Hessian is the constant matrix $2A$, so the local picture at the origin
+is the global one: a bowl when $A$ is positive definite, a saddle when it is indefinite.
+
+\begin{example}[Classifying critical points]\label{ex:u31-critical}
+Let $f(x,y)=x^3+y^2-3xy$. Setting the first derivatives to zero,
+\[
+  f_x=3x^2-3y=0,\qquad f_y=2y-3x=0 .
+\]
+The second equation gives $y=\tfrac32x$; then $3x^2-\tfrac92x=0$, so $x=0$ or $x=\tfrac32$. The
+critical points are $(0,0)$ and $(\tfrac32,\tfrac94)$. The Hessian is
+$H=\left[\begin{smallmatrix}6x&-3\\-3&2\end{smallmatrix}\right]$.
+\begin{itemize}
+  \item At $(0,0)$: $H=\left[\begin{smallmatrix}0&-3\\-3&2\end{smallmatrix}\right]$ has
+        $\det H=-9<0$, so one eigenvalue is negative: a saddle point, not a minimum.
+  \item At $(\tfrac32,\tfrac94)$: $H=\left[\begin{smallmatrix}9&-3\\-3&2\end{smallmatrix}\right]$ has
+        $D_1=9>0$ and $D_2=18-9=9>0$: positive definite, so a local minimum, with value
+        $f=\tfrac{27}{8}+\tfrac{81}{16}-\tfrac{81}{8}=-\tfrac{27}{16}$.
+\end{itemize}
+\end{example}
+
+\subsection{Ellipses, ellipsoids and principal axes}
+
+Cut the bowl $z=\vb{x}\T A\vb{x}$ at height $1$. The cross-section $\vb{x}\T A\vb{x}=1$ is an ellipse in the plane,
+an ellipsoid (a lopsided rugby ball) in $\R^3$. Cutting a saddle instead gives a hyperbola. The
+spectral theorem says exactly how the ellipse sits.
+
+\begin{theorem}[Principal axes]\label{thm:u31-axes}
+Let $A=Q\Lambda Q\T$ be positive definite with orthonormal eigenvectors $\vb{q}_1,\dots,\vb{q}_n$. The
+set $\vb{x}\T A\vb{x}=1$ is an ellipsoid whose axes point along the eigenvectors $\vb{q}_i$, with
+half-lengths $1/\sqrt{\lambda_i}$.
+\end{theorem}
+\begin{proof}
+In the coordinates $\vb{y}=Q\T\vb{x}$, which measure $\vb{x}$ along the perpendicular directions
+$\vb{q}_i$ (a rotation, possibly with a reflection, which changes no shapes), the equation becomes
+$\lambda_1y_1^2+\cdots+\lambda_ny_n^2=1$, the standard ellipsoid
+$\sum y_i^2/(1/\sqrt{\lambda_i})^2=1$. Its axes are the $y_i$-axes, i.e.\ the $\vb{q}_i$ directions,
+and the axis along $\vb{q}_i$ reaches $y_i=\pm1/\sqrt{\lambda_i}$.
+\end{proof}
+
+Large eigenvalues give short axes: the bowl rises steeply in that direction. Equal eigenvalues
+give a round cross-section; two equal out of three give a rugby ball; the identity gives a
+sphere.
+
+\begin{example}[An ellipse tilted at \texorpdfstring{$45^\circ$}{45 degrees}]\label{ex:u31-ellipse}
+For $A=\begin{bmatrix}5&4\\4&5\end{bmatrix}$ the equation $\vb{x}\T A\vb{x}=1$ reads $5x^2+8xy+5y^2=1$.
+The eigenvalues are $9$ and $1$ (trace $10$, determinant $9$) with eigenvectors
+$\vb{q}_1=(1,1)/\sqrt2$ and $\vb{q}_2=(1,-1)/\sqrt2$. So
+\[
+  5x^2+8xy+5y^2=9\Bigl(\frac{x+y}{\sqrt2}\Bigr)^2+1\Bigl(\frac{x-y}{\sqrt2}\Bigr)^2 ,
+\]
+and the ellipse has half-axis $1/\sqrt9=\tfrac13$ along $(1,1)$ and $1/\sqrt1=1$ along $(1,-1)$
+(Figure~\ref{fig:u31-axes}). Check the endpoints: $(x,y)=\tfrac{1}{3\sqrt2}(1,1)$ gives
+$\tfrac{5+8+5}{18}=1$, and $(x,y)=\tfrac{1}{\sqrt2}(1,-1)$ gives $\tfrac{5-8+5}{2}=1$.
+
+For $K$ of Example~\ref{ex:u31-K}, $\vb{x}\T K\vb{x}=1$ is an ellipsoid with three different axes:
+the longest, $1/\sqrt{2-\sqrt2}\approx1.31$, along $(1,\sqrt2,1)$; the middle one, $1/\sqrt2\approx0.71$,
+along $(1,0,-1)$; the shortest, $1/\sqrt{2+\sqrt2}\approx0.54$, along $(1,-\sqrt2,1)$.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=2.1,>=Stealth]
+  \draw[->,gray] (-1.05,0) -- (1.1,0) node[right] {$x$};
+  \draw[->,gray] (0,-0.95) -- (0,0.95) node[above] {$y$};
+  \draw[thick,blue,domain=0:360,samples=100,smooth,variable=\t]
+    plot ({0.70711*(cos(\t)/3+sin(\t))},{0.70711*(cos(\t)/3-sin(\t))});
+  \draw[->,very thick,red!75!black] (0,0) -- (0.2357,0.2357);
+  \node[red!75!black,right,font=\small] at (0.27,0.33) {$\tfrac13\,\vb{q}_1$, $\lambda_1=9$};
+  \draw[->,very thick,orange!85!black] (0,0) -- (0.70711,-0.70711);
+  \node[orange!85!black,right,font=\small] at (0.72,-0.66) {$1\cdot\vb{q}_2$, $\lambda_2=1$};
+  \draw (0.06,0.06) -- (0.12,0) -- (0.06,-0.06);
+  \node[blue,font=\small] at (-0.85,-0.62) {$5x^2+8xy+5y^2=1$};
+\end{tikzpicture}
+\caption{The principal axes of $\vb{x}\T A\vb{x}=1$ for $A=\left[\begin{smallmatrix}5&4\\4&5\end{smallmatrix}\right]$
+point along the eigenvectors; the half-lengths are $1/\sqrt{\lambda}$, so the large eigenvalue $9$
+gives the short axis $\tfrac13$.}
+\label{fig:u31-axes}
+\end{figure}
+
+\subsection{Exercises}
+
+\begin{exercise}[Products of positive definite matrices]\label{exr:u31-AB}
+When $A$ and $B$ are symmetric positive definite, $AB$ need not be symmetric, but its
+eigenvalues are still positive. Prove this: start from $AB\vb{x}=\lambda\vb{x}$ and take the dot product
+with $B\vb{x}$.
+\end{exercise}
+\begin{solution}
+From $AB\vb{x}=\lambda\vb{x}$ with $\vb{x}\ne\vb{0}$, take the dot product with $B\vb{x}$:
+\[
+  (B\vb{x})\T AB\vb{x}=\lambda\,(B\vb{x})\T\vb{x}=\lambda\,\vb{x}\T B\vb{x},
+\]
+using $B\T=B$. The left side is $\vb{y}\T A\vb{y}$ with $\vb{y}=B\vb{x}\ne\vb{0}$ ($B$ is invertible), which is
+positive because $A$ is positive definite. On the right, $\vb{x}\T B\vb{x}>0$ because $B$ is positive
+definite. Hence $\lambda=\vb{y}\T A\vb{y}/\vb{x}\T B\vb{x}>0$. (Such a $\lambda$ is automatically real: the
+quotient is real.) For instance $A=\left[\begin{smallmatrix}2&1\\1&1\end{smallmatrix}\right]$,
+$B=\left[\begin{smallmatrix}1&1/2\\1/2&1\end{smallmatrix}\right]$ give the nonsymmetric
+$AB=\left[\begin{smallmatrix}2.5&2\\1.5&1.5\end{smallmatrix}\right]$, whose eigenvalues
+$2\pm\frac{\sqrt{13}}{2}\approx3.80,\,0.20$ are positive.
+\end{solution}
+
+\begin{exercise}[The form of a nonsymmetric matrix]\label{exr:u31-form}
+Find the quadratic form $f(x,y)$ of $A=\left[\begin{smallmatrix}1&5\\7&9\end{smallmatrix}\right]$. Is it
+always positive, always negative, or neither?
+\end{exercise}
+\begin{solution}
+$f(x,y)=\begin{bmatrix}x&y\end{bmatrix}\begin{bmatrix}x+5y\\7x+9y\end{bmatrix}=x^2+5xy+7xy+9y^2=x^2+12xy+9y^2$.
+Only the sum $5+7$ of the off-diagonal entries matters, so this is also the form of the
+symmetric matrix $\left[\begin{smallmatrix}1&6\\6&9\end{smallmatrix}\right]$, whose determinant
+$9-36=-27$ is negative. Hence $f$ takes both signs: $f(1,0)=1>0$ and $f(2,-2)=4-48+36=-8<0$.
+Completing the square, $f=(x+6y)^2-27y^2$.
+\end{solution}
+
+\begin{exercise}[A parameter in the corner]\label{exr:u31-param}
+For which $c$ is $B=\left[\begin{smallmatrix}2&-1&-1\\-1&2&-1\\-1&-1&2+c\end{smallmatrix}\right]$ positive
+definite? Positive semidefinite? Confirm with pivots and by completing squares, and find
+$\vb{x}\ne\vb{0}$ with $\vb{x}\T B\vb{x}=0$ when $c=0$.
+\end{exercise}
+\begin{solution}
+\emph{Determinants.} $D_1=2$, $D_2=4-1=3$, and expanding along row~1,
+$D_3=2\bigl(2(2+c)-1\bigr)+1\bigl(-(2+c)-1\bigr)-1\bigl(1+2\bigr)=(6+4c)-(3+c)-3=3c$. So $B$ is
+positive definite for $c>0$ and positive semidefinite for $c\ge0$ (for $c<0$, $\det B<0$ forces a
+negative eigenvalue).
+
+\emph{Pivots.} Add $\tfrac12$ row~1 to rows 2 and 3: rows become $(0,\tfrac32,-\tfrac32)$ and
+$(0,-\tfrac32,\tfrac32+c)$; add the new row~2 to row~3: $(0,0,c)$. Pivots $2,\ \tfrac32,\ c$, which are
+the ratios $2,\ 3/2,\ 3c/3$ of the determinants.
+
+\emph{Squares.} $\vb{x}\T B\vb{x}=2x^2+2y^2+(2+c)z^2-2xy-2xz-2yz
+=2\bigl(x-\tfrac12y-\tfrac12z\bigr)^2+\tfrac32(y-z)^2+cz^2$. For $c=0$ this vanishes when $y=z$ and
+$x=\tfrac12(y+z)$, for example at $\vb{x}=(1,1,1)$; indeed every row of $B$ then sums to zero, so
+$(1,1,1)$ is in the nullspace.
+\end{solution}
+
+\begin{exercise}[How big can the cross term be?]\label{exr:u31-b}
+For which $b$ is $\left[\begin{smallmatrix}1&b\\b&9\end{smallmatrix}\right]$ positive definite? For
+$b=4$, find a vector that makes the form negative.
+\end{exercise}
+\begin{solution}
+Need $1>0$ and $9-b^2>0$, so $-3<b<3$. At $b=\pm3$ the matrix is only semidefinite:
+$x^2\pm6xy+9y^2=(x\pm3y)^2$. For $b=4$, $x^2+8xy+9y^2=(x+4y)^2-7y^2$; choosing $x+4y=0$, $y=1$,
+i.e.\ $(x,y)=(-4,1)$, gives $16-32+9=-7<0$.
+\end{solution}

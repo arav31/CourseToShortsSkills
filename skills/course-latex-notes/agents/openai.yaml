@@ -1,4 +1,0 @@
-interface:
-  display_name: "Course LaTeX Notes"
-  short_description: "Write source-grounded LaTeX notes."
-  default_prompt: "Use $course-latex-notes to write and compile comprehensive course notes."

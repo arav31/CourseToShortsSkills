@@ -1,0 +1,72 @@
+{
+  "series": {
+    "title": "Linear Algebra in Five Pictures",
+    "audience": "curious beginners who know high-school algebra; no prior linear algebra",
+    "hashtags": [
+      "#linearalgebra",
+      "#math",
+      "#mitocw",
+      "#manim",
+      "#stem"
+    ]
+  },
+  "created_at": "2026-10-19T07:07:25+00:00",
+  "items": [
+    {
+      "short_id": "s01",
+      "part": 1,
+      "title": "Two pictures of one system: rows vs columns",
+      "video_file": "shorts/01-rows-vs-columns/01-rows-vs-columns.mp4",
+      "sha256": "9cf7f774f15659399a0c4f565ab7e749927af07a22358eefe2ea3da8c9886348",
+      "duration": 61.73,
+      "caption": "Linear Algebra in Five Pictures · Part 1/5: Two pictures of one system: rows vs columns\n\nYou solved 2x - y = 0 and -x + 2y = 3 by crossing two lines. There is a second picture with no lines at all.\n\nSolving Ax = b means finding the combination of A's columns that lands exactly on b.\n\nTry it: With the same columns a1 = (2, -1) and a2 = (-1, 2), which combination reaches b = (1, 1)?\n(Answer: x = 1, y = 1, because (2, -1) + (-1, 2) = (1, 1).)\n\n#linearalgebra #math #mitocw #manim #stem",
+      "approved": true,
+      "status": "queued"
+    },
+    {
+      "short_id": "s02",
+      "part": 2,
+      "title": "What a matrix keeps and what it crushes",
+      "video_file": "shorts/02-what-a-matrix-crushes/02-what-a-matrix-crushes.mp4",
+      "sha256": "c2fd434046784b3215f28f29f174a51c49930fe47849dddb5945733a70657f88",
+      "duration": 75.37,
+      "caption": "Linear Algebra in Five Pictures · Part 2/5: What a matrix keeps and what it crushes\n\nThis matrix eats three numbers and returns two. Some input directions vanish completely. Which ones, and how many?\n\nRank r splits the input space into an r-dimensional row space that A keeps and an (n - r)-dimensional nullspace that A sends to zero.\n\nTry it: Change the last entry: A = [[1, 2, 2], [2, 4, 5]]. What are the rank and the nullspace dimension now?\n(Answer: Row 2 - 2*row 1 = (0, 0, 1), so r = 2 and the nullspace has dimension 3 - 2 = 1, spanned by (-2, 1, 0).)\n\n#linearalgebra #math #mitocw #manim #stem",
+      "approved": true,
+      "status": "queued"
+    },
+    {
+      "short_id": "s03",
+      "part": 3,
+      "title": "The best-fit line leaves a perpendicular error",
+      "video_file": "shorts/03-least-squares-right-angle/03-least-squares-right-angle.mp4",
+      "sha256": "e868d0054d28632e52b87ff5f2c7179defbb66d7f992ce219ecb41201353ae04",
+      "duration": 79.67,
+      "caption": "Linear Algebra in Five Pictures · Part 3/5: The best-fit line leaves a perpendicular error\n\nThree points refuse to sit on one line. Which line is best, and why does a right angle decide it?\n\nThe least-squares line is the one whose error vector is perpendicular to every column of A, which is why we solve A^T A x̂ = A^T b.\n\nTry it: Fit a least-squares line through (0, 0), (1, 3), (2, 0). What are C and D?\n(Answer: A^T b = (3, 3) gives 3C + 3D = 3 and 3C + 5D = 3, so D = 0 and C = 1: the flat line b = 1, with errors (-1, 2, -1).)\n\n#linearalgebra #math #mitocw #manim #stem",
+      "approved": true,
+      "status": "queued"
+    },
+    {
+      "short_id": "s04",
+      "part": 4,
+      "title": "Why A to the 100th is easy: follow the eigenvectors",
+      "video_file": "shorts/04-eigenvectors-make-powers-easy/04-eigenvectors-make-powers-easy.mp4",
+      "sha256": "612c22825571515dc007db76168073797a8e576c18fbeff553d75cc2f73c050a",
+      "duration": 77.37,
+      "caption": "Linear Algebra in Five Pictures · Part 4/5: Why A to the 100th is easy: follow the eigenvectors\n\n1000 people shuffle between two cities every year by the same rule. Where does everyone end up, and how fast?\n\nEach multiplication by A rescales every eigenvector part by its eigenvalue, so the lambda = 1 part survives and the lambda = 1/2 part halves away.\n\nTry it: Start instead with u0 = (0, 1000). What is u1, and where does the population settle?\n(Answer: u1 = A(0, 1000) = (300, 700), and it still settles at (600, 400).)\n\n#linearalgebra #math #mitocw #manim #stem",
+      "approved": true,
+      "status": "queued"
+    },
+    {
+      "short_id": "s05",
+      "part": 5,
+      "title": "Every matrix turns a circle into an ellipse",
+      "video_file": "shorts/05-svd-circle-to-ellipse/05-svd-circle-to-ellipse.mp4",
+      "sha256": "16037a56a4e0896bb50374e2d8552861ae0c9869c530641946a84488dc226558",
+      "duration": 66.77,
+      "caption": "Linear Algebra in Five Pictures · Part 5/5: Every matrix turns a circle into an ellipse\n\nFeed a matrix every arrow on a circle. However messy the matrix, out comes a clean ellipse. Why?\n\nEvery matrix sends some pair of perpendicular unit vectors v1, v2 to perpendicular vectors sigma1 u1 and sigma2 u2; that pair is the SVD, A = U Sigma V^T.\n\nTry it: Where does A send 2*v1 + v2 = (0.4, 2.2)?\n(Answer: A(0.4, 2.2) = (2.4 + 17.6, -1.6 + 6.6) = (20, 5), which is 2*(10, 0) + (0, 5).)\n\n#linearalgebra #math #mitocw #manim #stem",
+      "approved": true,
+      "status": "queued"
+    }
+  ],
+  "skipped": []
+}

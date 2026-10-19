@@ -1,0 +1,20 @@
+{
+  "name": "course-to-shorts",
+  "interface": {
+    "displayName": "Course to Shorts"
+  },
+  "plugins": [
+    {
+      "name": "course-to-shorts",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -1,0 +1,422 @@
+% unit: u30
+% sources: sources/075-complex-matrices-fast-fourier-transform-fft.txt, sources/051-lecture-26-complex-matrices-fast-fourier-transform-fft.txt, sources/209-mit18-06scf11-ses3-2sum-pdf-download-file.txt, sources/052-problem-solving-complex-matrices.txt, sources/210-mit18-06scf11-ses3-2prob-pdf-download-file.txt, sources/211-mit18-06scf11-ses3-2sol-pdf-download-file.txt
+\providecommand{\Hm}{^{\mathsf{H}}}% conjugate transpose: A\Hm
+\section{Complex matrices; fast Fourier transform (FFT)}\label{sec:u30}
+
+Complex numbers have slipped into the course through the back door: a real matrix such as a
+rotation can have complex eigenvalues and eigenvectors. This unit says once and for all what
+changes when vectors and matrices are complex. Only one rule is new: \emph{whenever we
+transpose, we also take complex conjugates}. With that rule, symmetric matrices become
+Hermitian matrices and orthogonal matrices become unitary ones.
+
+The payoff is the most important complex matrix of all, the Fourier matrix $F_n$. It has
+orthogonal columns, so it is easy to invert, and it has so much structure that it can be
+multiplied by a vector in about $\tfrac12 n\log_2 n$ steps instead of $n^2$. That algorithm, the
+fast Fourier transform, is a matrix factorization, and it changed scientific computing.
+
+\subsection{Length and inner product in \texorpdfstring{$\C^n$}{C\^{}n}}
+
+A vector $\vb{z}=(z_1,\dots,z_n)$ with complex components lives in $\C^n$. The old length formula
+$\vb{z}\T\vb{z}=z_1^2+\cdots+z_n^2$ is no good: for $\vb{z}=(1,i)$ it gives $1+i^2=0$, so a nonzero vector
+would have length zero. The cure is to conjugate one factor, because $\bar z z=|z|^2\ge0$
+(Section~\ref{sec:u29}).
+
+\begin{definition}[Conjugate transpose, length, inner product]\label{def:u30-hermitian-transpose}
+For a complex matrix or vector, $A\Hm=\bar A\T$ is the \emph{conjugate transpose} (read
+``$A$ Hermitian''; the $\mathsf{H}$ honours Charles Hermite). For $\vb{z},\vb{x},\vb{y}\in\C^n$,
+\[
+  \|\vb{z}\|^2=\vb{z}\Hm\vb{z}=|z_1|^2+\cdots+|z_n|^2,
+  \qquad
+  \vb{y}\Hm\vb{x}=\bar y_1x_1+\cdots+\bar y_nx_n .
+\]
+The vectors $\vb{x}$ and $\vb{y}$ are \emph{orthogonal} when $\vb{y}\Hm\vb{x}=0$.
+\end{definition}
+
+The inner product $\vb{y}\Hm\vb{x}$ is usually a complex number; only $\vb{z}\Hm\vb{z}$ is guaranteed real
+and nonnegative. The definition is forced on us: the inner product of a vector with itself
+must be its length squared.
+
+\begin{proposition}[Rules for \texorpdfstring{$\mathsf{H}$}{H}]\label{prop:u30-rules}
+For complex vectors and matrices of compatible sizes:
+(a) $\vb{x}\Hm\vb{y}=\overline{\vb{y}\Hm\vb{x}}$;
+(b) $(AB)\Hm=B\Hm A\Hm$;
+(c) $(A\vb{x})\Hm\vb{y}=\vb{x}\Hm(A\Hm\vb{y})$.
+\end{proposition}
+\begin{proof}
+(a) $\overline{\sum\bar y_kx_k}=\sum y_k\bar x_k=\vb{x}\Hm\vb{y}$.
+(b) Conjugation respects products, $\overline{AB}=\bar A\bar B$, and transposing reverses the
+order: $(\bar A\bar B)\T=\bar B\T\bar A\T$.
+(c) By (b), $(A\vb{x})\Hm=\vb{x}\Hm A\Hm$.
+\end{proof}
+
+\begin{example}[Lengths and right angles in \texorpdfstring{$\C^2$}{C\^{}2}]\label{ex:u30-c2}
+For $\vb{z}=(1,i)$: $\vb{z}\Hm\vb{z}=\bar1\cdot1+\bar i\cdot i=1+(-i)(i)=2$, so $\|\vb{z}\|=\sqrt2$, not $0$.
+For $\vb{x}=(1,i)$ and $\vb{y}=(i,1)$: $\vb{y}\Hm\vb{x}=\bar i\cdot1+\bar1\cdot i=-i+i=0$. These two vectors
+are orthogonal in $\C^2$, even though the unconjugated product $\vb{y}\T\vb{x}=i+i=2i$ is not zero.
+\end{example}
+
+\subsection{Hermitian matrices}
+
+\begin{definition}[Hermitian matrix]\label{def:u30-hermitian}
+A square complex matrix is \emph{Hermitian} if $A\Hm=A$, that is $a_{ji}=\bar a_{ij}$ for all
+$i,j$. In particular each diagonal entry equals its own conjugate, so it is real.
+\end{definition}
+
+For example $\begin{bmatrix}2&3+i\\3-i&5\end{bmatrix}$ is Hermitian: flipping across the
+diagonal and conjugating returns the same matrix. A real matrix is Hermitian exactly when it is
+symmetric, so everything below includes Section~\ref{sec:u29} as a special case.
+
+\begin{theorem}[Hermitian matrices are as good as symmetric ones]\label{thm:u30-hermitian}
+Let $A\Hm=A$. Then
+\begin{enumerate}[(a)]
+  \item $\vb{z}\Hm A\vb{z}$ is real for every $\vb{z}\in\C^n$;
+  \item every eigenvalue of $A$ is real;
+  \item eigenvectors for different eigenvalues are orthogonal: $\vb{y}\Hm\vb{x}=0$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+(a) The number $\vb{z}\Hm A\vb{z}$ is a $1\times1$ matrix, so it equals its transpose, and its
+conjugate is $(\vb{z}\Hm A\vb{z})\Hm=\vb{z}\Hm A\Hm\vb{z}=\vb{z}\Hm A\vb{z}$. A number equal to its conjugate
+is real.
+(b) If $A\vb{x}=\lambda\vb{x}$ with $\vb{x}\ne\vb{0}$, then $\vb{x}\Hm A\vb{x}=\lambda\,\vb{x}\Hm\vb{x}$. The left side
+is real by (a) and $\vb{x}\Hm\vb{x}>0$ is real, so $\lambda$ is real.
+(c) Let $A\vb{x}=\lambda\vb{x}$, $A\vb{y}=\mu\vb{y}$, $\lambda\ne\mu$, both real by (b). Then
+$\vb{y}\Hm A\vb{x}=\lambda\,\vb{y}\Hm\vb{x}$, and also
+$\vb{y}\Hm A\vb{x}=(A\Hm\vb{y})\Hm\vb{x}=(A\vb{y})\Hm\vb{x}=\bar\mu\,\vb{y}\Hm\vb{x}=\mu\,\vb{y}\Hm\vb{x}$.
+Subtracting, $(\lambda-\mu)\vb{y}\Hm\vb{x}=0$, so $\vb{y}\Hm\vb{x}=0$.
+\end{proof}
+
+The proof of the spectral theorem in Section~\ref{sec:u29} goes through word for word
+with $\mathsf{T}$ replaced by $\mathsf{H}$: every Hermitian matrix is $A=U\Lambda U\Hm$ with $\Lambda$
+real and $U$ unitary (defined next).
+
+\begin{example}[Diagonalizing a Hermitian matrix]\label{ex:u30-diag}
+Let $A=\begin{bmatrix}2&1-i\\1+i&3\end{bmatrix}$. It is Hermitian: the diagonal is real and the
+off-diagonal entries are conjugates.
+
+\emph{Eigenvalues.}
+$\det(A-\lambda I)=(2-\lambda)(3-\lambda)-(1-i)(1+i)=\lambda^2-5\lambda+6-2=\lambda^2-5\lambda+4$,
+because $(1-i)(1+i)=1-i^2=2$. So $(\lambda-1)(\lambda-4)=0$: $\lambda_1=1$, $\lambda_2=4$, real although
+$A$ is complex.
+
+\emph{Eigenvectors.} For $\lambda=1$, $A-I=\left[\begin{smallmatrix}1&1-i\\1+i&2\end{smallmatrix}\right]$.
+The second row is $(1+i)$ times the first, because $(1+i)(1-i)=2$; the rows are dependent, as
+they must be. The first row is solved by $\vb{v}=(1-i,\,-1)$: $1\cdot(1-i)+(1-i)(-1)=0$. For
+$\lambda=4$, $A-4I=\left[\begin{smallmatrix}-2&1-i\\1+i&-1\end{smallmatrix}\right]$; the second row
+gives $\vb{u}=(1,\,1+i)$. Check: $A\vb{u}=(2+(1-i)(1+i),\ 1+i+3(1+i))=(4,\,4+4i)=4\vb{u}$.
+
+\emph{Orthogonality.} $\vb{v}\Hm\vb{u}=\overline{(1-i)}\cdot1+\overline{(-1)}(1+i)=(1+i)-(1+i)=0$.
+
+\emph{Unitary eigenvector matrix.} Both vectors have length $\sqrt3$: $|1-i|^2+|{-1}|^2=2+1$ and
+$1+|1+i|^2=1+2$. Dividing by $\sqrt3$,
+\[
+  A=U\Lambda U\Hm=\frac{1}{\sqrt3}\begin{bmatrix}1-i&1\\-1&1+i\end{bmatrix}
+  \begin{bmatrix}1&0\\0&4\end{bmatrix}
+  \frac{1}{\sqrt3}\begin{bmatrix}1+i&-1\\1&1-i\end{bmatrix}.
+\]
+Multiplying out: the $(1,1)$ entry is $\tfrac13\bigl[(1-i)(1+i)+4\bigr]=\tfrac13(2+4)=2$, the $(1,2)$
+entry is $\tfrac13\bigl[-(1-i)+4(1-i)\bigr]=1-i$, and similarly for the rest, recovering $A$.
+\end{example}
+
+\begin{trap}
+A complex matrix that is merely \emph{symmetric} has none of these properties.
+$\left[\begin{smallmatrix}1&i\\i&1\end{smallmatrix}\right]$ equals its transpose but not its
+conjugate transpose, and its eigenvalues $1\pm i$ (eigenvectors $(1,1)$ and $(1,-1)$) are not real.
+For complex matrices, check $A\Hm=A$, never only $A\T=A$.
+\end{trap}
+
+\subsection{Unitary matrices}
+
+\begin{definition}[Unitary matrix]\label{def:u30-unitary}
+A square complex matrix $U$ is \emph{unitary} if $U\Hm U=I$: its columns are orthonormal in the
+sense $\vb{u}_j\Hm\vb{u}_k=0$ for $j\ne k$ and $\vb{u}_k\Hm\vb{u}_k=1$. Then $U^{-1}=U\Hm$.
+\end{definition}
+
+\begin{proposition}[Unitary matrices preserve lengths]\label{prop:u30-unitary}
+If $U$ is unitary then $(U\vb{x})\Hm(U\vb{y})=\vb{x}\Hm\vb{y}$ and $\|U\vb{z}\|=\|\vb{z}\|$ for all vectors, and
+every eigenvalue of $U$ has $|\lambda|=1$.
+\end{proposition}
+\begin{proof}
+$(U\vb{x})\Hm(U\vb{y})=\vb{x}\Hm U\Hm U\vb{y}=\vb{x}\Hm\vb{y}$; take $\vb{x}=\vb{y}=\vb{z}$ for lengths. If
+$U\vb{z}=\lambda\vb{z}$ with $\vb{z}\ne\vb{0}$, then $\|\vb{z}\|=\|U\vb{z}\|=|\lambda|\,\|\vb{z}\|$, so $|\lambda|=1$.
+\end{proof}
+
+The translation from real to complex is mechanical; Table~\ref{tab:u30-dictionary} collects it.
+
+\begin{table}[ht]\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & real ($\R^n$) & complex ($\C^n$) \\
+\midrule
+length squared & $\vb{x}\T\vb{x}=\sum x_k^2$ & $\vb{z}\Hm\vb{z}=\sum |z_k|^2$ \\
+inner product & $\vb{y}\T\vb{x}$ & $\vb{y}\Hm\vb{x}$ \\
+transpose rule & $(AB)\T=B\T A\T$ & $(AB)\Hm=B\Hm A\Hm$ \\
+good matrices & symmetric, $A\T=A$ & Hermitian, $A\Hm=A$ \\
+orthonormal columns & orthogonal, $Q\T Q=I$ & unitary, $U\Hm U=I$ \\
+spectral theorem & $A=Q\Lambda Q\T$ & $A=U\Lambda U\Hm$ \\
+\bottomrule
+\end{tabular}
+\caption{The dictionary between $\R^n$ and $\C^n$: transpose becomes conjugate transpose.}
+\label{tab:u30-dictionary}
+\end{table}
+
+\subsection{The Fourier matrix}
+
+Electrical engineers number rows and columns from $0$ to $n-1$, and for the Fourier matrix we
+follow them.
+
+\begin{definition}[Fourier matrix]\label{def:u30-fourier}
+Let $w=w_n=e^{2\pi i/n}=\cos\frac{2\pi}{n}+i\sin\frac{2\pi}{n}$. The $n\times n$ \emph{Fourier matrix}
+$F_n$ has entries $(F_n)_{jk}=w^{jk}$ for $j,k=0,1,\dots,n-1$:
+\[
+  F_n=\begin{bmatrix}
+  1&1&1&\cdots&1\\
+  1&w&w^2&\cdots&w^{n-1}\\
+  1&w^2&w^4&\cdots&w^{2(n-1)}\\
+  \vdots&\vdots&\vdots&&\vdots\\
+  1&w^{n-1}&w^{2(n-1)}&\cdots&w^{(n-1)^2}
+  \end{bmatrix}.
+\]
+\end{definition}
+
+The number $w$ sits on the unit circle at angle $2\pi/n$, one $n$th of the way round, and
+$w^n=1$. Its powers $1,w,w^2,\dots,w^{n-1}$ are the $n$ different $n$th roots of $1$, equally
+spaced on the circle (Figure~\ref{fig:u30-roots}). Powers are easy in the polar form:
+$w^{k}=e^{2\pi ik/n}$, which is why we never expand $w$ into cosines and sines. Note that
+$F_n\T=F_n$ (symmetric in the old sense), but $F_n$ is not Hermitian.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=1.55,>=Stealth]
+  \draw[->,gray] (-1.45,0) -- (1.55,0) node[right] {$\mathrm{Re}$};
+  \draw[->,gray] (0,-1.35) -- (0,1.45) node[above] {$\mathrm{Im}$};
+  \draw[thick] (0,0) circle (1);
+  \draw[->] (0.32,0) arc (0:45:0.32);
+  \node at (22:0.52) {\small $\tfrac{2\pi}{8}$};
+  \draw[dashed,gray] (0,0) -- (45:1);
+  \foreach \k in {1,3,5,7} {
+    \fill[orange!85!black] (45*\k:1) circle (1.6pt);
+  }
+  \foreach \k in {2,4,6,8} {
+    \fill[blue] (45*\k:1) circle (2.0pt);
+  }
+  \node[above right] at (45:1) {$w$};
+  \node[above] at (90:1) {$w^2=i$};
+  \node[above left] at (135:1) {$w^3$};
+  \node[left] at (180:1) {$w^4=-1$};
+  \node[below left] at (225:1) {$w^5$};
+  \node[below] at (270:1) {$w^6=-i$};
+  \node[below right] at (315:1) {$w^7$};
+  \node[right] at (0:1) {$w^8=1$};
+\end{tikzpicture}
+\caption{The eighth roots of unity, powers of $w=w_8=e^{2\pi i/8}$. The even powers (blue)
+$w^2,w^4,w^6,w^8$ are exactly the fourth roots of unity $i,-1,-i,1$: squaring $w_8$ gives $w_4$.
+This doubling of angles is what links $F_8$ to $F_4$ in the FFT.}
+\label{fig:u30-roots}
+\end{figure}
+
+For $n=4$, $w=e^{2\pi i/4}=i$ and the exponent is always (row number)$\times$(column number):
+\[
+  F_4=\begin{bmatrix}1&1&1&1\\1&i&i^2&i^3\\1&i^2&i^4&i^6\\1&i^3&i^6&i^9\end{bmatrix}
+     =\begin{bmatrix}1&1&1&1\\1&i&-1&-i\\1&-1&1&-1\\1&-i&-1&i\end{bmatrix}.
+\]
+Multiplying a four-component signal by $F_4$ (or by $F_4^{-1}$) is the four-point discrete Fourier
+transform.
+
+\begin{theorem}[The columns of \texorpdfstring{$F_n$}{F\_n} are orthogonal]\label{thm:u30-orth}
+$F_n\Hm F_n=nI$. Hence $\frac{1}{\sqrt n}F_n$ is unitary and
+\[
+  F_n^{-1}=\frac1n F_n\Hm=\frac1n\bar F_n .
+\]
+\end{theorem}
+\begin{proof}
+The $(k,l)$ entry of $F_n\Hm F_n$ is the inner product of columns $k$ and $l$:
+\[
+  \sum_{j=0}^{n-1}\overline{w^{jk}}\,w^{jl}=\sum_{j=0}^{n-1}w^{j(l-k)}=\sum_{j=0}^{n-1}r^j,
+  \qquad r=w^{l-k},
+\]
+using $\bar w=w^{-1}$ (because $|w|=1$). If $k=l$ then $r=1$ and the sum is $n$. If $k\ne l$
+then $0<|l-k|<n$, so $r\ne1$, while $r^n=(w^n)^{l-k}=1$; the geometric series gives
+$\sum_{j=0}^{n-1}r^j=(1-r^n)/(1-r)=0$. The last equality uses $F_n\T=F_n$, so
+$F_n\Hm=\bar F_n$.
+\end{proof}
+
+\begin{example}[Orthogonality and an impulse]\label{ex:u30-f4}
+Columns $1$ and $3$ of $F_4$ are $(1,i,-1,-i)$ and $(1,-i,-1,i)$. Without conjugating, their
+product is $1+1+1+1=4$, which looks far from orthogonal. With the conjugate,
+$\overline{(1,i,-1,-i)}\cdot(1,-i,-1,i)=1\cdot1+(-i)(-i)+(-1)(-1)+(i)(i)=1-1+1-1=0$.
+
+The impulse $\vb{x}=(1,0,0,0)$ transforms to $F_4\vb{x}=(1,1,1,1)$, the first column: a single
+impulse contains all frequencies in equal amounts. Transforming back with
+$F_4^{-1}=\tfrac14\bar F_4$ gives $\tfrac14(1+1+1+1,\ 1-i-1+i,\ 0,\ 0)=(1,0,0,0)$.
+\end{example}
+
+\begin{trap}
+The inverse of $F_n$ is $\frac1n\bar F_n$, not $\frac1nF_n$. For the impulse above both happen to
+give the same answer, but in general $F_4F_4=4\left[\begin{smallmatrix}1&0&0&0\\0&0&0&1\\0&0&1&0\\0&1&0&0\end{smallmatrix}\right]$:
+applying $F_4$ twice reverses components $1,2,3$ of the signal instead of restoring it.
+\end{trap}
+
+\subsection{The fast Fourier transform}
+
+Multiplying $F_n\vb{x}$ directly needs $n^2$ multiplications, since $F_n$ has no zero entries.
+The fast Fourier transform (FFT) connects $F_{2m}$ to two copies of $F_m$, using the fact seen in
+Figure~\ref{fig:u30-roots}:
+\[
+  w_{2m}^2=\bigl(e^{2\pi i/2m}\bigr)^2=e^{2\pi i/m}=w_m ,
+  \qquad
+  w_{2m}^m=e^{\pi i}=-1 .
+\]
+
+\begin{theorem}[FFT factorization]\label{thm:u30-fft}
+Let $D=\operatorname{diag}(1,w,w^2,\dots,w^{m-1})$ with $w=w_{2m}$, and let $P$ be the
+$2m\times 2m$ permutation matrix that puts the even-numbered components first,
+\[
+  P(x_0,x_1,\dots,x_{2m-1})=(x_0,x_2,\dots,x_{2m-2},\ x_1,x_3,\dots,x_{2m-1}).
+\]
+Then
+\[
+  F_{2m}=\begin{bmatrix}I&D\\I&-D\end{bmatrix}\begin{bmatrix}F_m&0\\0&F_m\end{bmatrix}P .
+\]
+\end{theorem}
+\begin{proof}
+Let $\vb{y}=F_{2m}\vb{x}$ and split the sum $y_j=\sum_{k=0}^{2m-1}w_{2m}^{jk}x_k$ into even $k=2l$ and
+odd $k=2l+1$:
+\[
+  y_j=\sum_{l=0}^{m-1}w_{2m}^{2jl}x_{2l}+w_{2m}^{j}\sum_{l=0}^{m-1}w_{2m}^{2jl}x_{2l+1}
+     =y'_j+w_{2m}^{\,j}\,y''_j ,
+\]
+where $\vb{y}'=F_m(x_0,x_2,\dots)$ and $\vb{y}''=F_m(x_1,x_3,\dots)$, because $w_{2m}^{2jl}=w_m^{jl}$. For
+$0\le j<m$ this is the top half of the right side. For the bottom half, replace $j$ by $j+m$:
+$w_m^{(j+m)l}=w_m^{jl}$ (as $w_m^m=1$), so $\vb{y}'$ and $\vb{y}''$ are unchanged, while
+$w_{2m}^{j+m}=-w_{2m}^j$. Hence $y_{j+m}=y'_j-w_{2m}^jy''_j$, which is the bottom half.
+\end{proof}
+
+In words: separate $\vb{x}$ into evens and odds (free), do two half-size transforms, then
+recombine with $m$ multiplications by the entries of $D$ and $2m$ additions.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,x=1.05cm,y=0.85cm,
+  val/.style={font=\small,inner sep=1.5pt},
+  box/.style={draw,rounded corners=2pt,fill=blue!6,minimum width=0.9cm,minimum height=1.25cm}]
+  \foreach \r/\lab in {0/{x_0=1},1/{x_1=2},2/{x_2=3},3/{x_3=4}}
+    \node[val,anchor=east] (in\r) at (0,-\r) {$\lab$};
+  \foreach \r/\lab in {0/1,1/3,2/2,3/4}
+    \node[val] (p\r) at (1.6,-\r) {$\lab$};
+  \draw[->] (in0.east) -- (p0.west);
+  \draw[->] (in2.east) -- (p1.west);
+  \draw[->] (in1.east) -- (p2.west);
+  \draw[->] (in3.east) -- (p3.west);
+  \node[box] (fa) at (2.9,-0.5) {$F_2$};
+  \node[box] (fb) at (2.9,-2.5) {$F_2$};
+  \foreach \r/\b in {0/fa,1/fa,2/fb,3/fb} \draw[->] (p\r.east) -- (\b.west |- p\r);
+  \foreach \r/\lab in {0/4,1/{-2},2/6,3/{-2}}
+    \node[val] (q\r) at (4.3,-\r) {$\lab$};
+  \foreach \r/\b in {0/fa,1/fa,2/fb,3/fb} \draw[->] (\b.east |- q\r) -- (q\r.west);
+  \foreach \r/\lab in {0/4,1/{-2},2/6,3/{-2i}}
+    \node[val] (d\r) at (6.0,-\r) {$\lab$};
+  \draw[->] (q0) -- (d0); \draw[->] (q1) -- (d1);
+  \draw[->] (q2) -- node[above,font=\scriptsize] {$\times1$} (d2);
+  \draw[->] (q3) -- node[above,font=\scriptsize] {$\times i$} (d3);
+  \foreach \r/\lab in {0/10,1/{-2-2i},2/{-2},3/{-2+2i}}
+    \node[val,anchor=west] (y\r) at (8.4,-\r) {$y_{\r}=\lab$};
+  \draw[->] (d0.east) -- (y0.west);
+  \draw[->] (d0.east) -- (y2.west);
+  \draw[->] (d2.east) -- (y0.west);
+  \draw[->,red!70!black] (d2.east) -- node[pos=0.85,below,font=\scriptsize] {$-$} (y2.west);
+  \draw[->] (d1.east) -- (y1.west);
+  \draw[->] (d1.east) -- (y3.west);
+  \draw[->] (d3.east) -- (y1.west);
+  \draw[->,red!70!black] (d3.east) -- node[pos=0.85,below,font=\scriptsize] {$-$} (y3.west);
+  \node[font=\scriptsize,align=center] at (0.9,0.75) {$P$: evens\\first};
+  \node[font=\scriptsize,align=center] at (2.9,0.75) {two copies\\of $F_2$};
+  \node[font=\scriptsize,align=center] at (5.15,0.75) {multiply\\by $D$};
+  \node[font=\scriptsize,align=center] at (7.3,0.75) {combine with\\$\left[\begin{smallmatrix}I&I\\I&-I\end{smallmatrix}\right]$};
+\end{tikzpicture}
+\caption{The factorization $F_4=\left[\begin{smallmatrix}I&D\\I&-D\end{smallmatrix}\right]
+\left[\begin{smallmatrix}F_2&0\\0&F_2\end{smallmatrix}\right]P$ applied to $\vb{x}=(1,2,3,4)$. Each
+``butterfly'' on the right forms a sum and a difference (red lines carry the minus sign). Only the
+twiddle step $\times i$ costs a genuine multiplication.}
+\label{fig:u30-butterfly}
+\end{figure}
+
+\begin{example}[A four-point FFT, step by step]\label{ex:u30-fft4}
+For $F_4$ we have $m=2$, $w_4=i$, $D=\operatorname{diag}(1,i)$ and $F_2=\left[\begin{smallmatrix}1&1\\1&-1\end{smallmatrix}\right]$.
+Take $\vb{x}=(1,2,3,4)$.
+\begin{enumerate}
+  \item Permute: evens $(x_0,x_2)=(1,3)$, odds $(x_1,x_3)=(2,4)$.
+  \item Half-size transforms: $\vb{y}'=F_2(1,3)=(4,-2)$ and $\vb{y}''=F_2(2,4)=(6,-2)$.
+  \item Twiddle: $D\vb{y}''=(1\cdot6,\ i\cdot(-2))=(6,-2i)$.
+  \item Combine: top $\vb{y}'+D\vb{y}''=(10,\,-2-2i)$, bottom $\vb{y}'-D\vb{y}''=(-2,\,-2+2i)$.
+\end{enumerate}
+So $F_4\vb{x}=(10,\,-2-2i,\,-2,\,-2+2i)$. Directly from the rows of $F_4$:
+$1+2+3+4=10$; $1+2i-3-4i=-2-2i$; $1-2+3-4=-2$; $1-2i-3+4i=-2+2i$. The two agree.
+Figure~\ref{fig:u30-butterfly} shows the same computation as a flow diagram.
+\end{example}
+
+\begin{proposition}[Operation count]\label{prop:u30-count}
+For $n=2^\ell$, applying Theorem~\ref{thm:u30-fft} recursively computes $F_n\vb{x}$ with
+$\tfrac12 n\log_2 n$ multiplications (counting the multiplications by entries of $D$).
+\end{proposition}
+\begin{proof}
+Let $C(n)$ be the count. A size-$n$ transform costs two size-$n/2$ transforms plus $n/2$
+multiplications by $D$, so $C(n)=2C(n/2)+\tfrac n2$ with $C(1)=0$. If $C(n/2)=\tfrac12\cdot\tfrac n2(\ell-1)$,
+then $C(n)=\tfrac n2(\ell-1)+\tfrac n2=\tfrac n2\ell$, and induction on $\ell$ finishes the proof.
+\end{proof}
+
+Unrolling the recursion explains the count: there are $\log_2 n$ levels (for $n=64$: $64\to32\to16\to8\to4\to2\to1$,
+six levels), each level's fix-up costs $n/2$ multiplications, and the permutations at all
+levels together just reorder the input (evens of evens, evens of odds, and so on). For
+$n=1024=2^{10}$, direct multiplication costs $1024^2\approx 10^6$, while the FFT costs
+$\tfrac12\cdot1024\cdot10=5120$, about $200$ times less. Since $F_n^{-1}=\frac1n\bar F_n$, the inverse
+transform runs through the same algorithm with $\bar w$ in place of $w$. All of this rests on
+$F_n$ being a very special matrix with orthogonal columns.
+
+\subsection{Exercises}
+
+\begin{exercise}[The smallest Fourier matrix]\label{exr:u30-f2}
+Compute $F_2$, check that $F_2\Hm F_2=2I$, and explain why $F_2^{-1}=\frac12F_2$ even though
+$F_n^{-1}\ne\frac1nF_n$ in general.
+\end{exercise}
+\begin{solution}
+For $n=2$, $w=e^{2\pi i/2}=e^{\pi i}=-1$, so $F_2=\left[\begin{smallmatrix}1&1\\1&w\end{smallmatrix}\right]
+=\left[\begin{smallmatrix}1&1\\1&-1\end{smallmatrix}\right]$. It is real and symmetric, so
+$F_2\Hm F_2=F_2^2=\left[\begin{smallmatrix}2&0\\0&2\end{smallmatrix}\right]=2I$. In general
+$F_n^{-1}=\frac1n\bar F_n$; here $\bar F_2=F_2$ because all entries are real, so the two formulas
+coincide.
+\end{solution}
+
+\begin{exercise}[One step of the FFT for \texorpdfstring{$n=8$}{n = 8}]\label{exr:u30-f8}
+In $F_8=\left[\begin{smallmatrix}I&D\\I&-D\end{smallmatrix}\right]\left[\begin{smallmatrix}F_4&0\\0&F_4\end{smallmatrix}\right]P$,
+write out $D$ and describe $P$. How many multiplications does the full FFT need for $n=8$,
+compared with $n^2$?
+\end{exercise}
+\begin{solution}
+Here $w=w_8=e^{2\pi i/8}=\frac{1+i}{\sqrt2}$, so
+$D=\operatorname{diag}(1,w,w^2,w^3)=\operatorname{diag}\bigl(1,\frac{1+i}{\sqrt2},\,i,\,\frac{-1+i}{\sqrt2}\bigr)$.
+These are the first four eighth roots of unity; $-D$ holds the other four. The permutation sends
+$(x_0,\dots,x_7)$ to $(x_0,x_2,x_4,x_6,x_1,x_3,x_5,x_7)$. The count is
+$\tfrac12\cdot8\cdot\log_28=12$ multiplications instead of $64$.
+\end{solution}
+
+\begin{exercise}[A unitary matrix]\label{exr:u30-unitary}
+Show that $U=\frac{1}{\sqrt2}\left[\begin{smallmatrix}1&i\\i&1\end{smallmatrix}\right]$ is unitary
+and that its eigenvalues have absolute value $1$.
+\end{exercise}
+\begin{solution}
+$U\Hm=\frac1{\sqrt2}\left[\begin{smallmatrix}1&-i\\-i&1\end{smallmatrix}\right]$ and
+$U\Hm U=\frac12\left[\begin{smallmatrix}1+1&i-i\\-i+i&1+1\end{smallmatrix}\right]=I$. The matrix
+$\left[\begin{smallmatrix}1&i\\i&1\end{smallmatrix}\right]$ has eigenvectors $(1,1)$ and $(1,-1)$ with
+eigenvalues $1+i$ and $1-i$, so $U$ has eigenvalues $(1\pm i)/\sqrt2$, and
+$|1\pm i|/\sqrt2=\sqrt2/\sqrt2=1$, as Proposition~\ref{prop:u30-unitary} requires.
+\end{solution}
+
+\begin{exercise}[Skew-Hermitian matrices]\label{exr:u30-skew}
+Suppose $A\Hm=-A$. Show that $iA$ is Hermitian and conclude that the eigenvalues of $A$ are purely
+imaginary. Check this on the real rotation $A=\left[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\right]$.
+\end{exercise}
+\begin{solution}
+$(iA)\Hm=\bar i\,A\Hm=(-i)(-A)=iA$, so $iA$ is Hermitian and its eigenvalues are real
+(Theorem~\ref{thm:u30-hermitian}). If $A\vb{x}=\lambda\vb{x}$ then $(iA)\vb{x}=i\lambda\vb{x}$, so $i\lambda$ is real
+and $\lambda$ is purely imaginary. The real antisymmetric rotation satisfies
+$A\Hm=A\T=-A$, and indeed $\det(A-\lambda I)=\lambda^2+1=0$ gives $\lambda=\pm i$.
+\end{solution}

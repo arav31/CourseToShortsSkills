@@ -1,0 +1,337 @@
+% unit: u08
+% sources: sources/014-solving-ax-0-pivot-variables-special-solutions.txt, sources/024-solving-ax-0-pivot-variables-special-solutions.txt, sources/107-mit18-06scf11-ses1-7sum-pdf-download-file.txt, sources/108-solving-ax-0.txt, sources/109-mit18-06scf11-ses1-7prob-pdf-download-file.txt, sources/110-mit18-06scf11-ses1-7sol-pdf-download-file.txt
+\section{\texorpdfstring{Solving \(A\vb{x}=\vb{0}\): pivot variables, special solutions}{Solving Ax = 0: pivot variables, special solutions}}\label{sec:u08}
+
+Section~\ref{sec:u07} defined the nullspace $\Nul{A}$ as the set of all solutions of
+$A\vb{x}=\vb{0}$ and showed that it is a subspace of $\R^n$. A definition is not yet a
+description: we want to \emph{list} what is in $\Nul{A}$. This section turns elimination, which
+so far solved square invertible systems, into an algorithm that works for every $m\times n$
+matrix. The algorithm produces one number, the rank $r$, and a short list of $n-r$
+\emph{special solutions} whose combinations are exactly the nullspace.
+
+\subsection{Elimination on a rectangular matrix}
+
+The running example of the lecture is the $3\times 4$ matrix
+\[
+A=\begin{bmatrix}1&2&2&2\\2&4&6&8\\3&6&8&10\end{bmatrix}.
+\]
+Two facts are visible before any computation: column~2 is twice column~1, and row~3 is
+row~1 plus row~2. Elimination should discover both. The first question is whether elimination
+is allowed to change the problem.
+
+\begin{proposition}[Row operations keep the nullspace]\label{prop:u08-same-null}
+If $E$ is an invertible $m\times m$ matrix, then $\Nul{EA}=\Nul{A}$. In particular, subtracting
+a multiple of one row from another, exchanging two rows, or dividing a row by a nonzero number
+never changes the nullspace.
+\end{proposition}
+\begin{proof}
+If $A\vb{x}=\vb{0}$ then $EA\vb{x}=E\vb{0}=\vb{0}$. Conversely, if $EA\vb{x}=\vb{0}$, multiply on
+the left by $E^{-1}$ to get $A\vb{x}=\vb{0}$. Each elimination step is multiplication on the left
+by an invertible elementary or permutation matrix (Sections~\ref{sec:u03} and~\ref{sec:u06}), and
+a product of invertible matrices is invertible.
+\end{proof}
+
+Because the right-hand side is $\vb{0}$ and stays $\vb{0}$ under every row operation, we do not
+need to carry it along. Elimination proceeds column by column as in the square case, with one
+new rule: if the pivot position and every entry below it are zero, there is nothing to do in
+that column, so we move to the next column (staying in the same row) instead of stopping.
+
+\begin{example}[Elimination with a missing pivot]\label{ex:u08-elim}
+Subtract $2\times$row~1 from row~2 and $3\times$row~1 from row~3:
+\[
+\begin{bmatrix}1&2&2&2\\2&4&6&8\\3&6&8&10\end{bmatrix}\longrightarrow
+\begin{bmatrix}1&2&2&2\\0&0&2&4\\0&0&2&4\end{bmatrix}.
+\]
+In column~2 the pivot position $(2,2)$ holds a zero and so does the entry below it, so no row
+exchange can help: column~2 gets no pivot. The next pivot is the $2$ in row~2, column~3.
+Subtracting row~2 from row~3 finishes the job:
+\[
+U=\begin{bmatrix}\boxed{1}&2&2&2\\0&0&\boxed{2}&4\\0&0&0&0\end{bmatrix}.
+\]
+The row of zeros records that row~3 of $A$ was a combination of rows~1 and~2; elimination
+knocked it out.
+\end{example}
+
+\begin{definition}[Echelon form, pivots, rank]\label{def:u08-rank}
+A matrix is in \emph{echelon form} if every zero row lies below all nonzero rows and the first
+nonzero entry of each nonzero row (its \emph{pivot}) lies strictly to the right of the pivot in
+the row above. Elimination brings every matrix $A$ to an echelon form $U$. The \emph{rank} of
+$A$, written $r=\rank A$, is the number of pivots. Columns that contain a pivot are
+\emph{pivot columns}; the remaining columns are \emph{free columns}.
+\end{definition}
+
+A row holds at most one pivot and so does a column, so always
+\[
+r\le m\qquad\text{and}\qquad r\le n.
+\]
+In Example~\ref{ex:u08-elim} the rank is $2$, the pivot columns are $1$ and $3$, and the free
+columns are $2$ and $4$. (That the rank does not depend on the order of the elimination steps
+follows from Section~\ref{sec:u10}, where $r$ is identified with the dimension of the column
+space, a number defined without elimination.)
+
+\subsection{Pivot variables, free variables and special solutions}
+
+The system $U\vb{x}=\vb{0}$ of Example~\ref{ex:u08-elim} is
+\begin{align*}
+x_1+2x_2+2x_3+2x_4&=0,\\
+2x_3+4x_4&=0.
+\end{align*}
+The unknowns that multiply pivot columns, $x_1$ and $x_3$, are \emph{pivot variables}; the
+others, $x_2$ and $x_4$, are \emph{free variables}. The free variables may be given any values.
+Once they are chosen, back substitution determines the pivot variables uniquely, because each
+nonzero row, read from the bottom up, contains exactly one new pivot variable with a nonzero
+coefficient.
+
+\begin{definition}[Special solutions]\label{def:u08-special}
+For each free variable, the \emph{special solution} is the solution of $A\vb{x}=\vb{0}$ in
+which that free variable equals $1$, every other free variable equals $0$, and the pivot
+variables are found by back substitution.
+\end{definition}
+
+\begin{example}[The two special solutions]\label{ex:u08-special}
+Take $x_2=1$, $x_4=0$. The second equation gives $2x_3=0$, so $x_3=0$; the first gives
+$x_1+2=0$, so $x_1=-2$. Next take $x_2=0$, $x_4=1$. Then $2x_3+4=0$ gives $x_3=-2$, and
+$x_1+2(-2)+2=0$ gives $x_1=2$:
+\[
+\vb{s}_1=\begin{bmatrix}-2\\1\\0\\0\end{bmatrix},\qquad
+\vb{s}_2=\begin{bmatrix}2\\0\\-2\\1\end{bmatrix}.
+\]
+Each special solution is a dependency among the columns of $A$. The first says
+$-2(\text{col }1)+(\text{col }2)=\vb{0}$: column~2 is twice column~1. The second says
+$2(\text{col }1)-2(\text{col }3)+(\text{col }4)=\vb{0}$, and indeed
+$2(1,2,3)-2(2,6,8)+(2,8,10)=(0,0,0)$. The whole nullspace is
+\[
+\Nul{A}=\{\,c\,\vb{s}_1+d\,\vb{s}_2 : c,d\in\R\,\},
+\]
+a two-dimensional plane through the origin in $\R^4$.
+\end{example}
+
+\begin{theorem}[Special solutions describe the nullspace]\label{thm:u08-special}
+Let $A$ be $m\times n$ with rank $r$. There are exactly $n-r$ special solutions
+$\vb{s}_1,\dots,\vb{s}_{n-r}$, and $\Nul{A}$ consists of all their linear combinations. More
+precisely, if $\vb{x}\in\Nul{A}$ and its free variables have the values $c_1,\dots,c_{n-r}$,
+then $\vb{x}=c_1\vb{s}_1+\dots+c_{n-r}\vb{s}_{n-r}$.
+\end{theorem}
+\begin{proof}
+There are $r$ pivot columns, hence $n-r$ free columns and one special solution for each. The
+special solutions lie in $\Nul{A}$, which is a subspace, so all their combinations do too.
+
+Conversely, let $\vb{x}\in\Nul{A}$ have free variables $c_1,\dots,c_{n-r}$ and put
+$\vb{y}=\vb{x}-\sum_j c_j\vb{s}_j$. Then $\vb{y}\in\Nul{A}=\Nul{U}$ by
+Proposition~\ref{prop:u08-same-null}. Since $\vb{s}_j$ has a $1$ in the $j$th free position and
+$0$ in the other free positions, every free variable of $\vb{y}$ is $0$. Now solve
+$U\vb{y}=\vb{0}$ from the last nonzero row upward. In that row every entry to the right of the
+pivot multiplies a free variable, which is zero, so the pivot variable is zero. In each row above,
+the entries to the right of the pivot multiply free variables or pivot variables already shown to
+be zero, so that row's pivot variable is zero as well. Hence $\vb{y}=\vb{0}$, that is,
+$\vb{x}=\sum_j c_j\vb{s}_j$.
+\end{proof}
+
+\begin{corollary}[More unknowns than equations]\label{cor:u08-wide}
+If $n>m$, then $A\vb{x}=\vb{0}$ has a solution $\vb{x}\ne\vb{0}$.
+\end{corollary}
+\begin{proof}
+Since $r\le m<n$, there is at least one free variable, and its special solution has a $1$ in
+that position.
+\end{proof}
+
+\subsection{The reduced row echelon form \texorpdfstring{\(R\)}{R}}
+
+Elimination can go further. Working upward, we can also clear the entries \emph{above} each pivot
+and then divide each pivot row by its pivot.
+
+\begin{definition}[Reduced row echelon form]\label{def:u08-rref}
+A matrix is in \emph{reduced row echelon form} if it is in echelon form, every pivot equals $1$,
+and every pivot is the only nonzero entry in its column. Elimination brings every matrix $A$ to
+such a matrix, and (a standard fact we use without proof) the result does not depend on the order
+of the steps; it is denoted $R=\operatorname{rref}(A)$ (MATLAB: \texttt{rref(A)}).
+\end{definition}
+
+\begin{example}[From \texorpdfstring{\(U\)}{U} to \texorpdfstring{\(R\)}{R}]\label{ex:u08-rref}
+In $U$ from Example~\ref{ex:u08-elim}, subtract row~2 from row~1 to clear the $2$ above the
+second pivot, then divide row~2 by its pivot $2$:
+\[
+U=\begin{bmatrix}1&2&2&2\\0&0&2&4\\0&0&0&0\end{bmatrix}\longrightarrow
+\begin{bmatrix}1&2&0&-2\\0&0&2&4\\0&0&0&0\end{bmatrix}\longrightarrow
+R=\begin{bmatrix}1&2&0&-2\\0&0&1&2\\0&0&0&0\end{bmatrix}.
+\]
+The equations $R\vb{x}=\vb{0}$ are $x_1=-2x_2+2x_4$ and $x_3=-2x_4$: the pivot variables are
+written directly in terms of the free ones. The free columns of $R$ contain $(2,0)$ and
+$(-2,2)$ in the pivot rows, and these numbers reappear in $\vb{s}_1$ and $\vb{s}_2$ with their
+signs reversed: $(x_1,x_3)=(-2,0)$ and $(2,-2)$.
+\end{example}
+
+The sign reversal is no accident. Suppose for the moment that the pivot columns come first (this
+is only a renaming of the unknowns). Then $R$ has an identity block in its pivot rows and pivot
+columns, a block $F$ in its pivot rows and free columns, and zero rows below:
+\[
+R=\begin{bmatrix}I&F\\0&0\end{bmatrix},\qquad I\text{ is }r\times r,\quad F\text{ is }r\times(n-r).
+\]
+
+\begin{proposition}[The nullspace matrix]\label{prop:u08-nullmatrix}
+With $R$ in this block form, the $n\times(n-r)$ matrix
+\[
+N=\begin{bmatrix}-F\\ I\end{bmatrix}\qquad(\text{here }I\text{ is }(n-r)\times(n-r))
+\]
+satisfies $RN=0$, and its columns are the special solutions.
+\end{proposition}
+\begin{proof}
+Block multiplication gives $RN=\begin{bmatrix}I(-F)+F\,I\\ 0\end{bmatrix}=0$. Column $j$ of $N$
+has free part equal to column $j$ of the identity, a $1$ in the $j$th free position and zeros
+in the others, so it is the solution whose free variables are those of the $j$th special
+solution. Since back substitution determines the pivot variables uniquely, it \emph{is} the
+$j$th special solution. Equivalently: $R\vb{x}=\vb{0}$ says
+$\vb{x}_{\text{pivot}}+F\vb{x}_{\text{free}}=\vb{0}$, so $\vb{x}_{\text{pivot}}=-F\vb{x}_{\text{free}}$.
+\end{proof}
+
+When the pivot columns are not first, put the rows of $-F$ in the pivot positions and the rows
+of $I$ in the free positions. In Example~\ref{ex:u08-rref}, $F=\begin{bmatrix}2&-2\\0&2\end{bmatrix}$
+(rows~1--2, columns~2 and~4), so rows~1 and~3 of $N$ come from $-F$ and rows~2 and~4 from $I$:
+\[
+N=\begin{bmatrix}-2&2\\1&0\\0&-2\\0&1\end{bmatrix}=\begin{bmatrix}\vb{s}_1&\vb{s}_2\end{bmatrix}.
+\]
+Figure~\ref{fig:u08-blocks} records the shapes; this is exactly what the teaching code
+\texttt{null(A)} does after computing $R$.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=0.55,>=Stealth]
+  % R: m = 4 rows (r = 2.5 + 1.5), n = 6 columns (r = 2.5 + 3.5)
+  \draw[fill=blue!8] (0,1.5) rectangle (2.5,4);
+  \draw[fill=orange!12] (2.5,1.5) rectangle (6,4);
+  \draw[fill=gray!8] (0,0) rectangle (6,1.5);
+  \node at (1.25,2.75) {$I$};
+  \node at (4.25,2.75) {$F$};
+  \node at (3,0.75) {$0$};
+  \draw[decorate,decoration={brace,amplitude=4pt}] (0,4.15) -- (2.5,4.15)
+    node[midway,above=4pt,font=\footnotesize,align=center] {$r$ pivot\\columns};
+  \draw[decorate,decoration={brace,amplitude=4pt}] (2.5,4.15) -- (6,4.15)
+    node[midway,above=4pt,font=\footnotesize,align=center] {$n-r$ free\\columns};
+  \draw[decorate,decoration={brace,amplitude=4pt,mirror}] (-0.15,1.5) -- (-0.15,4)
+    node[midway,left=5pt,font=\footnotesize,align=right] {$r$ pivot\\rows};
+  \draw[decorate,decoration={brace,amplitude=4pt,mirror}] (-0.15,0) -- (-0.15,1.5)
+    node[midway,left=5pt,font=\footnotesize,align=right] {$m-r$\\zero rows};
+  \node at (3,-0.7) {$R$ \;($m\times n$)};
+  % N: n = 6 rows (2.5 + 3.5), n - r = 3.5 columns
+  \begin{scope}[xshift=8.6cm,yshift=-1cm]
+    \draw[fill=orange!12] (0,3.5) rectangle (3.5,6);
+    \draw[fill=blue!8] (0,0) rectangle (3.5,3.5);
+    \node at (1.75,4.75) {$-F$};
+    \node at (1.75,1.75) {$I$};
+    \draw[decorate,decoration={brace,amplitude=4pt}] (3.65,6) -- (3.65,3.5)
+      node[midway,right=5pt,font=\footnotesize,align=left] {pivot\\variables};
+    \draw[decorate,decoration={brace,amplitude=4pt}] (3.65,3.5) -- (3.65,0)
+      node[midway,right=5pt,font=\footnotesize,align=left] {free\\variables};
+    \node at (1.75,-0.4) {$N$ \;($n\times(n-r)$)};
+  \end{scope}
+  \node at (7.3,2) {$\times$};
+  \node at (15.6,2) {$=\;0$};
+\end{tikzpicture}
+\caption{Block shapes in $RN=0$ when the pivot columns come first. Each column of $N$ is a
+special solution: the identity block sets one free variable to $1$ and the others to $0$, and
+$-F$ supplies the pivot variables, so that $I(-F)+F\,I=0$.}
+\label{fig:u08-blocks}
+\end{figure}
+
+\subsection{Two more examples}
+
+\begin{example}[The transpose needs a row exchange]\label{ex:u08-transpose}
+Take $A\T=\begin{bmatrix}1&2&3\\2&4&6\\2&6&8\\2&8&10\end{bmatrix}$. Its third column is the
+sum of the first two, so we expect a free third column. Subtract $2\times$row~1 from rows 2, 3
+and~4; column~2 then has a zero in the pivot position but a $2$ below it, so exchange rows~2
+and~3; finally subtract $2\times$row~2 from row~4:
+\[
+\begin{bmatrix}1&2&3\\0&0&0\\0&2&2\\0&4&4\end{bmatrix}\longrightarrow
+\begin{bmatrix}1&2&3\\0&2&2\\0&0&0\\0&4&4\end{bmatrix}\longrightarrow
+U=\begin{bmatrix}1&2&3\\0&2&2\\0&0&0\\0&0&0\end{bmatrix}.
+\]
+Column~3 has nothing in the pivot position or below, so the rank is $2$, the same as the rank
+of $A$; Section~\ref{sec:u11} proves that $\rank A\T=\rank A$ always. With the free variable
+$x_3=1$, the second row gives $2x_2+2=0$, so $x_2=-1$, and the first gives $x_1-2+3=0$, so
+$x_1=-1$. The nullspace is the line $\{c(-1,-1,1)\}$ in $\R^3$. Going on to
+$R=\begin{bmatrix}1&0&1\\0&1&1\\0&0&0\\0&0&0\end{bmatrix}$ shows $F=\begin{bmatrix}1\\1\end{bmatrix}$
+and $N=\begin{bmatrix}-F\\1\end{bmatrix}=(-1,-1,1)$, as it must.
+\end{example}
+
+\begin{example}[What a matrix crushes]\label{ex:u08-crush}
+Let $A=\begin{bmatrix}1&2&2\\2&4&4\end{bmatrix}$, which takes $n=3$ inputs to $m=2$ outputs.
+Row~2 minus $2\times$row~1 is $(0,0,0)$, so $R=\begin{bmatrix}1&2&2\\0&0&0\end{bmatrix}$ has one
+pivot and $r=1$. The free columns $2$ and~$3$ give
+\[
+\vb{s}_1=\begin{bmatrix}-2\\1\\0\end{bmatrix},\qquad \vb{s}_2=\begin{bmatrix}-2\\0\\1\end{bmatrix},
+\qquad A\vb{s}_1=\begin{bmatrix}-2+2\\-4+4\end{bmatrix}=\vb{0},\quad
+A\vb{s}_2=\begin{bmatrix}-2+2\\-4+4\end{bmatrix}=\vb{0}.
+\]
+So $\Nul{A}$ is a plane in $\R^3$ of dimension $n-r=2$: a whole plane of inputs is sent to
+zero. Both special solutions are perpendicular to the row $(1,2,2)$, since
+$-2+2+0=0$ and $-2+0+2=0$. That is no coincidence: $A\vb{x}=\vb{0}$ says precisely that
+$\vb{x}$ has zero dot product with every row. Section~\ref{sec:u11} completes this example with
+the other three subspaces.
+\end{example}
+
+\begin{trap}
+Row operations preserve the nullspace but \emph{not} the column space. In
+Example~\ref{ex:u08-elim}, column~3 of $U$ is $(2,2,0)$. Every vector $A\vb{x}$ has third component
+equal to the sum of the first two (row~3 of $A$ is row~1 plus row~2), and $2+2\ne 0$, so $(2,2,0)$
+is not in $\Col{A}$. Use $U$ or $R$ to find $\Nul{A}$ and to locate the pivot columns, but take
+those pivot columns from the original $A$ when you want the column space. A second slip: setting
+\emph{all} free variables to zero produces only $\vb{x}=\vb{0}$; a special solution needs a $1$.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u08-rref}
+Let $A=\begin{bmatrix}1&5&7&9\\0&4&1&7\\2&-2&11&-3\end{bmatrix}$. (a) Find the reduced row
+echelon form of $A$. (b) What is the rank of $A$? (c) Find the special solutions of
+$A\vb{x}=\vb{0}$.
+\end{exercise}
+\begin{solution}
+(a) Subtract $2\times$row~1 from row~3, giving row~3 $=(0,-12,-3,-21)$. Divide row~2 by $4$:
+$(0,1,\tfrac14,\tfrac74)$. Add $12\times$(new row~2) to row~3, giving a zero row. Subtract
+$5\times$row~2 from row~1: $7-\tfrac54=\tfrac{23}{4}$ and $9-\tfrac{35}{4}=\tfrac14$. Hence
+\[
+R=\begin{bmatrix}1&0&\tfrac{23}{4}&\tfrac14\\[2pt]0&1&\tfrac14&\tfrac74\\[2pt]0&0&0&0\end{bmatrix}.
+\]
+(b) There are two pivots, so $\rank A=2$.
+(c) The free variables are $x_3,x_4$, and $F=\begin{bmatrix}23/4&1/4\\1/4&7/4\end{bmatrix}$.
+The columns of $\begin{bmatrix}-F\\I\end{bmatrix}$ are
+$\vb{s}_1=\bigl(-\tfrac{23}{4},-\tfrac14,1,0\bigr)$ and $\vb{s}_2=\bigl(-\tfrac14,-\tfrac74,0,1\bigr)$.
+Check one entry: row~2 of $A$ times $\vb{s}_1$ is $4(-\tfrac14)+1=0$.
+\end{solution}
+
+\begin{exercise}\label{exr:u08-change}
+Change one entry of Example~\ref{ex:u08-crush}: $A=\begin{bmatrix}1&2&2\\2&4&5\end{bmatrix}$.
+Find the rank, the special solutions and the dimension of the nullspace.
+\end{exercise}
+\begin{solution}
+Row~2 minus $2\times$row~1 is now $(0,0,1)$, so there are pivots in columns~1 and~3 and $r=2$.
+Clearing above the second pivot gives $R=\begin{bmatrix}1&2&0\\0&0&1\end{bmatrix}$. The only free
+variable is $x_2$; setting $x_2=1$ gives $x_3=0$ and $x_1=-2$. The nullspace is the line through
+$(-2,1,0)$, of dimension $3-2=1$: the plane of Example~\ref{ex:u08-crush} has shrunk to a line.
+\end{solution}
+
+\begin{exercise}\label{exr:u08-reverse}
+Find a $2\times 4$ matrix $R$ in reduced row echelon form whose special solutions are
+$(-3,1,0,0)$ and $(-2,0,-6,1)$.
+\end{exercise}
+\begin{solution}
+In a special solution the free variables are $1$ and $0$; here the pattern
+$(x_2,x_4)=(1,0)$ and $(0,1)$ shows that $x_2,x_4$ are free and $x_1,x_3$ are pivot variables.
+By Proposition~\ref{prop:u08-nullmatrix} the pivot entries of the special solutions are the
+columns of $-F$: $(x_1,x_3)=(-3,0)$ and $(-2,-6)$, so $F$ has columns $(3,0)$ and $(2,6)$.
+Placing the identity in columns~1 and~3 and $F$ in columns~2 and~4,
+\[
+R=\begin{bmatrix}1&3&0&2\\0&0&1&6\end{bmatrix}.
+\]
+Check: $R(-3,1,0,0)=(-3+3,\,0)=\vb{0}$ and $R(-2,0,-6,1)=(-2+2,\,-6+6)=\vb{0}$.
+\end{solution}
+
+\begin{exercise}\label{exr:u08-rankAB}
+Let $B=\begin{bmatrix}1&1\\1&1\end{bmatrix}$. Find $2\times2$ matrices $A_1$ and $A_2$ with
+$\rank(A_1B)=1$ and $\rank(A_2B)=0$, and describe all possible $A_2$.
+\end{exercise}
+\begin{solution}
+$A_1=I$ works: $A_1B=B$ has equal rows, so elimination leaves one pivot. $A_2=0$ works
+trivially. In general, a row $(a,b)$ of $A_2$ multiplies $B$ to give $(a+b,\,a+b)$, which is zero
+exactly when $b=-a$. So $A_2B=0$ precisely when every row of $A_2$ is a multiple of $(1,-1)$, for
+example $A_2=\begin{bmatrix}1&-1\\1&-1\end{bmatrix}$.
+\end{solution}

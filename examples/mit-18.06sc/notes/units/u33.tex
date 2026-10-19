@@ -1,0 +1,340 @@
+% unit: u33
+% sources: sources/084-singular-value-decomposition.txt, sources/057-lecture-29-singular-value-decomposition.txt, sources/218-mit18-06scf11-ses3-5sum-pdf-download-file.txt, sources/058-problem-solving-determinants-and-volumecomputing-the-singula.txt, sources/219-mit18-06scf11-ses3-5prob-pdf-download-file.txt, sources/220-mit18-06scf11-ses3-5sol-pdf-download-file.txt; short s05 (svd-circle-to-ellipse)
+\section{Singular value decomposition}\label{sec:u33}
+
+The singular value decomposition, the SVD, is the final and best factorization of a matrix:
+\[
+  A=U\Sigma V\T ,\qquad U \text{ orthogonal},\quad \Sigma \text{ diagonal},\quad V \text{ orthogonal}.
+\]
+Unlike every earlier factorization, it works for \emph{any} matrix: rectangular, singular, not
+symmetric. We have met two relatives. A symmetric positive definite matrix is $Q\Lambda Q\T$
+(Section~\ref{sec:u29}), which is already of this form with $U=V=Q$. A diagonalizable matrix is
+$X\Lambda X^{-1}$ (Section~\ref{sec:u24}), but $X$ is usually not orthogonal and many matrices have
+no such factorization at all. The SVD keeps the diagonal middle and the orthogonal outsides by
+paying one price: two different orthogonal matrices, $U$ on the left and $V$ on the right. The
+construction uses everything from the last units: $A\T A$ is symmetric positive semidefinite
+(Section~\ref{sec:u32}), so the spectral theorem applies to it, and the result produces
+orthonormal bases for all four fundamental subspaces (Section~\ref{sec:u11}).
+
+\subsection{Every matrix turns a circle into an ellipse}
+
+Feed a $2\times2$ matrix every unit vector, the whole unit circle. The outputs always form an
+ellipse. The SVD explains why: some pair of perpendicular unit vectors goes to perpendicular
+vectors, and those are the axes of the ellipse.
+
+\begin{example}[Perpendicular in, perpendicular out]\label{ex:u33-short}
+Let $A=\begin{bmatrix}6&8\\-4&3\end{bmatrix}$ act on the unit circle.
+
+\emph{The ordinary axes get skewed.} $A(1,0)=(6,-4)$ and $A(0,1)=(8,3)$. Their dot product is
+$48-12=36\ne0$: the right angle between $\vb{e}_1$ and $\vb{e}_2$ is lost.
+
+\emph{A better pair.} Take the perpendicular unit vectors $\vb{v}_1=(0.6,\,0.8)$ and
+$\vb{v}_2=(-0.8,\,0.6)$. Then
+\begin{align*}
+  A\vb{v}_1&=(3.6+6.4,\ -2.4+2.4)=(10,\,0)=10\,(1,0),\\
+  A\vb{v}_2&=(-4.8+4.8,\ 3.2+1.8)=(0,\,5)=5\,(0,1).
+\end{align*}
+The outputs are perpendicular too. So $\sigma_1=10$, $\sigma_2=5$, $\vb{u}_1=(1,0)$, $\vb{u}_2=(0,1)$, and
+\[
+  A=U\Sigma V\T=\begin{bmatrix}1&0\\0&1\end{bmatrix}\begin{bmatrix}10&0\\0&5\end{bmatrix}
+  \begin{bmatrix}0.6&0.8\\-0.8&0.6\end{bmatrix}.
+\]
+The unit circle becomes the ellipse with semi-axes $10$ along $\vb{u}_1$ and $5$ along $\vb{u}_2$
+(Figure~\ref{fig:u33-circle}).
+
+\emph{Checks.} $A\T A=\left[\begin{smallmatrix}6&-4\\8&3\end{smallmatrix}\right]\left[\begin{smallmatrix}6&8\\-4&3\end{smallmatrix}\right]
+=\left[\begin{smallmatrix}52&36\\36&73\end{smallmatrix}\right]$ has trace $125=100+25$ and determinant
+$52\cdot73-36^2=3796-1296=2500=100\cdot25$, so its eigenvalues are $100=10^2$ and $25=5^2$. And the
+area factor is $|\det A|=|18+32|=50=\sigma_1\sigma_2$: the ellipse has area $\pi\cdot10\cdot5=50\pi$,
+fifty times the circle's.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth]
+  \begin{scope}[scale=1.45]
+    \draw[->,gray!70] (-1.3,0) -- (1.4,0);
+    \draw[->,gray!70] (0,-1.3) -- (0,1.35);
+    \draw[thick] (0,0) circle (1);
+    \draw[->,gray,thick] (0,0) -- (1,0) node[below right=-1pt,font=\scriptsize] {$\vb{e}_1$};
+    \draw[->,gray,thick] (0,0) -- (0,1) node[above left=-1pt,font=\scriptsize] {$\vb{e}_2$};
+    \draw[->,very thick,blue] (0,0) -- (0.6,0.8) node[above right=-1pt] {$\vb{v}_1$};
+    \draw[->,very thick,orange!85!black] (0,0) -- (-0.8,0.6) node[above left=-1pt] {$\vb{v}_2$};
+    \draw (0.096,0.128) -- (-0.032,0.224) -- (-0.128,0.096);
+    \node at (0,-1.6) {unit circle};
+  \end{scope}
+  \draw[->,thick] (2.5,0) -- node[above] {$A$} (3.6,0);
+  \begin{scope}[xshift=6.6cm,scale=0.24]
+    \draw[->,gray!70] (-11.5,0) -- (12,0);
+    \draw[->,gray!70] (0,-6.8) -- (0,6.8);
+    \draw[thick] (0,0) ellipse (10 and 5);
+    \draw[->,gray,thick] (0,0) -- (6,-4) node[below right=-1pt,font=\scriptsize] {$A\vb{e}_1=(6,-4)$};
+    \draw[->,gray,thick] (0,0) -- (8,3) node[above right=-2pt,font=\scriptsize] {$A\vb{e}_2=(8,3)$};
+    \draw[->,very thick,blue] (0,0) -- (10,0) node[below right=-1pt] {$\sigma_1\vb{u}_1$};
+    \draw[->,very thick,orange!85!black] (0,0) -- (0,5) node[above left=-1pt] {$\sigma_2\vb{u}_2$};
+    \draw (0.9,0) -- (0.9,0.9) -- (0,0.9);
+    \node at (0,-8.8) {ellipse, semi-axes $10$ and $5$};
+  \end{scope}
+\end{tikzpicture}
+\caption{The SVD of $A=\left[\begin{smallmatrix}6&8\\-4&3\end{smallmatrix}\right]$ seen geometrically. The
+standard axes (grey) land on the skewed pair $(6,-4)$, $(8,3)$. The perpendicular unit vectors
+$\vb{v}_1=(0.6,0.8)$, $\vb{v}_2=(-0.8,0.6)$ land on $(10,0)$ and $(0,5)$, still perpendicular: they are
+exactly the long and short axes of the image ellipse.}
+\label{fig:u33-circle}
+\end{figure}
+
+\begin{trap}
+Singular values are not eigenvalues. This $A$ has $\tr A=9$ and $\det A=50$, so its
+eigenvalues solve $\lambda^2-9\lambda+50=0$: $\lambda=\tfrac12\bigl(9\pm i\sqrt{119}\bigr)$, complex. No
+real direction keeps its line, yet the singular values $10$ and $5$ are real and positive. In
+general $A\vb{v}_i=\sigma_i\vb{u}_i$ moves $\vb{v}_i$ to a different direction $\vb{u}_i$; only when $\vb{u}_i=\vb{v}_i$
+is $\sigma_i$ an eigenvalue.
+\end{trap}
+
+\subsection{The goal in matrix language}
+
+Think of $A$ ($m\times n$, rank $r$) as taking each vector $\vb{v}$ of its row space to $A\vb{v}$ in its
+column space. Gram--Schmidt gives an orthonormal basis of the row space at once, but $A$ will
+usually destroy its orthogonality. The SVD asks for a \emph{special} orthonormal basis
+$\vb{v}_1,\dots,\vb{v}_r$ of the row space whose images are orthogonal:
+\[
+  A\vb{v}_1=\sigma_1\vb{u}_1,\quad A\vb{v}_2=\sigma_2\vb{u}_2,\quad\dots,\quad A\vb{v}_r=\sigma_r\vb{u}_r,
+\]
+with $\vb{u}_1,\dots,\vb{u}_r$ orthonormal in the column space and stretching factors $\sigma_i>0$. In
+matrix form, with the $\vb{v}$'s and $\vb{u}$'s as columns,
+\[
+  A\begin{bmatrix}\vb{v}_1&\cdots&\vb{v}_r\end{bmatrix}
+  =\begin{bmatrix}\vb{u}_1&\cdots&\vb{u}_r\end{bmatrix}
+  \begin{bmatrix}\sigma_1&&\\&\ddots&\\&&\sigma_r\end{bmatrix}.
+\]
+The nullspaces cause no difficulty. Complete $\vb{v}_1,\dots,\vb{v}_r$ by an orthonormal basis
+$\vb{v}_{r+1},\dots,\vb{v}_n$ of $\Nul{A}$ (so $A\vb{v}_j=\vb{0}$), and complete the $\vb{u}$'s by an orthonormal
+basis $\vb{u}_{r+1},\dots,\vb{u}_m$ of $\Nul{A\T}$. The extra columns are multiplied by zeros in $\Sigma$, and
+the equation becomes $AV=U\Sigma$ with square orthogonal $V$ and $U$.
+
+\begin{definition}[Singular value decomposition]\label{def:u33-svd}
+A \emph{singular value decomposition} of an $m\times n$ matrix $A$ of rank $r$ is a factorization
+\[
+  A=U\Sigma V\T ,
+\]
+where $U$ ($m\times m$) and $V$ ($n\times n$) are orthogonal and $\Sigma$ ($m\times n$) is zero except for
+$\Sigma_{ii}=\sigma_i$, $i=1,\dots,r$, with $\sigma_1\ge\sigma_2\ge\cdots\ge\sigma_r>0$. The $\sigma_i$ are the
+\emph{singular values}; the columns $\vb{v}_i$ of $V$ and $\vb{u}_i$ of $U$ are the right and left
+\emph{singular vectors}.
+\end{definition}
+
+Multiplying $AV=U\Sigma$ on the right by $V^{-1}=V\T$ gives $A=U\Sigma V\T$; multiplying out columns
+times rows gives the SVD as a sum of $r$ rank-one pieces,
+\[
+  A=\sigma_1\vb{u}_1\vb{v}_1\T+\sigma_2\vb{u}_2\vb{v}_2\T+\cdots+\sigma_r\vb{u}_r\vb{v}_r\T .
+\]
+Reading $A\vb{x}=U\bigl(\Sigma(V\T\vb{x})\bigr)$ from the right: $V\T$ rotates (or reflects), $\Sigma$ stretches
+along the axes, $U$ rotates (or reflects). That is the circle-to-ellipse picture in any dimension.
+
+\subsection{Finding \texorpdfstring{$V$}{V}, \texorpdfstring{$\Sigma$}{Sigma} and \texorpdfstring{$U$}{U}}
+
+Two orthogonal matrices are unknown, and we do not want to find them at once. The combination
+$A\T A$ makes $U$ disappear:
+\[
+  A\T A=(V\Sigma\T U\T)(U\Sigma V\T)=V(\Sigma\T\Sigma)V\T=V\begin{bmatrix}\sigma_1^2&&\\&\ddots&\\&&\sigma_n^2\end{bmatrix}V\T ,
+\]
+with $\sigma_i=0$ for $i>r$. This is $Q\Lambda Q\T$ for the symmetric matrix $A\T A$: \emph{the $\vb{v}$'s
+are eigenvectors of $A\T A$ and the $\sigma_i^2$ are its eigenvalues}. In the opposite order,
+$AA\T=U(\Sigma\Sigma\T)U\T$: the $\vb{u}$'s are eigenvectors of $AA\T$, with the same nonzero
+eigenvalues $\sigma_i^2$. The construction turns this into a proof.
+
+\begin{theorem}[Every matrix has an SVD]\label{thm:u33-existence}
+Let $A$ be $m\times n$ of rank $r$. Let $\vb{v}_1,\dots,\vb{v}_n$ be orthonormal eigenvectors of $A\T A$ with
+eigenvalues $\lambda_1\ge\cdots\ge\lambda_n\ge0$, and set $\sigma_i=\sqrt{\lambda_i}$. Then
+$\sigma_1,\dots,\sigma_r>0$ and $\sigma_{r+1}=\cdots=\sigma_n=0$; the vectors
+\[
+  \vb{u}_i=\frac{A\vb{v}_i}{\sigma_i}\qquad(i=1,\dots,r)
+\]
+are orthonormal eigenvectors of $AA\T$; and completing them to an orthonormal basis of $\R^m$
+gives $A=U\Sigma V\T$.
+\end{theorem}
+\begin{proof}
+$A\T A$ is symmetric positive semidefinite (Section~\ref{sec:u32}), so the spectral theorem
+supplies orthonormal eigenvectors with real eigenvalues $\lambda_i=\vb{v}_i\T A\T A\vb{v}_i=\|A\vb{v}_i\|^2\ge0$.
+In particular $\|A\vb{v}_i\|=\sigma_i$. The number of nonzero eigenvalues is $\rank(A\T A)=\rank A=r$
+(because $\Nul{A\T A}=\Nul{A}$: if $A\T A\vb{x}=\vb{0}$ then $\|A\vb{x}\|^2=\vb{x}\T A\T A\vb{x}=0$).
+
+For $i,j\le r$,
+\[
+  \vb{u}_i\T\vb{u}_j=\frac{\vb{v}_i\T A\T A\vb{v}_j}{\sigma_i\sigma_j}=\frac{\sigma_j^2\,\vb{v}_i\T\vb{v}_j}{\sigma_i\sigma_j}
+  =\begin{cases}1,&i=j,\\0,&i\ne j,\end{cases}
+\]
+so the $\vb{u}_i$ are orthonormal, and $AA\T\vb{u}_i=A(A\T A\vb{v}_i)/\sigma_i=\sigma_i^2\,A\vb{v}_i/\sigma_i=\sigma_i^2\vb{u}_i$.
+For $i>r$, $\|A\vb{v}_i\|=\sigma_i=0$, so $A\vb{v}_i=\vb{0}$. Extend $\vb{u}_1,\dots,\vb{u}_r$ to an orthonormal basis
+$\vb{u}_1,\dots,\vb{u}_m$ of $\R^m$. Column by column, $A\vb{v}_i=\sigma_i\vb{u}_i$ for $i\le r$ and $A\vb{v}_i=\vb{0}$ for
+$i>r$, which is $AV=U\Sigma$. Since $V$ is orthogonal, $A=U\Sigma V\T$.
+\end{proof}
+
+\begin{trap}
+Do not compute $U$ separately from the eigenvectors of $AA\T$ and then just multiply. Each
+eigenvector is determined only up to sign (more freedom still for repeated eigenvalues), and an
+independent choice of signs in $U$ and $V$ can give $U\Sigma V\T\ne A$. This happened in the lecture
+itself (next example). Find $V$ from $A\T A$, then compute $\vb{u}_i=A\vb{v}_i/\sigma_i$; use $AA\T$ only as
+a check.
+\end{trap}
+
+\begin{example}[The lecture's invertible example]\label{ex:u33-4433}
+Take $A=\begin{bmatrix}4&4\\-3&3\end{bmatrix}$ (rank $2$).
+
+\emph{Step 1: $A\T A$.}
+$A\T A=\left[\begin{smallmatrix}4&-3\\4&3\end{smallmatrix}\right]\left[\begin{smallmatrix}4&4\\-3&3\end{smallmatrix}\right]
+=\left[\begin{smallmatrix}25&7\\7&25\end{smallmatrix}\right]$. Its eigenvectors are $(1,1)$ with
+eigenvalue $25+7=32$ and $(1,-1)$ with eigenvalue $25-7=18$. Normalizing,
+$\vb{v}_1=\tfrac{1}{\sqrt2}(1,1)$, $\vb{v}_2=\tfrac{1}{\sqrt2}(1,-1)$, and $\sigma_1=\sqrt{32}=4\sqrt2$,
+$\sigma_2=\sqrt{18}=3\sqrt2$.
+
+\emph{Step 2: $\vb{u}_i=A\vb{v}_i/\sigma_i$.} $A\vb{v}_1=\tfrac{1}{\sqrt2}(8,0)=(4\sqrt2,0)$, so $\vb{u}_1=(1,0)$.
+$A\vb{v}_2=\tfrac{1}{\sqrt2}(0,-6)=(0,-3\sqrt2)$, so $\vb{u}_2=(0,-1)$. Therefore
+\[
+  \begin{bmatrix}4&4\\-3&3\end{bmatrix}
+  =\begin{bmatrix}1&0\\0&-1\end{bmatrix}
+   \begin{bmatrix}4\sqrt2&0\\0&3\sqrt2\end{bmatrix}
+   \begin{bmatrix}1/\sqrt2&1/\sqrt2\\1/\sqrt2&-1/\sqrt2\end{bmatrix}.
+\]
+\emph{Check with $AA\T$.} $AA\T=\left[\begin{smallmatrix}32&0\\0&18\end{smallmatrix}\right]$, diagonal by luck,
+with the same eigenvalues $32$ and $18$ (the eigenvalues of $AB$ and $BA$ always agree). Its
+eigenvectors are $(1,0)$ and $(0,\pm1)$. Choosing $\vb{u}_2=(0,1)$ from $AA\T$ alone, as the
+lecture first did, produces $\left[\begin{smallmatrix}4&4\\3&-3\end{smallmatrix}\right]$: the second row has
+the wrong sign. The formula $\vb{u}_2=A\vb{v}_2/\sigma_2$ fixes the sign to $(0,-1)$.
+\end{example}
+
+\begin{example}[A rank-one matrix with a nullspace]\label{ex:u33-rank1}
+Let $A=\begin{bmatrix}4&3\\8&6\end{bmatrix}$. Every row is a multiple of $(4,3)$ and every column a
+multiple of $(1,2)$, so $r=1$: the row space is the line through $(4,3)$, the column space the line
+through $(1,2)$, and the nullspaces are the perpendicular lines.
+\begin{itemize}
+  \item Row space: $\vb{v}_1=(4,3)/5=(0.8,\,0.6)$. Nullspace: $\vb{v}_2=(0.6,\,-0.8)$.
+  \item Column space: $\vb{u}_1=(1,2)/\sqrt5$. Left nullspace: $\vb{u}_2=(2,-1)/\sqrt5$.
+  \item $A\T A=\left[\begin{smallmatrix}80&60\\60&45\end{smallmatrix}\right]$ has rank $1$, so one eigenvalue
+        is $0$ and the other equals the trace $125$. So $\sigma_1=\sqrt{125}=5\sqrt5$.
+\end{itemize}
+Check the direction: $A\vb{v}_1=(3.2+1.8,\ 6.4+3.6)=(5,10)=5\sqrt5\cdot\tfrac{1}{\sqrt5}(1,2)=\sigma_1\vb{u}_1$. The SVD is
+\[
+  \begin{bmatrix}4&3\\8&6\end{bmatrix}
+  =\frac{1}{\sqrt5}\begin{bmatrix}1&2\\2&-1\end{bmatrix}
+   \begin{bmatrix}\sqrt{125}&0\\0&0\end{bmatrix}
+   \begin{bmatrix}0.8&0.6\\0.6&-0.8\end{bmatrix},
+\]
+and as a single rank-one piece, $\sigma_1\vb{u}_1\vb{v}_1\T=5\sqrt5\cdot\frac{1}{\sqrt5}\left[\begin{smallmatrix}1\\2\end{smallmatrix}\right]
+\begin{bmatrix}0.8&0.6\end{bmatrix}=5\left[\begin{smallmatrix}0.8&0.6\\1.6&1.2\end{smallmatrix}\right]=A$. The
+nullspace vectors $\vb{v}_2$ and $\vb{u}_2$ only meet the zero in $\Sigma$.
+\end{example}
+
+\subsection{The right bases for the four subspaces}
+
+\begin{theorem}[SVD bases]\label{thm:u33-bases}
+In an SVD $A=U\Sigma V\T$ of an $m\times n$ matrix of rank $r$:
+\begin{itemize}
+  \item $\vb{v}_1,\dots,\vb{v}_r$ is an orthonormal basis of the row space $\Col{A\T}$;
+  \item $\vb{u}_1,\dots,\vb{u}_r$ is an orthonormal basis of the column space $\Col{A}$;
+  \item $\vb{v}_{r+1},\dots,\vb{v}_n$ is an orthonormal basis of the nullspace $\Nul{A}$;
+  \item $\vb{u}_{r+1},\dots,\vb{u}_m$ is an orthonormal basis of the left nullspace $\Nul{A\T}$;
+\end{itemize}
+and in these bases $A$ is diagonal: $A\vb{v}_i=\sigma_i\vb{u}_i$ and $A\T\vb{u}_i=\sigma_i\vb{v}_i$ for $i\le r$.
+\end{theorem}
+\begin{proof}
+For $j>r$, $A\vb{v}_j=\vb{0}$, so $\vb{v}_{r+1},\dots,\vb{v}_n$ are $n-r$ orthonormal vectors in $\Nul{A}$, whose
+dimension is $n-r$: they are a basis. The remaining $\vb{v}_1,\dots,\vb{v}_r$ are orthogonal to all of
+$\Nul{A}$, so they lie in its orthogonal complement, the row space (Section~\ref{sec:u16}), which has
+dimension $r$. For $i\le r$, $\vb{u}_i=A\vb{v}_i/\sigma_i$ is in $\Col{A}$, of dimension $r$, so
+$\vb{u}_1,\dots,\vb{u}_r$ is a basis of it; the other $\vb{u}$'s are orthogonal to $\Col{A}$, hence in
+$\Nul{A\T}$, of dimension $m-r$. Finally, transposing $A=U\Sigma V\T$ gives $A\T=V\Sigma\T U\T$, so
+$A\T U=V\Sigma\T$, i.e.\ $A\T\vb{u}_i=\sigma_i\vb{v}_i$.
+\end{proof}
+
+These are the ``right'' bases at last. Gram--Schmidt could already make bases orthonormal; the
+eigenvectors of $A\T A$ make them orthonormal \emph{and} uncouple the matrix: each $\vb{v}_i$ goes to
+a multiple of the matching $\vb{u}_i$ and nothing else (Figure~\ref{fig:u33-bigpicture}). For a square
+matrix one more consequence follows: $|\det A|=|\det U|\,\det\Sigma\,|\det V|=\sigma_1\sigma_2\cdots\sigma_n$,
+because orthogonal matrices have determinant $\pm1$. The singular values measure how $A$ stretches
+volume, as in Example~\ref{ex:u33-short}.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,font=\small,
+  sp/.style={draw,thick,fill=#1,minimum width=3.6cm,align=center,inner sep=4pt}]
+  \node[sp=blue!8,minimum height=1.7cm] (R) at (0,1.2)
+    {row space $\Col{A\T}$\\ dimension $r$\\ $\vb{v}_1,\dots,\vb{v}_r$};
+  \node[sp=gray!10,minimum height=1.3cm] (N) at (0,-1.05)
+    {nullspace $\Nul{A}$\\ dimension $n-r$\\ $\vb{v}_{r+1},\dots,\vb{v}_n$};
+  \node[sp=orange!10,minimum height=1.7cm] (C) at (8,1.2)
+    {column space $\Col{A}$\\ dimension $r$\\ $\vb{u}_1,\dots,\vb{u}_r$};
+  \node[sp=gray!10,minimum height=1.3cm] (LN) at (8,-1.05)
+    {left nullspace $\Nul{A\T}$\\ dimension $m-r$\\ $\vb{u}_{r+1},\dots,\vb{u}_m$};
+  \node[above] at (0,2.15) {$\R^n$};
+  \node[above] at (8,2.15) {$\R^m$};
+  \node[font=\large] at (0,-0.03) {$\perp$};
+  \node[font=\large] at (8,-0.03) {$\perp$};
+  \draw[->,very thick,blue] ([yshift=4pt]R.east) -- node[above] {$A\vb{v}_i=\sigma_i\vb{u}_i$} ([yshift=4pt]C.west);
+  \draw[->,thick,dashed,orange!85!black] ([yshift=-8pt]C.west) -- node[below] {$A\T\vb{u}_i=\sigma_i\vb{v}_i$} ([yshift=-8pt]R.east);
+  \node[circle,draw,inner sep=1.5pt] (Z) at (4,-1.05) {$\vb{0}$};
+  \draw[->,thick,gray] (N.east) -- node[above,font=\scriptsize] {$A\vb{v}_j=\vb{0}$} (Z);
+\end{tikzpicture}
+\caption{The SVD chooses orthonormal bases for the four fundamental subspaces so that $A$ acts
+diagonally: the row space basis $\vb{v}_i$ goes to $\sigma_i$ times the column space basis $\vb{u}_i$, and the
+nullspace basis goes to zero. The left nullspace basis $\vb{u}_{r+1},\dots,\vb{u}_m$ is never reached.}
+\label{fig:u33-bigpicture}
+\end{figure}
+
+\subsection{Exercises}
+
+\begin{exercise}[Following the ellipse]\label{exr:u33-practice}
+For $A=\left[\begin{smallmatrix}6&8\\-4&3\end{smallmatrix}\right]$ of Example~\ref{ex:u33-short}, where does $A$
+send $2\vb{v}_1+\vb{v}_2$? Answer once by direct multiplication and once using $A\vb{v}_i=\sigma_i\vb{u}_i$.
+\end{exercise}
+\begin{solution}
+$2\vb{v}_1+\vb{v}_2=(1.2-0.8,\ 1.6+0.6)=(0.4,\,2.2)$. Directly, $A(0.4,2.2)=(2.4+17.6,\ -1.6+6.6)=(20,\,5)$.
+With the SVD, $A(2\vb{v}_1+\vb{v}_2)=2\sigma_1\vb{u}_1+\sigma_2\vb{u}_2=2(10,0)+(0,5)=(20,5)$. In the $\vb{v}$-coordinates the
+matrix just scales the coordinates $2$ and $1$ by $10$ and $5$.
+\end{solution}
+
+\begin{exercise}[The Fibonacci matrix]\label{exr:u33-fib}
+Show that the singular values of $A=\left[\begin{smallmatrix}1&1\\1&0\end{smallmatrix}\right]$ are
+$\sigma_1=\frac{1+\sqrt5}{2}$ and $\sigma_2=\frac{\sqrt5-1}{2}$. How are they related to the
+eigenvalues of $A$?
+\end{exercise}
+\begin{solution}
+$A\T A=AA\T=\left[\begin{smallmatrix}2&1\\1&1\end{smallmatrix}\right]$, with characteristic polynomial
+$\lambda^2-3\lambda+1$, so $\sigma_1^2=\frac{3+\sqrt5}{2}$ and $\sigma_2^2=\frac{3-\sqrt5}{2}$. Squaring the
+claimed values: $\bigl(\frac{1+\sqrt5}{2}\bigr)^2=\frac{1+2\sqrt5+5}{4}=\frac{3+\sqrt5}{2}$ and
+$\bigl(\frac{\sqrt5-1}{2}\bigr)^2=\frac{5-2\sqrt5+1}{4}=\frac{3-\sqrt5}{2}$. Since $A$ is symmetric, its
+eigenvalues $\frac{1\pm\sqrt5}{2}$ are real and the singular values are their absolute values; the
+negative eigenvalue $\frac{1-\sqrt5}{2}$ becomes $\sigma_2=\frac{\sqrt5-1}{2}$, and its sign moves into
+$\vb{u}_2=-\vb{v}_2$.
+\end{solution}
+
+\begin{exercise}[Orthogonal columns]\label{exr:u33-orthcols}
+Suppose the $n$ columns $\vb{w}_1,\dots,\vb{w}_n$ of $A$ are orthogonal, with lengths $\sigma_1\ge\cdots\ge\sigma_n>0$.
+Compute $A\T A$ and find $U$, $\Sigma$, $V$.
+\end{exercise}
+\begin{solution}
+The $(i,j)$ entry of $A\T A$ is $\vb{w}_i\T\vb{w}_j$, so $A\T A=\operatorname{diag}(\sigma_1^2,\dots,\sigma_n^2)$. Its
+eigenvectors are the standard basis vectors, so $V=I$ and the singular values are the lengths
+$\sigma_i$. Then $\vb{u}_i=A\vb{v}_i/\sigma_i=A\vb{e}_i/\sigma_i=\vb{w}_i/\sigma_i$: the columns of $U$ are the unit
+vectors in the column directions (completed by an orthonormal basis of $\Nul{A\T}$ if $m>n$).
+\end{solution}
+
+\begin{exercise}[An SVD from scratch]\label{exr:u33-C}
+Find the SVD of $C=\left[\begin{smallmatrix}5&5\\-1&7\end{smallmatrix}\right]$.
+\end{exercise}
+\begin{solution}
+$C\T C=\left[\begin{smallmatrix}5&-1\\5&7\end{smallmatrix}\right]\left[\begin{smallmatrix}5&5\\-1&7\end{smallmatrix}\right]
+=\left[\begin{smallmatrix}26&18\\18&74\end{smallmatrix}\right]$, with
+$\det(C\T C-\lambda I)=\lambda^2-100\lambda+(26\cdot74-324)=\lambda^2-100\lambda+1600=(\lambda-80)(\lambda-20)$.
+For $\lambda=80$: $C\T C-80I=\left[\begin{smallmatrix}-54&18\\18&-6\end{smallmatrix}\right]$ gives
+$\vb{v}_1=(1,3)/\sqrt{10}$. For $\lambda=20$: $\left[\begin{smallmatrix}6&18\\18&54\end{smallmatrix}\right]$ gives
+$\vb{v}_2=(-3,1)/\sqrt{10}$. So $\sigma_1=\sqrt{80}=4\sqrt5$, $\sigma_2=\sqrt{20}=2\sqrt5$. Then
+\[
+  \vb{u}_1=\frac{C\vb{v}_1}{\sigma_1}=\frac{(20,20)}{\sqrt{10}\cdot4\sqrt5}=\frac{1}{\sqrt2}\begin{bmatrix}1\\1\end{bmatrix},\qquad
+  \vb{u}_2=\frac{C\vb{v}_2}{\sigma_2}=\frac{(-10,10)}{\sqrt{10}\cdot2\sqrt5}=\frac{1}{\sqrt2}\begin{bmatrix}-1\\1\end{bmatrix},
+\]
+\[
+  C=\frac{1}{\sqrt2}\begin{bmatrix}1&-1\\1&1\end{bmatrix}
+    \begin{bmatrix}4\sqrt5&0\\0&2\sqrt5\end{bmatrix}
+    \frac{1}{\sqrt{10}}\begin{bmatrix}1&3\\-3&1\end{bmatrix}.
+\]
+Check: $|\det C|=|35+5|=40=4\sqrt5\cdot2\sqrt5$.
+\end{solution}

@@ -1,0 +1,183 @@
+1
+00:00:00,087 --> 00:00:01,762
+A thousand people move between
+
+2
+00:00:01,762 --> 00:00:03,175
+two cities by the same
+
+3
+00:00:03,175 --> 00:00:04,750
+rule every year.
+
+4
+00:00:04,750 --> 00:00:05,400
+Where are they after
+
+5
+00:00:05,400 --> 00:00:06,462
+a hundred years?
+
+6
+00:00:07,067 --> 00:00:07,917
+Each year,
+
+7
+00:00:07,917 --> 00:00:10,005
+city one keeps eighty percent
+
+8
+00:00:10,005 --> 00:00:11,867
+and sends twenty across;
+
+9
+00:00:11,867 --> 00:00:13,430
+city two keeps seventy
+
+10
+00:00:13,430 --> 00:00:15,004
+and sends thirty back.
+
+11
+00:00:15,004 --> 00:00:16,367
+That's the matrix A.
+
+12
+00:00:16,942 --> 00:00:18,679
+A turns most vectors:
+
+13
+00:00:18,679 --> 00:00:19,780
+one thousand,
+
+14
+00:00:19,780 --> 00:00:21,580
+zero becomes eight hundred,
+
+15
+00:00:21,580 --> 00:00:22,380
+two hundred.
+
+16
+00:00:22,992 --> 00:00:24,092
+But six hundred,
+
+17
+00:00:24,092 --> 00:00:26,692
+four hundred comes back unchanged:
+
+18
+00:00:26,692 --> 00:00:27,604
+an eigenvector with
+
+19
+00:00:27,604 --> 00:00:28,605
+eigenvalue one.
+
+20
+00:00:29,200 --> 00:00:31,725
+And anything along one, minus one,
+
+21
+00:00:32,138 --> 00:00:33,100
+A just halves:
+
+22
+00:00:33,462 --> 00:00:35,050
+eigenvalue one half.
+
+23
+00:00:35,667 --> 00:00:36,704
+Split the start along
+
+24
+00:00:36,704 --> 00:00:39,205
+the two lines: one thousand,
+
+25
+00:00:39,205 --> 00:00:41,667
+zero is six hundred, four hundred,
+
+26
+00:00:41,667 --> 00:00:43,355
+plus four hundred times one,
+
+27
+00:00:43,717 --> 00:00:44,429
+minus one.
+
+28
+00:00:45,020 --> 00:00:46,745
+Each year the green part stays
+
+29
+00:00:46,745 --> 00:00:48,208
+and the red part halves:
+
+30
+00:00:48,571 --> 00:00:50,320
+eight hundred, two hundred,
+
+31
+00:00:50,708 --> 00:00:51,983
+right where A sent us.
+
+32
+00:00:52,600 --> 00:00:54,587
+Again it halves: one hundred,
+
+33
+00:00:54,587 --> 00:00:56,475
+fifty, twenty-five,
+
+34
+00:00:56,475 --> 00:00:57,938
+closing in on six hundred,
+
+35
+00:00:57,938 --> 00:00:58,750
+four hundred.
+
+36
+00:00:59,333 --> 00:01:00,795
+The start doesn't matter:
+
+37
+00:01:00,795 --> 00:01:02,045
+every split of the thousand
+
+38
+00:01:02,045 --> 00:01:03,571
+lies on the red line,
+
+39
+00:01:03,571 --> 00:01:04,371
+and the whole line
+
+40
+00:01:04,371 --> 00:01:05,596
+halves each year.
+
+41
+00:01:06,187 --> 00:01:07,038
+A to the hundredth
+
+42
+00:01:07,038 --> 00:01:09,000
+just powers the eigenvalues:
+
+43
+00:01:09,363 --> 00:01:11,400
+one stays one, one half to the
+
+44
+00:01:11,400 --> 00:01:13,637
+hundredth is practically zero.
+
+45
+00:01:13,637 --> 00:01:15,350
+Everyone ends at six hundred,
+
+46
+00:01:15,350 --> 00:01:16,262
+four hundred.

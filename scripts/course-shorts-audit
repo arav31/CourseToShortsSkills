@@ -1,7 +1,0 @@
-#!/bin/sh
-set -eu
-
-plugin_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-python_bin=${COURSE_SHORTS_PYTHON:-python3}
-
-exec "$python_bin" "$plugin_root/tools/audit_video_frames.py" "$@"

@@ -1,0 +1,351 @@
+% unit: u32
+% sources: sources/091-similar-matrices-and-jordan-form.txt, sources/055-lecture-28-similar-matrices-and-jordan-form.txt, sources/215-mit18-06scf11-ses3-4sum-pdf-download-file.txt, sources/056-problem-solving-similar-matrices.txt, sources/216-mit18-06scf11-ses3-4prob-pdf-download-file.txt, sources/217-mit18-06scf11-ses3-4sol-pdf-download-file.txt
+\section{Similar matrices and Jordan form}\label{sec:u32}
+
+This unit finishes the story of positive definite matrices by showing where they come from,
+$A\T A$, and then turns to a new way of organizing all square matrices. Two matrices are
+\emph{similar} when one is $M^{-1}AM$ for some invertible $M$. Similar matrices share their
+eigenvalues, so the square matrices fall into families, and in each family we look for the
+simplest member. When $A$ has $n$ independent eigenvectors that member is the diagonal $\Lambda$;
+when eigenvectors are missing it is the Jordan form. Diagonalization (Section~\ref{sec:u24}) was
+the first example of similarity; Section~\ref{sec:u35} will show that similar matrices are the
+same linear transformation seen in different bases.
+
+\subsection{Where positive definite matrices come from}
+
+Positive definiteness behaves like positivity of numbers. Two quick facts show which of the
+four tests of Section~\ref{sec:u31} to reach for.
+
+\begin{proposition}[Inverses and sums]\label{prop:u32-inverse-sum}
+If $A$ and $B$ are symmetric positive definite, so are $A^{-1}$ and $A+B$.
+\end{proposition}
+\begin{proof}
+$A^{-1}$ is symmetric because $(A^{-1})\T=(A\T)^{-1}=A^{-1}$, and its eigenvalues $1/\lambda_i$ are
+positive: the eigenvalue test is the natural one here, since we know nothing about the pivots
+of $A^{-1}$. For $A+B$ we know neither eigenvalues nor pivots, but the energy test is immediate:
+for $\vb{x}\ne\vb{0}$, $\vb{x}\T(A+B)\vb{x}=\vb{x}\T A\vb{x}+\vb{x}\T B\vb{x}>0$.
+\end{proof}
+
+The most important source is a rectangular matrix. In least squares (Section~\ref{sec:u18}) an
+$m\times n$ matrix $A$ led to the square symmetric matrix $A\T A$. Like the square of a number, it
+cannot be negative.
+
+\begin{theorem}[\texorpdfstring{$A\T A$}{ATA} is positive definite]\label{thm:u32-ata}
+For any $m\times n$ matrix $A$, the matrix $A\T A$ is symmetric positive semidefinite. It is
+positive definite exactly when $A$ has independent columns (rank $n$).
+\end{theorem}
+\begin{proof}
+Symmetry: $(A\T A)\T=A\T(A\T)\T=A\T A$. For the energy, move the parentheses:
+\[
+  \vb{x}\T(A\T A)\vb{x}=(A\vb{x})\T(A\vb{x})=\|A\vb{x}\|^2\ge0 .
+\]
+This is zero only when $A\vb{x}=\vb{0}$. If the columns are independent, $\Nul{A}=\{\vb{0}\}$ and so
+$\vb{x}\T A\T A\vb{x}>0$ for all $\vb{x}\ne\vb{0}$. If the columns are dependent, a nonzero $\vb{x}$ in the
+nullspace gives $\vb{x}\T A\T A\vb{x}=0$, so $A\T A$ is only semidefinite.
+\end{proof}
+
+\begin{example}[Two rectangular matrices]\label{ex:u32-ata}
+For the line-fitting matrix $A=\left[\begin{smallmatrix}1&0\\1&1\\1&2\end{smallmatrix}\right]$, the columns
+are independent and $A\T A=\left[\begin{smallmatrix}3&3\\3&5\end{smallmatrix}\right]$ has upper-left
+determinants $3$ and $15-9=6$: positive definite, so the normal equations $A\T A\hat{\vb{x}}=A\T\vb{b}$
+always have a unique solution. For $B=\left[\begin{smallmatrix}1&2\\2&4\\3&6\end{smallmatrix}\right]$ the
+second column is twice the first, and $B\T B=\left[\begin{smallmatrix}14&28\\28&56\end{smallmatrix}\right]$
+has determinant $784-784=0$: semidefinite only, with $\vb{x}=(2,-1)$ giving
+$\vb{x}\T B\T B\vb{x}=\|B\vb{x}\|^2=0$.
+\end{example}
+
+A practical bonus: elimination on a positive definite matrix never needs row exchanges, since
+all pivots are positive; there are no zeros, or dangerously small numbers, in the pivot
+positions. These are the best matrices to compute with.
+
+\subsection{Similar matrices share eigenvalues}
+
+\begin{definition}[Similar matrices]\label{def:u32-similar}
+Two $n\times n$ matrices $A$ and $B$ are \emph{similar} if $B=M^{-1}AM$ for some invertible
+matrix $M$.
+\end{definition}
+
+If $A$ has $n$ independent eigenvectors in the columns of $X$, then $X^{-1}AX=\Lambda$
+(Section~\ref{sec:u24}): $A$ is similar to $\Lambda$, with $M=X$. Any other invertible $M$ also gives
+a similar matrix, just not a diagonal one.
+
+\begin{example}[A family with eigenvalues 3 and 1]\label{ex:u32-family31}
+Let $A=\begin{bmatrix}2&1\\1&2\end{bmatrix}$, with eigenvalues $3$ and $1$, so $A$ is similar to
+$\Lambda=\left[\begin{smallmatrix}3&0\\0&1\end{smallmatrix}\right]$. Now choose any invertible $M$, say
+$M=\left[\begin{smallmatrix}1&4\\0&1\end{smallmatrix}\right]$, whose inverse is
+$M^{-1}=\left[\begin{smallmatrix}1&-4\\0&1\end{smallmatrix}\right]$. Then
+\[
+  AM=\begin{bmatrix}2&9\\1&6\end{bmatrix},\qquad
+  B=M^{-1}AM=\begin{bmatrix}1&-4\\0&1\end{bmatrix}\begin{bmatrix}2&9\\1&6\end{bmatrix}
+   =\begin{bmatrix}-2&-15\\1&6\end{bmatrix}.
+\]
+Nothing about $B$ looks special, but $\tr B=-2+6=4=3+1$ and $\det B=-12+15=3=3\cdot1$: its
+eigenvalues are again $3$ and $1$. Other members of the same family are the triangular matrices
+$\left[\begin{smallmatrix}3&7\\0&1\end{smallmatrix}\right]$ and
+$\left[\begin{smallmatrix}1&7\\0&3\end{smallmatrix}\right]$.
+\end{example}
+
+\begin{theorem}[What similar matrices share]\label{thm:u32-same}
+If $B=M^{-1}AM$, then $A$ and $B$ have the same characteristic polynomial, hence the same
+eigenvalues, trace and determinant. If $A\vb{x}=\lambda\vb{x}$ then $B(M^{-1}\vb{x})=\lambda(M^{-1}\vb{x})$, and
+for each $\lambda$ the two matrices have the same number of independent eigenvectors.
+\end{theorem}
+\begin{proof}
+Since $M^{-1}(\lambda I)M=\lambda I$,
+\[
+  \det(B-\lambda I)=\det\bigl(M^{-1}(A-\lambda I)M\bigr)=\det M^{-1}\,\det(A-\lambda I)\,\det M=\det(A-\lambda I).
+\]
+For the eigenvectors, insert $MM^{-1}=I$: from $A\vb{x}=\lambda\vb{x}$ we get $AMM^{-1}\vb{x}=\lambda\vb{x}$, and
+multiplying on the left by $M^{-1}$ gives $(M^{-1}AM)(M^{-1}\vb{x})=\lambda(M^{-1}\vb{x})$. So $M^{-1}$
+carries the eigenvectors of $A$ for $\lambda$ onto eigenvectors of $B$ for $\lambda$; it is
+invertible, so it maps independent vectors to independent vectors, and $M$ carries them back.
+\end{proof}
+
+The eigenvalues stay; the eigenvectors move (by $M^{-1}$). Similarity is also an equivalence
+relation: $A=I^{-1}AI$; if $B=M^{-1}AM$ then $A=MBM^{-1}=(M^{-1})^{-1}B(M^{-1})$; and if also
+$C=N^{-1}BN$ then $C=(MN)^{-1}A(MN)$. So the $n\times n$ matrices split into disjoint families of
+mutually similar matrices.
+
+\begin{corollary}[Distinct eigenvalues]\label{cor:u32-distinct}
+If $A$ and $B$ have the same $n$ distinct eigenvalues, they are similar.
+\end{corollary}
+\begin{proof}
+Distinct eigenvalues give independent eigenvectors, so $A=X\Lambda X^{-1}$ and $B=Y\Lambda Y^{-1}$
+with the same $\Lambda$. Then $B=Y X^{-1}AXY^{-1}=M^{-1}AM$ with $M=XY^{-1}$.
+\end{proof}
+
+So when the eigenvalues are distinct, the family is simply ``all matrices with these
+eigenvalues'', and its best member is $\Lambda$.
+
+\subsection{Repeated eigenvalues: two families}
+
+Now let $\lambda_1=\lambda_2=4$. The trouble with a repeated eigenvalue is that there may not be a
+full set of eigenvectors. The $2\times2$ matrices with eigenvalues $4,4$ split into \emph{two}
+families.
+
+\emph{The loner.} $4I$ is similar only to itself, because $M^{-1}(4I)M=4M^{-1}M=4I$ for every $M$.
+
+\emph{Everyone else.} Every other matrix with eigenvalues $4,4$ is similar to the
+\emph{Jordan block}
+\[
+  J=\begin{bmatrix}4&1\\0&4\end{bmatrix}.
+\]
+$J$ is not diagonalizable: $J-4I=\left[\begin{smallmatrix}0&1\\0&0\end{smallmatrix}\right]$ has rank $1$,
+so there is only one independent eigenvector, $(1,0)$. If $J$ were diagonalizable it would be
+similar to $4I$, which is similar only to itself. To find more members of $J$'s family, choose
+any trace $8$ and determinant $16$:
+\[
+  \begin{bmatrix}5&1\\-1&3\end{bmatrix},\qquad
+  \begin{bmatrix}4&0\\17&4\end{bmatrix},\qquad
+  \begin{bmatrix}a&b\\(8a-a^2-16)/b&8-a\end{bmatrix}\ (b\ne0).
+\]
+For the last one, the trace is $a+8-a=8$ and the determinant is
+$a(8-a)-(8a-a^2-16)=16$. None of these is $4I$, so none is diagonalizable, and each has a single
+line of eigenvectors. Figure~\ref{fig:u32-families} pictures the families.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[font=\small,
+  best/.style={draw=red!70!black,thick,fill=red!6,rounded corners=3pt,inner sep=2pt}]
+  \draw[thick,rounded corners=14pt] (-2.5,-2.6) rectangle (2.6,1.6);
+  \node[above] at (0.05,1.6) {eigenvalues $3,1$: one family};
+  \node[best] at (0,0.9) {$\begin{bmatrix}3&0\\0&1\end{bmatrix}$};
+  \node at (-1.4,-0.5) {$\begin{bmatrix}2&1\\1&2\end{bmatrix}$};
+  \node at (1.4,-0.5) {$\begin{bmatrix}-2&-15\\1&6\end{bmatrix}$};
+  \node at (-1.4,-1.9) {$\begin{bmatrix}3&7\\0&1\end{bmatrix}$};
+  \node at (1.4,-1.9) {$\begin{bmatrix}1&7\\0&3\end{bmatrix}$};
+  \draw[thick,rounded corners=10pt] (4.2,0.2) rectangle (5.8,1.6);
+  \node[best] at (5.0,0.9) {$\begin{bmatrix}4&0\\0&4\end{bmatrix}$};
+  \node[below,align=center,font=\scriptsize] at (5.0,0.15) {only member};
+  \draw[thick,rounded corners=14pt] (6.4,-2.6) rectangle (10.8,1.6);
+  \node[best] at (8.6,0.9) {$\begin{bmatrix}4&1\\0&4\end{bmatrix}$};
+  \node at (7.45,-0.5) {$\begin{bmatrix}5&1\\-1&3\end{bmatrix}$};
+  \node at (9.75,-0.5) {$\begin{bmatrix}4&0\\17&4\end{bmatrix}$};
+  \node at (8.6,-1.9) {$\begin{bmatrix}a&b\\\frac{8a-a^2-16}{b}&8-a\end{bmatrix}$};
+  \node[above] at (7.5,1.6) {eigenvalues $4,4$: two families};
+\end{tikzpicture}
+\caption{Families of similar $2\times2$ matrices. Within a family every pair is connected by some
+$M^{-1}AM$; the framed member is the simplest one (its Jordan form). With distinct eigenvalues
+$3,1$ there is one family and its best member is $\Lambda$. With eigenvalues $4,4$ the loner $4I$
+forms a family by itself, and all the other matrices are similar to the Jordan block.}
+\label{fig:u32-families}
+\end{figure}
+
+\begin{example}[Bringing a matrix to its Jordan block]\label{ex:u32-chain}
+Show directly that $B=\begin{bmatrix}5&1\\-1&3\end{bmatrix}$ is similar to $J=\begin{bmatrix}4&1\\0&4\end{bmatrix}$.
+The lectures do not compute Jordan forms in general, but for a $2\times2$ block the idea is short.
+We want $M=[\vb{x}_1\ \vb{x}_2]$ with $BM=MJ$, i.e.
+\[
+  B\vb{x}_1=4\vb{x}_1,\qquad B\vb{x}_2=\vb{x}_1+4\vb{x}_2\quad\text{(equivalently } (B-4I)\vb{x}_2=\vb{x}_1\text{)}.
+\]
+Here $B-4I=\left[\begin{smallmatrix}1&1\\-1&-1\end{smallmatrix}\right]$ has rank $1$; its nullspace gives
+the eigenvector $\vb{x}_1=(1,-1)$, and $(B-4I)\vb{x}_2=\vb{x}_1$ is solved by $\vb{x}_2=(1,0)$. With
+$M=\left[\begin{smallmatrix}1&1\\-1&0\end{smallmatrix}\right]$:
+\[
+  BM=\begin{bmatrix}5&1\\-1&3\end{bmatrix}\begin{bmatrix}1&1\\-1&0\end{bmatrix}=\begin{bmatrix}4&5\\-4&-1\end{bmatrix},
+  \qquad
+  MJ=\begin{bmatrix}1&1\\-1&0\end{bmatrix}\begin{bmatrix}4&1\\0&4\end{bmatrix}=\begin{bmatrix}4&5\\-4&-1\end{bmatrix}.
+\]
+They agree, $M$ is invertible ($\det M=1$), and so $M^{-1}BM=J$.
+\end{example}
+
+\subsection{Jordan blocks and Jordan's theorem}
+
+\begin{definition}[Jordan block, Jordan matrix]\label{def:u32-jordan}
+A \emph{Jordan block} $J_i$ of size $k$ has one eigenvalue $\lambda_i$ repeated on the diagonal,
+ones just above the diagonal, and zeros elsewhere:
+\[
+  J_i=\begin{bmatrix}\lambda_i&1&&\\&\lambda_i&\ddots&\\&&\ddots&1\\&&&\lambda_i\end{bmatrix}.
+\]
+Its only independent eigenvector is $\vb{e}_1$. A \emph{Jordan matrix} is a block diagonal matrix
+whose diagonal blocks are Jordan blocks:
+\[
+  J=\begin{bmatrix}J_1&&\\&\ddots&\\&&J_d\end{bmatrix}.
+\]
+\end{definition}
+
+\begin{theorem}[Jordan form]\label{thm:u32-jordan}
+Every square matrix $A$ is similar to a Jordan matrix $J=M^{-1}AM$. The eigenvalues of $A$ sit on
+the diagonal of $J$; the number of blocks $d$ equals the number of independent eigenvectors of
+$A$, one eigenvector per block; and $J$ is unique apart from the order of the blocks.
+\end{theorem}
+
+The proof is long, and the course states the theorem without it; a proof is in the appendix on
+the Jordan form in Strang's \emph{Introduction to Linear Algebra}, and in any advanced linear
+algebra text. Two cases summarize it.
+If $A$ has $n$ distinct eigenvalues, every block has size $1$ and $J=\Lambda$: there are $d=n$
+blocks and eigenvectors. If eigenvectors are missing, $J$ has $n-d$ ones above the diagonal,
+one for each missing eigenvector. The uniqueness part, which is what separates families, can be
+proved with one invariant.
+
+\begin{proposition}[Ranks of powers are similarity invariants]\label{prop:u32-ranks}
+If $B=M^{-1}AM$ then $\rank\,(B-\lambda I)^k=\rank\,(A-\lambda I)^k$ for every number $\lambda$ and every
+$k\ge1$.
+\end{proposition}
+\begin{proof}
+$B-\lambda I=M^{-1}(A-\lambda I)M$, and the inner factors $MM^{-1}$ cancel in a power:
+$(B-\lambda I)^k=M^{-1}(A-\lambda I)^kM$. Multiplying by invertible matrices on either side does not
+change the rank.
+\end{proof}
+
+Counting eigenvectors uses only $k=1$ (the nullity of $A-\lambda I$). Higher powers see the
+sizes of the blocks, as the next example shows.
+
+\begin{example}[Same eigenvalues, same eigenvector count, not similar]\label{ex:u32-4by4}
+Compare the $4\times4$ matrices
+\[
+  A=\begin{bmatrix}0&1&0&0\\0&0&1&0\\0&0&0&0\\0&0&0&0\end{bmatrix},\qquad
+  C=\begin{bmatrix}0&1&0&0\\0&0&0&0\\0&0&0&1\\0&0&0&0\end{bmatrix}.
+\]
+Both are triangular with four zero eigenvalues. Both have rank $2$, so each nullspace (the
+eigenvectors for $\lambda=0$) has dimension $4-2=2$: two eigenvectors and two missing. But $A$
+consists of a $3\times3$ block and a $1\times1$ block, while $C$ consists of two $2\times2$ blocks.
+The squares tell them apart: $A^2$ has a single $1$ in position $(1,3)$, so $\rank A^2=1$,
+whereas $C^2=0$. By Proposition~\ref{prop:u32-ranks}, $A$ and $C$ are not similar.
+
+Changing the $(1,3)$ entry of $A$ from $0$ to $7$ gives a matrix $A'$ with the same ranks of
+powers ($\rank A'=2$, $\rank A'^2=1$, $A'^3=0$); it is similar to $A$, and $A$ is the Jordan form of
+that family: a $1$ above the diagonal for every missing eigenvector, zeros elsewhere.
+\end{example}
+
+\begin{trap}
+Equal eigenvalues do not make matrices similar, and neither do equal eigenvalues plus equal
+numbers of eigenvectors. $\left[\begin{smallmatrix}4&0\\0&4\end{smallmatrix}\right]$ and
+$\left[\begin{smallmatrix}4&1\\0&4\end{smallmatrix}\right]$ share trace and determinant, and $A$, $C$ above
+share even the eigenvector count. Only for distinct eigenvalues is ``same eigenvalues'' enough.
+Note also that the Jordan form, though perfect for algebra, is useless numerically: the
+slightest change in the entries splits repeated eigenvalues and changes the blocks.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}[Jordan matrices with different block sizes]\label{exr:u32-JK}
+Let $J$ have Jordan blocks of sizes $2,2$ and $K$ blocks of sizes $3,1$, all with eigenvalue $0$:
+\[
+  J=\begin{bmatrix}0&1&0&0\\0&0&0&0\\0&0&0&1\\0&0&0&0\end{bmatrix},\qquad
+  K=\begin{bmatrix}0&1&0&0\\0&0&1&0\\0&0&0&0\\0&0&0&0\end{bmatrix}.
+\]
+Both have two independent eigenvectors. Show that if $JM=MK$ then $M$ is not invertible, so $J$
+and $K$ are not similar.
+\end{exercise}
+\begin{solution}
+Write $M=(m_{ij})$. Multiplying by $J$ on the left shifts rows: row~1 of $JM$ is row~2 of $M$,
+row~3 of $JM$ is row~4 of $M$, rows 2 and 4 are zero. Multiplying by $K$ on the right shifts
+columns: column~2 of $MK$ is column~1 of $M$, column~3 is column~2, columns 1 and 4 are zero:
+\[
+  JM=\begin{bmatrix}m_{21}&m_{22}&m_{23}&m_{24}\\0&0&0&0\\m_{41}&m_{42}&m_{43}&m_{44}\\0&0&0&0\end{bmatrix},
+  \qquad
+  MK=\begin{bmatrix}0&m_{11}&m_{12}&0\\0&m_{21}&m_{22}&0\\0&m_{31}&m_{32}&0\\0&m_{41}&m_{42}&0\end{bmatrix}.
+\]
+Comparing entries: column~1 gives $m_{21}=m_{41}=0$; row~2 gives $m_{21}=m_{22}=0$ and row~4 gives
+$m_{41}=m_{42}=0$; then entry $(1,2)$ gives $m_{11}=m_{22}=0$ and entry $(3,2)$ gives
+$m_{31}=m_{42}=0$. So the whole first column $(m_{11},m_{21},m_{31},m_{41})$ is zero and $M$ is
+singular. A similarity $K=M^{-1}JM$ would require an invertible $M$ with $JM=MK$; none exists.
+(Ranks of squares give the same verdict: $J^2=0$ but $\rank K^2=1$.)
+\end{solution}
+
+\begin{exercise}[True statements about similarity]\label{exr:u32-true}
+Explain why each statement is true.
+\begin{enumerate}[(a)]
+  \item If $A$ is similar to $B$ then $A^2$ is similar to $B^2$.
+  \item $A^2$ and $B^2$ can be similar when $A$ and $B$ are not.
+  \item $\left[\begin{smallmatrix}3&0\\0&4\end{smallmatrix}\right]$ is similar to
+        $\left[\begin{smallmatrix}3&1\\0&4\end{smallmatrix}\right]$.
+  \item $\left[\begin{smallmatrix}3&0\\0&3\end{smallmatrix}\right]$ is not similar to
+        $\left[\begin{smallmatrix}3&1\\0&3\end{smallmatrix}\right]$.
+  \item If $B$ is obtained from $A$ by exchanging rows 1 and 2 and then columns 1 and 2, then $B$
+        is similar to $A$.
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+\begin{enumerate}[(a)]
+  \item If $A=M^{-1}BM$ then $A^2=M^{-1}BMM^{-1}BM=M^{-1}B^2M$.
+  \item Take $A=\left[\begin{smallmatrix}0&0\\0&0\end{smallmatrix}\right]$ and
+        $B=\left[\begin{smallmatrix}0&1\\0&0\end{smallmatrix}\right]$. Then $A^2=B^2=0$, which are
+        certainly similar, but only the zero matrix is similar to the zero matrix, so $A$ and $B$
+        are not similar.
+  \item The eigenvalues $3$ and $4$ are distinct, so both matrices are similar to
+        $\operatorname{diag}(3,4)$ (Corollary~\ref{cor:u32-distinct}). Explicitly, with
+        $M=\left[\begin{smallmatrix}1&1\\0&1\end{smallmatrix}\right]$,
+        $M^{-1}\left[\begin{smallmatrix}3&1\\0&4\end{smallmatrix}\right]M
+        =\left[\begin{smallmatrix}1&-1\\0&1\end{smallmatrix}\right]\left[\begin{smallmatrix}3&4\\0&4\end{smallmatrix}\right]
+        =\left[\begin{smallmatrix}3&0\\0&4\end{smallmatrix}\right]$.
+  \item For $3I$ every vector is an eigenvector; for the second matrix only the line through
+        $(1,0)$. Similar matrices have the same number of independent eigenvectors.
+  \item Exchanging rows 1 and 2 is left multiplication by the permutation matrix $P$ obtained from
+        $I$ by exchanging its rows 1 and 2; exchanging columns 1 and 2 is right multiplication by
+        the same $P$. So $B=PAP$, and since $P^{-1}=P$, $B=P^{-1}AP$.
+\end{enumerate}
+\end{solution}
+
+\begin{exercise}[Polynomials, distinct eigenvalues and Jordan blocks]\label{exr:u32-recitation}
+\begin{enumerate}[(a)]
+  \item If $A$ and $B$ are similar, show that $2A^3+A-3I$ is similar to $2B^3+B-3I$.
+  \item If $A$ and $B$ are $3\times3$ matrices with eigenvalues $1,0,-1$, must they be similar?
+  \item Are $J_1=\left[\begin{smallmatrix}-1&1&0\\0&-1&1\\0&0&-1\end{smallmatrix}\right]$ and
+        $J_2=\left[\begin{smallmatrix}-1&1&0\\0&-1&0\\0&0&-1\end{smallmatrix}\right]$ similar?
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+\begin{enumerate}[(a)]
+  \item Let $B=MAM^{-1}$. Then $MA^3M^{-1}=(MAM^{-1})^3=B^3$ and $MIM^{-1}=I$, so
+        $M(2A^3+A-3I)M^{-1}=2B^3+B-3I$. The same works for any polynomial in $A$.
+  \item Yes. Three distinct eigenvalues make both diagonalizable with the same
+        $\Lambda=\operatorname{diag}(1,0,-1)$: $A=S\Lambda S^{-1}$ and $B=T\Lambda T^{-1}$, so
+        $B=(TS^{-1})A(TS^{-1})^{-1}$. Similar to the same matrix means similar to each other.
+  \item No. Both have the single eigenvalue $-1$, but $J_1+I$ has rank $2$ (a nullspace of
+        dimension $1$: one eigenvector), while $J_2+I$ has rank $1$ (a nullspace of dimension $2$:
+        two eigenvectors). Similar matrices have the same number of independent eigenvectors.
+\end{enumerate}
+\end{solution}
+
+\begin{exercise}[When is \texorpdfstring{$A\T A$}{ATA} invertible?]\label{exr:u32-ata}
+Let $A=\left[\begin{smallmatrix}1&1\\1&t\\1&t^2\end{smallmatrix}\right]$. For which $t$ is $A\T A$ positive
+definite? Compute $A\T A$ for $t=1$ and exhibit $\vb{x}\ne\vb{0}$ with $\vb{x}\T A\T A\vb{x}=0$.
+\end{exercise}
+\begin{solution}
+By Theorem~\ref{thm:u32-ata}, $A\T A$ is positive definite exactly when the columns $(1,1,1)$ and
+$(1,t,t^2)$ are independent, i.e.\ unless $(1,t,t^2)$ is a multiple of $(1,1,1)$, which happens only
+for $t=1$. So: positive definite for every $t\ne1$. At $t=1$ both columns are $(1,1,1)$ and
+$A\T A=\left[\begin{smallmatrix}3&3\\3&3\end{smallmatrix}\right]$; the vector $\vb{x}=(1,-1)$ gives
+$A\vb{x}=\vb{0}$, so $\vb{x}\T A\T A\vb{x}=3-3-3+3=0$.
+\end{solution}

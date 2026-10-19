@@ -1,0 +1,101 @@
+% Course study notes. Copy to runs/<course>/notes/notes.tex and replace every
+% <<...>> marker; build_notes.py refuses to pass while any marker remains.
+% Each outline unit is its own file under notes/units/ (one \section each).
+\documentclass[11pt]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,tabularx,array,longtable}
+\usepackage[shortlabels]{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,patterns,shapes.geometric,matrix,fit,backgrounds,angles,quotes,intersections}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist{itemsep=0.15em,topsep=0.3em}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small <<SHORT COURSE NAME>>}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+% Maths in headings also goes into PDF bookmarks; give macros a plain-text meaning there
+% (or write headings as \texorpdfstring{$...$}{plain text}).
+\pdfstringdefDisableCommands{\def\R{R}\def\N{N}\def\Z{Z}\def\Q{Q}\def\C{C}}
+
+% Numbered environments share one counter per section: Definition 2.1, Theorem 2.2, ...
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}[definition]{Example}
+\newtheorem{exercise}[definition]{Exercise}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem*{trap}{Common trap}
+\newenvironment{solution}{\begin{proof}[Solution]}{\end{proof}}
+
+% Course-specific notation (add what the course uses; keep it consistent).
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+\begin{document}
+
+\begin{titlepage}
+  \raggedright
+  \vspace*{2.2cm}
+  {\Huge\bfseries <<COURSE TITLE>>\par}
+  \vspace{0.8em}
+  {\Large <<COURSE CODE AND INSTITUTION>>\par}
+  \vspace{0.4em}
+  {\large Study notes\par}
+  \vfill
+  \begin{flushright}
+    \begin{minipage}{0.46\textwidth}
+      \raggedleft\hyphenpenalty=10000\exhyphenpenalty=10000
+      {\itshape ``<<A SHORT, VERIFIED QUOTE BY A PIONEER OF THIS FIELD>>''\par}
+      \vspace{0.5em}
+      --- <<NAME>>\par
+    \end{minipage}
+  \end{flushright}
+  \vfill
+  {\small <<MONTH YEAR>>\par}
+\end{titlepage}
+
+\setcounter{tocdepth}{1}% sections only; subsections make the contents run for pages
+\tableofcontents
+\clearpage
+
+\section*{About these notes}
+<<TWO OR THREE SENTENCES: WHAT THE COURSE COVERS, WHAT A READER SHOULD KNOW FIRST, AND HOW THE SECTIONS BUILD ON EACH OTHER.>>
+
+\subsection*{Notation}
+\begin{longtable}{@{}p{0.28\textwidth}p{0.66\textwidth}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+<<SYMBOL>> & <<MEANING>> \\
+\bottomrule
+\end{longtable}
+\addtocounter{table}{-1}% the notation table is not a numbered table
+\clearpage
+
+% One file per outline unit, in course order.
+\input{units/u01}
+
+\appendix
+\section{Formula sheet}
+<<THE KEY RESULTS OF THE COURSE IN ONE PLACE, GROUPED BY SECTION, EACH WITH A POINTER TO WHERE IT IS DERIVED.>>
+
+\end{document}

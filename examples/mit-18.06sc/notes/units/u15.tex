@@ -1,0 +1,323 @@
+% unit: u15
+% sources: sources/018-exam-1.txt, sources/113-mit18-06scf11-ex1-pdf-download-file.txt, sources/114-mit18-06scf11-ex1s-pdf-download-file.txt
+\section{Exam 1}\label{sec:u15}
+
+The first unit exam checks whether the machinery of Part~I has become reflex: elimination
+written with elementary matrices $E_{ij}$, the factorization $A=LU$, the inverse, bases for
+the column space and the nullspace, the complete solution of $A\vb{x}=\vb{b}$, and what the
+reduced echelon form $R$ says about the columns of $A$. This section collects the four exam
+problems as practice problems with complete solutions, preceded by the handful of facts they
+draw on and followed by variations to practise on. Try each problem before reading its solution.
+
+\subsection{The facts the exam draws on}
+
+Every problem on the exam is an application of a few statements from
+Sections~\ref{sec:u05}--\ref{sec:u11}. For an $m\times n$ matrix $A$ of rank $r$:
+\begin{itemize}
+  \item $A\vb{x}=\vb{b}$ is solvable exactly when $\vb{b}\in\Col{A}$; it is solvable for
+    \emph{every} $\vb{b}\in\R^m$ exactly when $r=m$.
+  \item A solution, when one exists, is unique exactly when $\Nul{A}=\{\vb{0}\}$, that is,
+    when $r=n$. Otherwise the complete solution is $\vb{x}_p+\vb{x}_n$ with $\vb{x}_n$ ranging
+    over the $(n-r)$-dimensional nullspace.
+  \item The pivot columns of $A$ (not of $R$) are a basis for $\Col{A}$; the $n-r$ special
+    solutions are a basis for $\Nul{A}$.
+  \item Row operations do not change the nullspace, so $A$ and $R=\operatorname{rref}(A)$
+    satisfy exactly the same column relations.
+  \item The inverse of an elimination matrix $E_{ij}$ (subtract $\ell$ times row $j$ from row
+    $i$) adds $\ell$ times row $j$ back, and the inverse of a product reverses the order.
+\end{itemize}
+The first two items combine into the four cases of Table~\ref{tab:u15-cases}, which is the
+whole content of Problem~1 below.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Rank & Shape of $R$ & Solutions of $A\vb{x}=\vb{b}$ & Example \\
+    \midrule
+    $r=m=n$ & $I$ & exactly one, for every $\vb{b}$ & square invertible \\
+    $r=n<m$ & $\begin{bmatrix} I\\ 0\end{bmatrix}$ & zero or one & tall, independent columns \\
+    $r=m<n$ & $\begin{bmatrix} I & F\end{bmatrix}$ & infinitely many, for every $\vb{b}$ & wide, independent rows \\
+    $r<m,\ r<n$ & $\begin{bmatrix} I & F\\ 0 & 0\end{bmatrix}$ & zero or infinitely many & neither \\
+    \bottomrule
+  \end{tabular}
+  \caption{Rank decides how many solutions $A\vb{x}=\vb{b}$ can have ($F$ is the free part of $R$; columns may need reordering).}
+  \label{tab:u15-cases}
+\end{table}
+
+\begin{example}[Reading the case from two right-hand sides]\label{ex:u15-case}
+Take
+\[
+  A=\begin{bmatrix}1&2\\2&4\\3&6\end{bmatrix}.
+\]
+Column~2 is twice column~1, so $r=1$, which is smaller than both $m=3$ and $n=2$: the last
+row of the table. Check both possibilities. For $\vb{b}=(1,2,3)$, which is column~1, the
+system is solvable with $\vb{x}_p=(1,0)$, and adding any multiple of the special solution
+$(-2,1)$ gives infinitely many solutions $\vb{x}=(1-2t,\,t)$. For $\vb{b}=(1,0,0)$,
+elimination on the augmented matrix gives
+\[
+  \left[\begin{array}{cc|c}1&2&1\\2&4&0\\3&6&0\end{array}\right]
+  \longrightarrow
+  \left[\begin{array}{cc|c}1&2&1\\0&0&-2\\0&0&-3\end{array}\right],
+\]
+and the equations $0=-2$ and $0=-3$ are impossible, so there is no solution. A single
+right-hand side with a unique solution would have forced $r=n$; a single unsolvable one
+forces $r<m$.
+\end{example}
+
+\subsection{Problem 1: rank from solvability}
+
+\begin{exercise}[Exam problem 1]\label{ex:u15-p1}
+An $m\times n$ matrix $A$ has the property that
+\[
+  A\vb{x}=\begin{bmatrix}1\\1\\1\end{bmatrix}\ \text{has no solution}
+  \qquad\text{and}\qquad
+  A\vb{x}=\begin{bmatrix}0\\1\\0\end{bmatrix}\ \text{has exactly one solution.}
+\]
+\begin{enumerate}[(a)]
+  \item Give all the information you can about $m$, $n$ and the rank $r$.
+  \item Find all solutions of $A\vb{x}=\vb{0}$ and explain.
+  \item Write down an example of such a matrix $A$.
+\end{enumerate}
+\end{exercise}
+
+\begin{solution}
+(a) The right-hand sides live in $\R^m$, so $m=3$. Exactly one solution for
+$\vb{b}=(0,1,0)$ means there are no free variables: $\Nul{A}=\{\vb{0}\}$ and $r=n$. No
+solution for $\vb{b}=(1,1,1)$ means $\Col{A}\neq\R^3$, so $r<m=3$. Together,
+$r=n\le 2$: either $n=r=1$ or $n=r=2$ (and $m=3$ in both cases).
+
+(b) Since $r=n$, the columns are independent and $A\vb{x}=\vb{0}$ has only the solution
+$\vb{x}=\vb{0}$. (The zero vector is always a solution; independence of the columns says no
+other combination of them vanishes.)
+
+(c) Two examples, one for each possible $n$:
+\[
+  n=1:\ A=\begin{bmatrix}0\\1\\0\end{bmatrix},\qquad
+  n=2:\ A=\begin{bmatrix}1&0\\0&1\\0&0\end{bmatrix}.
+\]
+For $n=1$, $A\vb{x}=(0,1,0)$ is solved only by the scalar $x=1$, and $(1,1,1)$ is not a
+multiple of $(0,1,0)$. For $n=2$ the column space is the plane $x_3=0$
+(Figure~\ref{fig:u15-p1}), which contains $(0,1,0)=A(0,1)$ but not $(1,1,1)$; the two
+columns are independent, so the solution $(0,1)$ is unique.
+\end{solution}
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[x={(-0.55cm,-0.42cm)},y={(1.15cm,0cm)},z={(0cm,1.15cm)},>=Stealth,scale=1.45]
+    \fill[blue!8] (-0.3,-0.6,0) -- (2,-0.6,0) -- (2,2.2,0) -- (-0.3,2.2,0) -- cycle;
+    \draw[blue!40] (-0.3,-0.6,0) -- (2,-0.6,0) -- (2,2.2,0) -- (-0.3,2.2,0) -- cycle;
+    \draw[->,gray] (0,0,0) -- (2.5,0,0) node[below left] {$x_1$};
+    \draw[->,gray] (0,0,0) -- (0,2.8,0) node[right] {$x_2$};
+    \draw[->,gray] (0,0,0) -- (0,0,1.7) node[above] {$x_3$};
+    \draw[->,very thick,blue] (0,0,0) -- (0,1,0) node[below right] {$(0,1,0)\in\Col{A}$};
+    \draw[->,very thick,red!75!black] (0,0,0) -- (1,1,1) node[above right] {$(1,1,1)\notin\Col{A}$};
+    \draw[dashed,red!75!black] (1,1,1) -- (1,1,0);
+    \fill[red!75!black] (1,1,0) circle (1pt);
+    \node[blue!70!black,anchor=west] at (2,2.25,0) {$\Col{A}$: the plane $x_3=0$};
+  \end{tikzpicture}
+  \caption{Problem 1(c) with $n=2$: the column space of $A$ is a plane through the origin in $\R^3$.
+  Right-hand sides in the plane are reachable (uniquely, since the columns are independent);
+  $(1,1,1)$ sits above the plane and is not.}
+  \label{fig:u15-p1}
+\end{figure}
+
+\begin{trap}
+Each hypothesis controls one inequality: uniqueness for one $\vb{b}$ gives $r=n$ (no free
+variables), unsolvability for one $\vb{b}$ gives $r<m$. A frequent slip is to read ``exactly
+one solution'' as ``$A$ is square and invertible''; that would make every $\vb{b}$ solvable,
+contradicting the first hypothesis.
+\end{trap}
+
+\subsection{Problem 2: from elimination matrices to \texorpdfstring{$A^{-1}$}{A inverse}, \texorpdfstring{$A$}{A} and \texorpdfstring{$L$}{L}}
+
+\begin{exercise}[Exam problem 2]\label{ex:u15-p2}
+A $3\times 3$ matrix $A$ reduces to $I$ by three row operations, in this order:
+$E_{21}$ subtracts $4$ times row~1 from row~2; $E_{31}$ subtracts $3$ times row~1 from
+row~3; $E_{23}$ subtracts row~3 from row~2.
+\begin{enumerate}[(a)]
+  \item Write $A^{-1}$ in terms of the $E$'s, then compute it.
+  \item What is the original matrix $A$?
+  \item What is the lower triangular factor $L$ in $A=LU$?
+\end{enumerate}
+\end{exercise}
+
+\begin{solution}
+(a) The operations give $E_{23}E_{31}E_{21}A=I$, so $A^{-1}=E_{23}E_{31}E_{21}$, with
+\[
+  E_{21}=\begin{bmatrix}1&0&0\\-4&1&0\\0&0&1\end{bmatrix},\quad
+  E_{31}=\begin{bmatrix}1&0&0\\0&1&0\\-3&0&1\end{bmatrix},\quad
+  E_{23}=\begin{bmatrix}1&0&0\\0&1&-1\\0&0&1\end{bmatrix}.
+\]
+Apply them to $I$ in order. $E_{31}E_{21}$ places $-4$ and $-3$ in column~1; then $E_{23}$
+subtracts row~3 from row~2:
+\[
+  E_{31}E_{21}=\begin{bmatrix}1&0&0\\-4&1&0\\-3&0&1\end{bmatrix},\qquad
+  A^{-1}=E_{23}(E_{31}E_{21})=\begin{bmatrix}1&0&0\\-1&1&-1\\-3&0&1\end{bmatrix}.
+\]
+(b) Invert the product in reverse order, $A=E_{21}^{-1}E_{31}^{-1}E_{23}^{-1}$, where each
+inverse just flips the sign of its off-diagonal entry:
+\[
+  A=\begin{bmatrix}1&0&0\\4&1&0\\0&0&1\end{bmatrix}
+    \begin{bmatrix}1&0&0\\0&1&0\\3&0&1\end{bmatrix}
+    \begin{bmatrix}1&0&0\\0&1&1\\0&0&1\end{bmatrix}
+   =\begin{bmatrix}1&0&0\\4&1&0\\3&0&1\end{bmatrix}
+    \begin{bmatrix}1&0&0\\0&1&1\\0&0&1\end{bmatrix}
+   =\begin{bmatrix}1&0&0\\4&1&1\\3&0&1\end{bmatrix}.
+\]
+Check: multiplying this $A$ by the $A^{-1}$ of part (a) gives $I$.
+
+(c) Forward elimination on $A$ uses only $E_{21}$ and $E_{31}$: subtracting $4$ (row~1) from
+row~2 and $3$ (row~1) from row~3 leaves a matrix that is already upper triangular. The step $E_{23}$ is an \emph{upward} step (it clears the entry above the
+last pivot), so it is not part of $A=LU$. The multipliers $4$ and $3$ go straight into $L$:
+\[
+  L=E_{21}^{-1}E_{31}^{-1}=\begin{bmatrix}1&0&0\\4&1&0\\3&0&1\end{bmatrix},\qquad
+  U=E_{23}^{-1}=\begin{bmatrix}1&0&0\\0&1&1\\0&0&1\end{bmatrix},
+\]
+and indeed the factorization in (b) already reads $A=LU$.
+\end{solution}
+
+\begin{trap}
+$A^{-1}$ is the product of the $E$'s in the order they were \emph{applied}
+($E_{23}E_{31}E_{21}$, last step on the left); $A$ is the product of the inverses in the
+\emph{opposite} order. Writing $A^{-1}=E_{21}E_{31}E_{23}$ gives a different matrix here,
+because $E_{23}$ does not commute with $E_{31}$.
+\end{trap}
+
+\subsection{Problem 3: bases and the complete solution for a matrix with a parameter}
+
+\begin{exercise}[Exam problem 3]\label{ex:u15-p3}
+This $3\times 4$ matrix depends on $c$:
+\[
+  A=\begin{bmatrix}1&1&2&4\\3&c&2&8\\0&0&2&2\end{bmatrix}.
+\]
+\begin{enumerate}[(a)]
+  \item For each $c$ find a basis for the column space of $A$.
+  \item For each $c$ find a basis for the nullspace of $A$.
+  \item For each $c$ find the complete solution of $A\vb{x}=(1,c,0)$.
+\end{enumerate}
+\end{exercise}
+
+\begin{solution}
+Subtract $3$ (row~1) from row~2:
+\[
+  \begin{bmatrix}1&1&2&4\\0&c-3&-4&-4\\0&0&2&2\end{bmatrix}.
+\]
+Everything depends on whether the entry $c-3$ is a pivot.
+
+\emph{Case $c\neq 3$.} The pivots are in columns 1, 2, 3, so $r=3$. Dividing and clearing
+upward gives
+\[
+  R=\begin{bmatrix}1&0&0&2\\0&1&0&0\\0&0&1&1\end{bmatrix}.
+\]
+(a) The pivot columns of $A$, namely $(1,3,0)$, $(1,c,0)$, $(2,2,2)$, are a basis for
+$\Col{A}$. Since $r=m=3$ this column space is all of $\R^3$, so the standard basis would do
+equally well.
+(b) One free variable, $x_4$. Setting $x_4=1$ in $R\vb{x}=\vb{0}$ gives $x_1=-2$, $x_2=0$,
+$x_3=-1$; the basis is $\vb{s}=(-2,0,-1,1)$.
+
+\emph{Case $c=3$.} Row~2 becomes $(0,0,-4,-4)$; adding half of it to row~3 kills row~3, so
+$r=2$ with pivots in columns 1 and 3:
+\[
+  R=\begin{bmatrix}1&1&0&2\\0&0&1&1\\0&0&0&0\end{bmatrix}.
+\]
+(a) Basis for $\Col{A}$: columns 1 and 3 of $A$, $(1,3,0)$ and $(2,2,2)$.
+(b) Free variables $x_2$ and $x_4$. The special solutions are
+$\vb{s}_1=(-1,1,0,0)$ (from $x_2=1,x_4=0$) and $\vb{s}_2=(-2,0,-1,1)$ (from $x_2=0,x_4=1$).
+
+(c) The right-hand side $(1,c,0)$ is exactly column~2 of $A$, so $\vb{x}_p=(0,1,0,0)$ is a
+particular solution for every $c$. Adding the nullspace:
+\[
+  c\neq 3:\ \ \vb{x}=\begin{bmatrix}0\\1\\0\\0\end{bmatrix}+x_4\begin{bmatrix}-2\\0\\-1\\1\end{bmatrix};
+  \qquad
+  c=3:\ \ \vb{x}=\begin{bmatrix}0\\1\\0\\0\end{bmatrix}+x_2\begin{bmatrix}-1\\1\\0\\0\end{bmatrix}
+   +x_4\begin{bmatrix}-2\\0\\-1\\1\end{bmatrix}.
+\]
+When $c=3$ the vector $(1,0,0,0)$ is another particular solution (column~1 equals
+$(1,3,0)$ too); it differs from $(0,1,0,0)$ by the null vector $\vb{s}_1$, so it describes
+the same solution set.
+\end{solution}
+
+\begin{trap}
+The basis for $\Col{A}$ consists of columns of $A$, not of $R$. For $c=3$ the pivot columns
+of $R$ are $(1,0,0)$ and $(0,1,0)$, which span the plane $x_3=0$. But column~3 of $A$ is
+$(2,2,2)$, which is not in that plane, so those two vectors are not a basis for $\Col{A}$.
+Row operations preserve the \emph{relations} among the columns, not the column space.
+\end{trap}
+
+\subsection{Problem 4: what \texorpdfstring{$\operatorname{rref}(A)$}{rref(A)} reveals}
+
+\begin{exercise}[Exam problem 4]\label{ex:u15-p4}
+\begin{enumerate}[(a)]
+  \item If $A$ is $3\times 5$, what do you know about its nullspace?
+  \item Row operations on $A$ lead to
+    \[
+      R=\operatorname{rref}(A)=\begin{bmatrix}1&4&0&0&0\\0&0&0&1&0\\0&0&0&0&1\end{bmatrix}.
+    \]
+    Write down everything you know about the columns of $A$.
+  \item In the vector space $M$ of all $3\times 3$ matrices, which subspace $S$ is spanned by
+    all possible reduced row echelon forms $R$?
+\end{enumerate}
+\end{exercise}
+
+\begin{solution}
+(a) $\Nul{A}$ is a subspace of $\R^5$ of dimension $5-r$. Since $r\le 3$, the dimension is
+at least $2$: the nullspace contains at least two independent vectors, and every
+$3\times 5$ matrix has nonzero solutions to $A\vb{x}=\vb{0}$.
+
+(b) Write $\vb{a}_1,\dots,\vb{a}_5$ for the columns of $A$. The pivots of $R$ are in columns
+1, 4, 5, so $r=3$ and:
+\begin{itemize}
+  \item $\vb{a}_1,\vb{a}_4,\vb{a}_5$ are independent and form a basis for
+    $\Col{A}=\R^3$ (three pivots in three rows);
+  \item $\vb{a}_2=4\vb{a}_1$, because $(-4,1,0,0,0)\in\Nul{R}=\Nul{A}$ means
+    $-4\vb{a}_1+\vb{a}_2=\vb{0}$;
+  \item $\vb{a}_3=\vb{0}$, because $(0,0,1,0,0)\in\Nul{A}$.
+\end{itemize}
+Nothing else is determined: any three independent vectors in $\R^3$ can serve as
+$\vb{a}_1,\vb{a}_4,\vb{a}_5$.
+
+(c) In an echelon matrix the pivot of row $i$ sits in a column $p_i$ with
+$p_1<p_2<\cdots$, so $p_i\ge i$ and everything to the left of a pivot is zero; zero rows are
+at the bottom. Hence every $R$ is \emph{upper triangular}, and so is every combination of
+$R$'s. Conversely, the six matrices $E_{ij}$ ($i\le j$) with a single $1$ in position
+$(i,j)$ are combinations of echelon forms:
+$E_{11}$, $E_{12}$, $E_{13}$ are themselves echelon forms; $E_{22}$ is the echelon form
+$\left[\begin{smallmatrix}1&0&0\\0&1&0\\0&0&0\end{smallmatrix}\right]$ minus $E_{11}$;
+$E_{23}$ is $\left[\begin{smallmatrix}0&1&0\\0&0&1\\0&0&0\end{smallmatrix}\right]$ minus
+$E_{12}$; $E_{33}$ is $I$ minus
+$\left[\begin{smallmatrix}1&0&0\\0&1&0\\0&0&0\end{smallmatrix}\right]$.
+So $S$ is the space of all $3\times 3$ upper triangular matrices, of dimension $6$.
+\end{solution}
+
+\subsection{Variations for practice}
+
+\begin{exercise}\label{ex:u15-v1}
+Suppose $A\vb{x}=\vb{b}$ has a solution for every $\vb{b}\in\R^2$, and $A\vb{x}=(1,0)$ has
+infinitely many solutions. What can you say about $m$, $n$, $r$? Give an example.
+\end{exercise}
+
+\begin{solution}
+$\vb{b}\in\R^2$ gives $m=2$; solvable for every $\vb{b}$ gives $r=m=2$; infinitely many
+solutions means free variables, so $n>r=2$. Thus $m=r=2<n$. Example:
+$A=\begin{bmatrix}1&0&0\\0&1&0\end{bmatrix}$, where $A\vb{x}=(1,0)$ is solved by
+$(1,0,t)$ for every $t$.
+\end{solution}
+
+\begin{exercise}\label{ex:u15-v2}
+Elimination on a $3\times 3$ matrix $A$ uses $E_{21}$ (subtract $2$ times row~1 from
+row~2) and then $E_{32}$ (subtract $5$ times row~2 from row~3), reaching
+$U=\begin{bmatrix}1&1&1\\0&1&1\\0&0&1\end{bmatrix}$. Find $L$ and $A$.
+\end{exercise}
+
+\begin{solution}
+In the order $E_{21}$, $E_{32}$ the multipliers go directly into $L$:
+$L=E_{21}^{-1}E_{32}^{-1}=\begin{bmatrix}1&0&0\\2&1&0\\0&5&1\end{bmatrix}$. Then
+\[
+  A=LU=\begin{bmatrix}1&0&0\\2&1&0\\0&5&1\end{bmatrix}
+       \begin{bmatrix}1&1&1\\0&1&1\\0&0&1\end{bmatrix}
+      =\begin{bmatrix}1&1&1\\2&3&3\\0&5&6\end{bmatrix}.
+\]
+Check: subtracting $2$ (row~1) from row~2 gives $(0,1,1)$, then subtracting $5$ times that
+from row~3 gives $(0,0,1)$.
+\end{solution}

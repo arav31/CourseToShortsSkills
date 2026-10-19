@@ -1,0 +1,115 @@
+1
+00:00:00,138 --> 00:00:02,075
+Feed a matrix every arrow on a
+
+2
+00:00:02,075 --> 00:00:04,900
+circle. However messy the matrix,
+
+3
+00:00:04,900 --> 00:00:07,212
+out comes a clean ellipse. Why?
+
+4
+00:00:07,833 --> 00:00:09,970
+Take A with rows six, eight and
+
+5
+00:00:09,970 --> 00:00:11,958
+minus four, three.
+
+6
+00:00:11,958 --> 00:00:14,971
+The two axis arrows land on its columns.
+
+7
+00:00:15,567 --> 00:00:16,979
+Those images are no longer
+
+8
+00:00:16,979 --> 00:00:17,805
+perpendicular:
+
+9
+00:00:18,155 --> 00:00:19,954
+their dot product is forty eight
+
+10
+00:00:19,954 --> 00:00:22,154
+minus twelve, thirty six.
+
+11
+00:00:22,742 --> 00:00:23,979
+Now turn the pair.
+
+12
+00:00:23,979 --> 00:00:26,479
+A quarter turn swaps their roles,
+
+13
+00:00:26,479 --> 00:00:28,517
+so the dot product flips to minus
+
+14
+00:00:28,517 --> 00:00:29,467
+thirty six.
+
+15
+00:00:30,067 --> 00:00:31,479
+So somewhere in between it is
+
+16
+00:00:31,479 --> 00:00:33,942
+zero, for any matrix at all.
+
+17
+00:00:33,942 --> 00:00:36,042
+Here that happens at v one equals
+
+18
+00:00:36,042 --> 00:00:37,954
+point six, point eight.
+
+19
+00:00:38,567 --> 00:00:41,642
+Their images, ten, zero and zero,
+
+20
+00:00:41,642 --> 00:00:44,105
+five, are perpendicular too:
+
+21
+00:00:44,105 --> 00:00:46,404
+the long and short axes of the ellipse.
+
+22
+00:00:46,987 --> 00:00:48,875
+Any arrow on the circle is a mix
+
+23
+00:00:48,875 --> 00:00:51,962
+of v one and v two, so its image
+
+24
+00:00:51,962 --> 00:00:54,363
+is the same mix of the two axes.
+
+25
+00:00:54,363 --> 00:00:55,787
+That traces an ellipse.
+
+26
+00:00:56,400 --> 00:00:58,062
+Ten and five are the singular
+
+27
+00:00:58,062 --> 00:01:00,563
+values, and in matrix form this is
+
+28
+00:01:00,563 --> 00:01:02,525
+the singular value decomposition:
+
+29
+00:01:02,912 --> 00:01:05,675
+A equals U Sigma V transpose.

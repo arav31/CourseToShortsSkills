@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Video"
+  short_description: "Make a narrated 3Blue1Brown-style vertical short"
+  default_prompt: "Use $course-video to storyboard, render and review an explainer short for this concept."

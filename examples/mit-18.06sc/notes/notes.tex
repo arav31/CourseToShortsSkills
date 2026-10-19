@@ -1,0 +1,226 @@
+% Study notes for MIT 18.06SC Linear Algebra, written with the course-notes skill.
+\documentclass[11pt]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,tabularx,array,longtable}
+\usepackage[shortlabels]{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,patterns,shapes.geometric,matrix,fit,backgrounds,angles,quotes,intersections}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist{itemsep=0.15em,topsep=0.3em}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small 18.06SC Linear Algebra}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+% Maths in headings also goes into PDF bookmarks; give macros a plain-text meaning there
+% (or write headings as \texorpdfstring{$...$}{plain text}).
+\pdfstringdefDisableCommands{\def\vb#1{#1}\def\T{T}\def\R{R}}
+
+% Numbered environments share one counter per section: Definition 2.1, Theorem 2.2, ...
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}[definition]{Example}
+\newtheorem{exercise}[definition]{Exercise}
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem*{trap}{Common trap}
+\newenvironment{solution}{\begin{proof}[Solution]}{\end{proof}}
+
+% Course-specific notation (add what the course uses; keep it consistent).
+\newcommand{\vb}[1]{\boldsymbol{#1}}          % vectors: \vb{x}, \vb{b}
+\newcommand{\T}{^{\mathsf{T}}}                 % transpose: A\T
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Span}{span}
+\newcommand{\Col}[1]{\mathbf{C}(#1)}            % column space C(A)
+\newcommand{\Nul}[1]{\mathbf{N}(#1)}            % nullspace N(A)
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+\begin{document}
+
+\begin{titlepage}
+  \raggedright
+  \vspace*{2.2cm}
+  {\Huge\bfseries Linear Algebra\par}
+  \vspace{0.8em}
+  {\Large MIT 18.06SC \textperiodcentered{} after Gilbert Strang's lectures, MIT OpenCourseWare\par}
+  \vspace{0.4em}
+  {\large Study notes\par}
+  \vfill
+  \begin{flushright}
+    \begin{minipage}{0.46\textwidth}
+      \raggedleft\hyphenpenalty=10000\exhyphenpenalty=10000
+      {\itshape ``The best way to learn is to do; the worst way to teach is to talk.''\par}
+      \vspace{0.5em}
+      --- Paul Halmos\par
+    \end{minipage}
+  \end{flushright}
+  \vfill
+  {\small October 2026\par}
+\end{titlepage}
+
+\setcounter{tocdepth}{1}% sections only; subsections make the contents run for pages
+\tableofcontents
+\clearpage
+
+\section*{About these notes}
+These notes follow MIT 18.06SC (Fall 2011), Gilbert Strang's first course in linear algebra, session by session. Part I solves $A\vb{x}=\vb{b}$ and builds the four fundamental subspaces; Part II adds orthogonality, least squares, determinants and eigenvalues; Part III turns to symmetric and positive definite matrices, the SVD and linear transformations. High-school algebra is the only prerequisite. Each section ends with exercises and full solutions, and the exam sections collect solved practice problems.
+
+\subsection*{Notation}
+\begin{longtable}{@{}p{0.28\textwidth}p{0.66\textwidth}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$A$, $m\times n$ & a matrix with $m$ rows and $n$ columns \\
+$\vb{x}\in\R^n$, $\vb{b}\in\R^m$ & the unknown vector and the right-hand side in $A\vb{x}=\vb{b}$ \\
+$\vb{a}_j$ & column $j$ of $A$ \\
+$A\T$ & the transpose: $(A\T)_{ij}=A_{ji}$ \\
+$A^{-1}$ & the inverse of a square invertible matrix: $A^{-1}A=I$ \\
+$I$ & the identity matrix \\
+$E$, $P$, $L$, $U$ & elimination, permutation, lower and upper triangular matrices ($A=LU$, $PA=LU$) \\
+$R$ & the reduced row echelon form of $A$ \\
+$r=\rank A$ & the rank: the number of pivots \\
+$\Col{A}$, $\Col{A\T}$ & the column space and the row space \\
+$\Nul{A}$, $\Nul{A\T}$ & the nullspace and the left nullspace \\
+$\Span\{\vb{v}_1,\dots,\vb{v}_k\}$ & all linear combinations of the vectors \\
+$\vb{u}\cdot\vb{v}=\vb{u}\T\vb{v}$ & dot product; $\|\vb{v}\|=\sqrt{\vb{v}\T\vb{v}}$ is length \\
+$P$, $\hat{\vb{x}}$, $\vb{e}$ & projection matrix, least-squares solution, error $\vb{e}=\vb{b}-A\hat{\vb{x}}$ \\
+$Q$ & a matrix with orthonormal columns ($Q\T Q=I$) \\
+$\det A$ & the determinant (signed volume factor) \\
+$\lambda$, $\vb{x}$ & an eigenvalue and eigenvector: $A\vb{x}=\lambda\vb{x}$ \\
+$X$, $\Lambda$ & eigenvector matrix (the 2011 lectures write $S$) and diagonal eigenvalue matrix: $A=X\Lambda X^{-1}$ \\
+$\tr A$ & the trace: the sum of the diagonal entries (= sum of eigenvalues) \\
+$\sigma_i$; $U$, $\Sigma$, $V$ & singular values and the SVD $A=U\Sigma V\T$ \\
+$A^{+}$ & the pseudoinverse \\
+\bottomrule
+\end{longtable}
+\addtocounter{table}{-1}% the notation table is not a numbered table
+\clearpage
+
+% One file per outline unit, in course order.
+\part{\texorpdfstring{$A\vb{x}=\vb{b}$}{Ax = b} and the four subspaces}
+\input{units/u01}
+\input{units/u02}
+\input{units/u03}
+\input{units/u04}
+\input{units/u05}
+\input{units/u06}
+\input{units/u07}
+\input{units/u08}
+\input{units/u09}
+\input{units/u10}
+\input{units/u11}
+\input{units/u12}
+\input{units/u13}
+\input{units/u14}
+\input{units/u15}
+\part{Least squares, determinants and eigenvalues}
+\input{units/u16}
+\input{units/u17}
+\input{units/u18}
+\input{units/u19}
+\input{units/u20}
+\input{units/u21}
+\input{units/u22}
+\input{units/u23}
+\input{units/u24}
+\input{units/u25}
+\input{units/u26}
+\input{units/u27}
+\input{units/u28}
+\part{Positive definite matrices and applications}
+\input{units/u29}
+\input{units/u30}
+\input{units/u31}
+\input{units/u32}
+\input{units/u33}
+\input{units/u34}
+\input{units/u35}
+\input{units/u36}
+\input{units/u37}
+\input{units/u38}
+\part{Review}
+\input{units/u39}
+\input{units/u40}
+\input{units/u41}
+
+\appendix
+\section{Formula sheet}
+The results below are the ones the rest of the course leans on. Each line points to the
+section where it is derived; none of them should be used without knowing why it is true.
+
+\subsection*{Part I: \texorpdfstring{$A\vb{x}=\vb{b}$}{Ax = b} and the four subspaces}
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{@{}p{0.45\textwidth}p{0.40\textwidth}r@{}}
+\toprule
+Result & Meaning & Where \\
+\midrule
+$A\vb{x}=x_1\vb{a}_1+\dots+x_n\vb{a}_n$ & $A\vb{x}$ is a combination of the columns & \S\ref{sec:u01} \\
+$A\vb{x}=\vb{b}$ solvable $\iff \vb{b}\in\Col{A}$ & the column picture decides solvability & \S\ref{sec:u07} \\
+$(AB)^{-1}=B^{-1}A^{-1}$, \ $(AB)\T=B\T A\T$ & inverses and transposes reverse order & \S\ref{sec:u04}, \S\ref{sec:u06} \\
+$A=LU$, \ $PA=LU$ & elimination recorded as a factorization & \S\ref{sec:u05}, \S\ref{sec:u06} \\
+$\vb{x}=\vb{x}_p+\vb{x}_n$ & complete solution: particular plus nullspace & \S\ref{sec:u09} \\
+$\dim\Col{A}=\dim\Col{A\T}=r$ & row rank equals column rank & \S\ref{sec:u11} \\
+$\dim\Nul{A}=n-r$, \ $\dim\Nul{A\T}=m-r$ & free variables count the nullspace & \S\ref{sec:u08}, \S\ref{sec:u11} \\
+$r=m$: solvable for every $\vb{b}$; \ $r=n$: at most one solution & full row rank / full column rank & \S\ref{sec:u09} \\
+$\dim(S+U)=\dim S+\dim U-\dim(S\cap U)$ & dimension of a sum of subspaces & \S\ref{sec:u12} \\
+$A\T C A\vb{x}=\vb{f}$ & balance law on a network & \S\ref{sec:u13} \\
+\bottomrule
+\end{longtable}
+
+\subsection*{Part II: orthogonality, determinants and eigenvalues}
+\begin{longtable}{@{}p{0.45\textwidth}p{0.40\textwidth}r@{}}
+\toprule
+Result & Meaning & Where \\
+\midrule
+$\Nul{A}\perp\Col{A\T}$, \ $\Nul{A\T}\perp\Col{A}$ & the four subspaces meet at right angles & \S\ref{sec:u16} \\
+$\Nul{A\T A}=\Nul{A}$ & $A\T A$ is invertible iff $A$ has independent columns & \S\ref{sec:u16} \\
+$\vb{p}=\dfrac{\vb{a}\T\vb{b}}{\vb{a}\T\vb{a}}\,\vb{a}$, \ $P=\dfrac{\vb{a}\vb{a}\T}{\vb{a}\T\vb{a}}$ & projection onto a line & \S\ref{sec:u17} \\
+$A\T A\hat{\vb{x}}=A\T\vb{b}$, \ $P=A(A\T A)^{-1}A\T$ & projection onto $\Col{A}$; least squares & \S\ref{sec:u17}, \S\ref{sec:u18} \\
+$P^2=P=P\T$ & what makes a matrix a projection & \S\ref{sec:u18} \\
+$Q\T Q=I$, \ $A=QR$, \ $\hat{\vb{x}}=R^{-1}Q\T\vb{b}$ & orthonormal columns and Gram--Schmidt & \S\ref{sec:u19} \\
+$\det AB=\det A\det B$, \ $\det A\T=\det A$ & multiplicative and transpose-invariant & \S\ref{sec:u20} \\
+$\det A=\sum_j a_{1j}C_{1j}$, \ $A^{-1}=\dfrac{C\T}{\det A}$ & cofactor expansion and the inverse & \S\ref{sec:u21}, \S\ref{sec:u22} \\
+$x_j=\det B_j/\det A$ & Cramer's rule & \S\ref{sec:u22} \\
+$\det(A-\lambda I)=0$; \ $\sum\lambda_i=\tr A$, \ $\prod\lambda_i=\det A$ & eigenvalues & \S\ref{sec:u23} \\
+$A=X\Lambda X^{-1}$, \ $A^k=X\Lambda^kX^{-1}$ & diagonalization and powers & \S\ref{sec:u24} \\
+$\vb{u}(t)=e^{At}\vb{u}(0)=Xe^{\Lambda t}X^{-1}\vb{u}(0)$ & solving $\vb{u}'=A\vb{u}$; stable iff all $\operatorname{Re}\lambda<0$ & \S\ref{sec:u25} \\
+Markov: $\lambda_1=1$, \ $|\lambda_i|\le1$ & steady state is the $\lambda=1$ eigenvector & \S\ref{sec:u26} \\
+\bottomrule
+\end{longtable}
+
+\subsection*{Part III: symmetric matrices, the SVD and transformations}
+\begin{longtable}{@{}p{0.45\textwidth}p{0.40\textwidth}r@{}}
+\toprule
+Result & Meaning & Where \\
+\midrule
+$S=Q\Lambda Q\T$ for $S=S\T$ & real eigenvalues, orthonormal eigenvectors & \S\ref{sec:u29} \\
+$\bar{\vb{x}}\T\vb{y}$, \ $A^{\mathsf H}=\bar A\T$, \ $F_n^{-1}=\bar F_n/n$ & complex inner product; Fourier matrix & \S\ref{sec:u30} \\
+$\vb{x}\T S\vb{x}>0$ for $\vb{x}\neq\vb{0}$ & positive definite: pivots, eigenvalues, upper-left determinants all positive & \S\ref{sec:u29}, \S\ref{sec:u31} \\
+$B=M^{-1}AM$ has the eigenvalues of $A$ & similar matrices; Jordan form & \S\ref{sec:u32} \\
+$A=U\Sigma V\T$, \ $A\vb{v}_i=\sigma_i\vb{u}_i$ & SVD; $\sigma_i^2$ are the eigenvalues of $A\T A$ & \S\ref{sec:u33} \\
+$[T]_{\text{new}}=M^{-1}[T]_{\text{old}}M$ & a linear map in a new basis & \S\ref{sec:u34}, \S\ref{sec:u35} \\
+$A^{+}=V\Sigma^{+}U\T$ & pseudoinverse; $A^{+}\vb{b}$ is the shortest least-squares solution & \S\ref{sec:u36} \\
+\bottomrule
+\end{longtable}
+
+\end{document}

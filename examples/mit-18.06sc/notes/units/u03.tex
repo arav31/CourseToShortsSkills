@@ -1,0 +1,392 @@
+% unit: u03
+% sources: sources/072-elimination-with-matrices.txt, sources/123-lecture-elimination-with-matrices.txt, sources/124-mit18-06scf11-ses1-2sum-pdf-download-file.txt, sources/026-elimination-with-matrices.txt, sources/125-mit18-06scf11-ses1-2prob-pdf-download-file.txt, sources/126-mit18-06scf11-ses1-2sol-pdf-download-file.txt
+\section{Elimination with matrices}\label{sec:u03}
+
+Section~\ref{sec:u01} asked which combination of the columns produces $\vb{b}$ but had no
+systematic way to find it. \emph{Gaussian elimination} is that way, and it is how essentially
+every software package solves $A\vb{x}=\vb{b}$. It subtracts multiples of equations from
+other equations until the system is triangular, then solves the triangular system from the
+bottom up. This section does elimination by hand, sees how it can fail, and then rewrites
+each step as multiplication by a simple matrix. That last move turns a procedure into
+algebra, and it is the starting point for the factorization $A=LU$ in Section~\ref{sec:u05}.
+
+\subsection{Pivots and multipliers}
+
+Our example has three equations in three unknowns:
+\begin{equation}\label{eq:u03-system}
+\begin{aligned}
+  x + 2y + z &= 2\\
+  3x + 8y + z &= 12\\
+  4y + z &= 2
+\end{aligned}
+\qquad\qquad
+A=\begin{bmatrix} 1 & 2 & 1\\ 3 & 8 & 1\\ 0 & 4 & 1\end{bmatrix},\quad
+\vb{b}=\begin{bmatrix} 2\\ 12\\ 2\end{bmatrix}.
+\end{equation}
+Elimination works on the rows of $A$ (the equations), so we write only the numbers.
+
+\begin{definition}[Pivot, multiplier, upper triangular]\label{def:u03-pivot}
+Elimination clears the columns of $A$ from left to right. At step $k$ the \emph{pivot} is the
+entry in position $(k,k)$ of the current matrix; it must be nonzero. To clear an entry
+$a_{ik}$ below the pivot ($i>k$), subtract
+\[
+  \ell_{ik} = \frac{\text{entry to eliminate}}{\text{pivot}}
+\]
+times the pivot row $k$ from row $i$. The number $\ell_{ik}$ is the \emph{multiplier}. When
+all columns are cleared the result $U$ is \emph{upper triangular}: every entry below the main
+diagonal is zero, and the pivots sit on the diagonal.
+\end{definition}
+
+\begin{example}[Forward elimination on a $3\times3$ system]\label{ex:u03-forward}
+Eliminate below the pivots of the matrix $A$ in \eqref{eq:u03-system}.
+\begin{itemize}
+  \item \emph{Step $(2,1)$.} The first pivot is $1$. The entry below it is $3$, so
+    $\ell_{21}=3/1=3$: subtract $3$ times row $1$ from row $2$, giving
+    $(3,8,1)-3(1,2,1)=(0,2,-2)$.
+  \item \emph{Step $(3,1)$.} The entry in position $(3,1)$ is already $0$, so
+    $\ell_{31}=0$ and nothing changes. (Software still checks this position.)
+  \item \emph{Step $(3,2)$.} The second pivot is the $2$ now in position $(2,2)$. The entry
+    below it is $4$, so $\ell_{32}=4/2=2$: subtract $2$ times the \emph{new} row $2$ from
+    row $3$, giving $(0,4,1)-2(0,2,-2)=(0,0,5)$.
+\end{itemize}
+The third pivot is $5$, and
+\[
+  A=\begin{bmatrix} 1 & 2 & 1\\ 3 & 8 & 1\\ 0 & 4 & 1\end{bmatrix}
+  \;\longrightarrow\;
+  \begin{bmatrix} 1 & 2 & 1\\ 0 & 2 & -2\\ 0 & 4 & 1\end{bmatrix}
+  \;\longrightarrow\;
+  U=\begin{bmatrix} 1 & 2 & 1\\ 0 & 2 & -2\\ 0 & 0 & 5\end{bmatrix}.
+\]
+\end{example}
+The pivots $1,2,5$ already tell us a great deal about $A$. For instance, their product
+$1\cdot2\cdot5=10$ is the determinant of $A$ (Section~\ref{sec:u20}).
+
+The right-hand side must receive the same operations. The convenient bookkeeping is the
+\emph{augmented matrix} $[\,A\;\;\vb{b}\,]$, with $\vb{b}$ tacked on as an extra column.
+Subtracting $3$ times row~1 changes $12$ into $12-3\cdot2=6$; subtracting $2$ times row~2
+changes $2$ into $2-2\cdot6=-10$. Elimination turns $A\vb{x}=\vb{b}$ into $U\vb{x}=\vb{c}$
+with $\vb{c}=(2,6,-10)$; Figure~\ref{fig:u03-flow} records the whole computation.
+
+\begin{figure}[ht]
+\centering
+\small
+\begin{tikzpicture}[>=Stealth]
+  \node (A) {$\left[\begin{array}{rrr|r} \boxed{1} & 2 & 1 & 2\\ 3 & 8 & 1 & 12\\ 0 & 4 & 1 & 2\end{array}\right]$};
+  \node[right=2.3cm of A] (B) {$\left[\begin{array}{rrr|r} \boxed{1} & 2 & 1 & 2\\ 0 & \boxed{2} & -2 & 6\\ 0 & 4 & 1 & 2\end{array}\right]$};
+  \node[right=2.3cm of B] (C) {$\left[\begin{array}{rrr|r} \boxed{1} & 2 & 1 & 2\\ 0 & \boxed{2} & -2 & 6\\ 0 & 0 & \boxed{5} & -10\end{array}\right]$};
+  \draw[->,thick] (A) -- node[above,align=center,font=\footnotesize] {$E_{21}$\\ row$_2-3\,$row$_1$} (B);
+  \draw[->,thick] (B) -- node[above,align=center,font=\footnotesize] {$E_{32}$\\ row$_3-2\,$row$_2$} (C);
+  \node[below=3pt of A] {$[\,A\;\;\vb{b}\,]$};
+  \node[below=3pt of B] {$[\,E_{21}A\;\;E_{21}\vb{b}\,]$};
+  \node[below=3pt of C] {$[\,U\;\;\vb{c}\,]$};
+\end{tikzpicture}
+\caption{Forward elimination on the augmented matrix. Boxed entries are pivots. Each arrow is
+one row operation, equivalently one multiplication on the left by an elimination matrix; the
+step $E_{31}$ is skipped because the $(3,1)$ entry is already zero. The right-hand column
+changes from $\vb{b}=(2,12,2)$ to $\vb{c}=(2,6,-10)$.}\label{fig:u03-flow}
+\end{figure}
+
+\subsection{Back substitution}
+
+The triangular system $U\vb{x}=\vb{c}$ reads
+\[
+  x+2y+z=2,\qquad 2y-2z=6,\qquad 5z=-10 .
+\]
+Solve it in reverse order. The last equation gives $z=-2$. The second becomes
+$2y+4=6$, so $y=1$. The first becomes $x+2-2=2$, so $x=2$. Checking in the original
+equations \eqref{eq:u03-system}: $2+2-2=2$, $6+8-2=12$, $4-2=2$.
+
+\begin{proposition}[Back substitution]\label{prop:u03-back}
+Let $U$ be an $n\times n$ upper triangular matrix whose diagonal entries $u_{11},\dots,u_{nn}$
+are all nonzero. Then for every $\vb{c}$ the system $U\vb{x}=\vb{c}$ has exactly one
+solution, given by
+\[
+  x_n=\frac{c_n}{u_{nn}},\qquad
+  x_i=\frac{1}{u_{ii}}\Bigl(c_i-\sum_{j=i+1}^{n}u_{ij}x_j\Bigr)\quad (i=n-1,\dots,1).
+\]
+\end{proposition}
+
+\begin{proof}
+Equation $i$ of $U\vb{x}=\vb{c}$ is $u_{ii}x_i+\sum_{j>i}u_{ij}x_j=c_i$, because the entries
+left of the diagonal are zero. Equation $n$ involves only $x_n$ and forces $x_n=c_n/u_{nn}$.
+Suppose $x_{i+1},\dots,x_n$ are already forced. Then equation $i$ has exactly one unknown
+left, $x_i$, with the nonzero coefficient $u_{ii}$, so it forces the stated value. Working
+upward, every component is forced, which proves uniqueness; and the values so obtained
+satisfy every equation, which proves existence.
+\end{proof}
+
+\subsection{When elimination breaks down}
+
+Zero is never allowed as a pivot. If a zero appears in the pivot position, there are two
+cases.
+
+\emph{Temporary failure.} If some row \emph{below} has a nonzero entry in that column,
+exchange the two rows and continue.
+
+\begin{example}[A row exchange rescues elimination]\label{ex:u03-exchange}
+Change the $8$ in $A$ to a $6$. The first step gives
+row~2 $=(3,6,1)-3(1,2,1)=(0,0,-2)$, a zero in the $(2,2)$ pivot position. Row~3 is
+$(0,4,1)$, with a nonzero entry there, so exchange rows~2 and~3:
+\[
+  \begin{bmatrix} 1 & 2 & 1\\ 0 & 0 & -2\\ 0 & 4 & 1\end{bmatrix}
+  \;\xrightarrow{\text{exchange rows 2, 3}}\;
+  \begin{bmatrix} 1 & 2 & 1\\ 0 & 4 & 1\\ 0 & 0 & -2\end{bmatrix},
+\]
+which is already triangular, with pivots $1,4,-2$. The matrix is fine; only the order of the
+equations was unlucky.
+\end{example}
+
+\emph{Complete failure.} If the pivot position holds a zero and every entry below it is zero
+too, no exchange helps.
+
+\begin{example}[Elimination fails: a singular matrix]\label{ex:u03-singular}
+Change the $(3,3)$ entry of $A$ from $1$ to $-4$. The first step
+gives row~2 $=(0,2,-2)$ and leaves row~3 $=(0,4,-4)$; subtracting $2$ times row~2 leaves
+row~3 $=(0,0,0)$. There is no third pivot. The matrix is \emph{singular}: depending on
+$\vb{b}$, the system has no solution or infinitely many, never exactly one. (In the column
+picture, column~3 has become $(1,1,-4)=3\,(1,3,0)-(2,8,4)$, a combination of the
+first two columns.)
+\end{example}
+
+In summary, elimination on an $n\times n$ matrix proceeds as follows.
+\begin{enumerate}
+  \item For $k=1,\dots,n$: if the $(k,k)$ entry is zero, exchange row $k$ with a lower row
+    that has a nonzero entry in column $k$; if there is none, stop: $A$ is singular.
+  \item For each row $i>k$, compute $\ell_{ik}=a_{ik}/a_{kk}$ (current entries) and subtract
+    $\ell_{ik}$ times row $k$ from row $i$, in the augmented column as well.
+  \item When all $n$ pivots are found, solve $U\vb{x}=\vb{c}$ by back substitution.
+\end{enumerate}
+
+\begin{trap}
+The multipliers use the \emph{current} entries, not the original ones: in step $(3,2)$ the
+multiplier is $4/2$, where $2$ is the pivot created by step $(2,1)$, not the original entry
+$8$. And a zero in a pivot position is not yet a verdict of singularity: look below it first.
+Only a zero with nothing nonzero underneath means failure.
+\end{trap}
+
+\subsection{Each elimination step is a matrix}
+
+To put elimination into matrix language we need products of matrices. Multiplying a matrix
+by a column gives a combination of its columns (Definition~\ref{def:u01-Ax}). The mirror image
+is a row times a matrix.
+
+\begin{proposition}[Row times matrix]\label{prop:u03-rowtimes}
+If $\vb{y}\T=(y_1,\dots,y_m)$ is a row vector and $A$ is $m\times n$ with rows
+$\vb{r}_1,\dots,\vb{r}_m$, then $\vb{y}\T A=y_1\vb{r}_1+\cdots+y_m\vb{r}_m$, a combination of
+the rows of $A$.
+\end{proposition}
+
+\begin{proof}
+Entry $j$ of $\vb{y}\T A$ is the row $\vb{y}\T$ times column $j$ of $A$, namely
+$\sum_i y_ia_{ij}$. Entry $j$ of $\sum_i y_i\vb{r}_i$ is also $\sum_i y_ia_{ij}$, since
+$a_{ij}$ is entry $j$ of row $\vb{r}_i$.
+\end{proof}
+
+For example, $\begin{bmatrix} 1 & 2 & 7\end{bmatrix}A
+=1\,(1,2,1)+2\,(3,8,1)+7\,(0,4,1)=(7,46,10)$.
+For a matrix $E$ with $m$ columns and a matrix $A$ with $m$ rows, the product $EA$ is the
+matrix whose column $j$ is $E$ times column $j$ of $A$; its $(i,j)$ entry is row $i$ of $E$
+times column $j$ of $A$. By Proposition~\ref{prop:u03-rowtimes}, \emph{row $i$ of $EA$ is
+the combination of the rows of $A$ given by row $i$ of $E$}. (Section~\ref{sec:u04} collects
+all the ways to see a matrix product.) So to subtract $3$ times row~1 from row~2 and leave
+the other rows alone, the rows of $E$ must be $(1,0,0)$, $(-3,1,0)$ and $(0,0,1)$.
+
+\begin{definition}[Elimination matrix]\label{def:u03-Eij}
+For $i\neq j$, the \emph{elimination matrix} $E_{ij}$ with multiplier $\ell$ is the identity
+matrix with the entry $-\ell$ placed in row $i$, column $j$. Multiplying on the left,
+$E_{ij}A$ subtracts $\ell$ times row $j$ of $A$ from row $i$ and leaves the other rows
+unchanged.
+\end{definition}
+
+\begin{example}[Elimination as matrix multiplication]\label{ex:u03-matrices}
+For the example \eqref{eq:u03-system}, the two nontrivial steps are
+\[
+  E_{21}=\begin{bmatrix} 1 & 0 & 0\\ -3 & 1 & 0\\ 0 & 0 & 1\end{bmatrix},\qquad
+  E_{32}=\begin{bmatrix} 1 & 0 & 0\\ 0 & 1 & 0\\ 0 & -2 & 1\end{bmatrix}.
+\]
+Then
+\[
+  E_{21}A=\begin{bmatrix} 1 & 2 & 1\\ 0 & 2 & -2\\ 0 & 4 & 1\end{bmatrix},\qquad
+  E_{32}(E_{21}A)=\begin{bmatrix} 1 & 2 & 1\\ 0 & 2 & -2\\ 0 & 0 & 5\end{bmatrix}=U.
+\]
+Spot-check one entry: the $(2,3)$ entry of $E_{21}A$ is row~2 of $E_{21}$ times column~3 of
+$A$, $(-3)(1)+(1)(1)+(0)(1)=-2$. The step $E_{31}$ is the identity, because $\ell_{31}=0$.
+\end{example}
+
+The whole of forward elimination is the single line $E_{32}(E_{31}(E_{21}A))=U$. Can we
+multiply the $E$'s together first, to get one matrix that does everything? Yes, because
+matrix multiplication is associative.
+
+\begin{proposition}[Associative law]\label{prop:u03-assoc}
+If the shapes allow the products, $(EF)A=E(FA)$.
+\end{proposition}
+
+\begin{proof}
+Compare the $(i,j)$ entries, writing $e,f,a$ for the entries of $E,F,A$:
+\[
+  \bigl((EF)A\bigr)_{ij}=\sum_k\Bigl(\sum_l e_{il}f_{lk}\Bigr)a_{kj}
+  =\sum_l e_{il}\Bigl(\sum_k f_{lk}a_{kj}\Bigr)=\bigl(E(FA)\bigr)_{ij}.
+\]
+Both are the sum of $e_{il}f_{lk}a_{kj}$ over all $k$ and $l$, added in a different order.
+\end{proof}
+
+So we may move parentheses freely, as long as the order of the factors is kept. For the
+example, $E=E_{32}E_{21}$ does all of elimination at once:
+\[
+  E=\begin{bmatrix} 1 & 0 & 0\\ 0 & 1 & 0\\ 0 & -2 & 1\end{bmatrix}
+  \begin{bmatrix} 1 & 0 & 0\\ -3 & 1 & 0\\ 0 & 0 & 1\end{bmatrix}
+  =\begin{bmatrix} 1 & 0 & 0\\ -3 & 1 & 0\\ 6 & -2 & 1\end{bmatrix},\qquad EA=U,\quad E\vb{b}=\vb{c}.
+\]
+The entry $6$ appears because $3$ of row~1 went into row~2 and then $2$ of that row~2 went into
+row~3. Section~\ref{sec:u05} shows how to avoid such entries by recording elimination the
+other way around.
+
+The order of the factors cannot be changed: the \emph{commutative} law fails for matrices.
+Row exchanges show this vividly.
+
+\begin{definition}[Permutation matrix]\label{def:u03-perm}
+A \emph{permutation matrix} $P$ is the identity matrix with its rows reordered. Multiplying
+on the left, $PA$ reorders the rows of $A$ in the same way.
+\end{definition}
+
+To exchange the two rows of a $2\times2$ matrix, exchange the rows of $I$:
+\[
+  \begin{bmatrix} 0 & 1\\ 1 & 0\end{bmatrix}\begin{bmatrix} a & b\\ c & d\end{bmatrix}
+  =\begin{bmatrix} c & d\\ a & b\end{bmatrix},
+  \qquad
+  \begin{bmatrix} a & b\\ c & d\end{bmatrix}\begin{bmatrix} 0 & 1\\ 1 & 0\end{bmatrix}
+  =\begin{bmatrix} b & a\\ d & c\end{bmatrix}.
+\]
+On the left, $P$ acts on rows; on the right, the same $P$ acts on columns (each column of $AP$
+is a combination of the columns of $A$). So $PA\neq AP$ in general. In elimination we use
+row operations, so the elimination and permutation matrices always multiply from the left.
+
+\subsection{Undoing a step: inverse matrices}
+
+Every elimination step can be undone. If $E_{21}$ subtracts $3$ times row~1 from row~2, the
+step that brings row~2 back adds $3$ times row~1 to row~2:
+\[
+  E_{21}^{-1}E_{21}=
+  \begin{bmatrix} 1 & 0 & 0\\ 3 & 1 & 0\\ 0 & 0 & 1\end{bmatrix}
+  \begin{bmatrix} 1 & 0 & 0\\ -3 & 1 & 0\\ 0 & 0 & 1\end{bmatrix}
+  =\begin{bmatrix} 1 & 0 & 0\\ 0 & 1 & 0\\ 0 & 0 & 1\end{bmatrix}=I .
+\]
+For example, $E_{21}$ turns $\vb{b}=(2,12,2)$ into $(2,6,2)$, and $E_{21}^{-1}$ turns
+$(2,6,2)$ back into $(2,12,2)$. The matrix $I$ is the \emph{identity}: $I\vb{x}=\vb{x}$ for
+every $\vb{x}$, the matrix analogue of the number $1$.
+
+\begin{proposition}[Inverse of an elimination matrix]\label{prop:u03-Einv}
+Let $E_{ij}(\ell)$ denote the elimination matrix with $-\ell$ in position $(i,j)$. Then
+$E_{ij}(-\ell)\,E_{ij}(\ell)=I=E_{ij}(\ell)\,E_{ij}(-\ell)$. A permutation matrix that
+exchanges two rows is its own inverse.
+\end{proposition}
+
+\begin{proof}
+Apply $E_{ij}(-\ell)E_{ij}(\ell)$ to any matrix $M$. The first factor replaces row $i$ by
+(row $i$) $-\ell\,$(row $j$) and leaves row $j$ untouched, since $j\neq i$. The second factor
+adds $\ell\,$(row $j$) back to row $i$, restoring $M$. A matrix that leaves every $M$
+unchanged is $I$ (take $M=I$). The other order is the same argument with $\ell$ replaced by
+$-\ell$. Exchanging the same two rows twice restores every matrix.
+\end{proof}
+
+This is why elimination is legitimate: with $E$ the product of all the step matrices,
+$A\vb{x}=\vb{b}$ and $U\vb{x}=\vb{c}$ have the same solutions. If $A\vb{x}=\vb{b}$ then
+$EA\vb{x}=E\vb{b}$, that is, $U\vb{x}=\vb{c}$. Conversely, each step can be reversed, so
+multiplying $U\vb{x}=\vb{c}$ on the left by the inverse steps returns $A\vb{x}=\vb{b}$. The
+answer $\vb{x}=(2,1,-2)$ found by back substitution is therefore the solution of the original
+system.
+
+\begin{trap}
+Row operations multiply on the \emph{left}; a matrix on the right of $A$ combines columns.
+Writing $AE_{21}$ instead of $E_{21}A$ subtracts $3$ times column~2 from column~1, a
+different operation entirely. Also keep the factors in order: elimination is $E_{32}E_{21}A$,
+not $E_{21}E_{32}A$.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u03-two}
+For the system $2x+3y=5$, $6x+15y=12$: what multiple of equation~1 should be subtracted from
+equation~2? Write the system as $A\vb{x}=\vb{b}$, eliminate (what are the pivots?), and solve by
+back substitution. Check your answer in both equations.
+\end{exercise}
+\begin{solution}
+Subtract $\ell_{21}=6/2=3$ times equation~1. In matrix form,
+\[
+  \begin{bmatrix} 2 & 3\\ 6 & 15\end{bmatrix}\begin{bmatrix} x\\ y\end{bmatrix}
+  =\begin{bmatrix} 5\\ 12\end{bmatrix}
+  \;\longrightarrow\;
+  \begin{bmatrix} 2 & 3\\ 0 & 6\end{bmatrix}\begin{bmatrix} x\\ y\end{bmatrix}
+  =\begin{bmatrix} 5\\ -3\end{bmatrix},
+\]
+since $15-3\cdot3=6$ and $12-3\cdot5=-3$. The pivots are $2$ and $6$. Back substitution:
+$6y=-3$ gives $y=-\tfrac12$; then $2x-\tfrac32=5$ gives $x=\tfrac{13}{4}$. Check:
+$2\cdot\tfrac{13}{4}+3(-\tfrac12)=\tfrac{13}{2}-\tfrac32=5$ and
+$6\cdot\tfrac{13}{4}+15(-\tfrac12)=\tfrac{39}{2}-\tfrac{15}{2}=12$.
+\end{solution}
+
+\begin{exercise}\label{ex:u03-four}
+Solve by elimination, using a row exchange when needed:
+\[
+  x-y-z+u=0,\qquad 2x+2z=8,\qquad -y-2z=-8,\qquad 3x-3y-2z+4u=7 .
+\]
+\end{exercise}
+\begin{solution}
+The augmented matrix and the elimination steps:
+\[
+  \left[\begin{array}{rrrr|r} 1&-1&-1&1&0\\ 2&0&2&0&8\\ 0&-1&-2&0&-8\\ 3&-3&-2&4&7\end{array}\right]
+  \to
+  \left[\begin{array}{rrrr|r} 1&-1&-1&1&0\\ 0&2&4&-2&8\\ 0&-1&-2&0&-8\\ 0&0&1&1&7\end{array}\right]
+  \to
+  \left[\begin{array}{rrrr|r} 1&-1&-1&1&0\\ 0&2&4&-2&8\\ 0&0&0&-1&-4\\ 0&0&1&1&7\end{array}\right].
+\]
+The first arrow subtracts $2$ times row~1 from row~2 and $3$ times row~1 from row~4. The
+second adds $\tfrac12$ of row~2 to row~3 (multiplier $\ell_{32}=-\tfrac12$). Now the $(3,3)$
+position holds $0$, but row~4 has a $1$ below it, so exchange rows~3 and~4; the matrix is
+then upper triangular with pivots $1,2,1,-1$. Back substitution: $-u=-4$ gives $u=4$;
+$z+u=7$ gives $z=3$; $2y+4z-2u=8$ gives $2y=8-12+8=4$, $y=2$; $x-y-z+u=0$ gives $x=2+3-4=1$.
+So $(x,y,z,u)=(1,2,3,4)$. Check the last equation: $3-6-6+16=7$.
+\end{solution}
+
+\begin{exercise}\label{ex:u03-pascal}
+Find the lower triangular $E$ that reduces the $4\times4$ Pascal matrix to a smaller Pascal
+matrix:
+\[
+  E\begin{bmatrix} 1&0&0&0\\ 1&1&0&0\\ 1&2&1&0\\ 1&3&3&1\end{bmatrix}
+  =\begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&1&1&0\\ 0&1&2&1\end{bmatrix}.
+\]
+Which matrix $M$, a product of several such $E$'s, reduces the Pascal matrix all the way to $I$?
+\end{exercise}
+\begin{solution}
+Subtracting each row from the row below it uses Pascal's rule
+$\binom{i}{j}-\binom{i-1}{j}=\binom{i-1}{j-1}$ and produces the smaller Pascal matrix:
+\[
+  E=\begin{bmatrix} 1&0&0&0\\ -1&1&0&0\\ 0&-1&1&0\\ 0&0&-1&1\end{bmatrix}.
+\]
+(Here row $i$ is replaced by row $i$ minus the \emph{original} row $i-1$; as a sequence of
+elimination steps, do row~4 first, then row~3, then row~2.) The same idea one level down
+clears the second column with $E_2$ (rows~3 and~4 minus the rows above them, leaving rows~1,
+2 alone), and then $E_3$ subtracts row~3 from row~4:
+\[
+  E_2=\begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&-1&1&0\\ 0&0&-1&1\end{bmatrix},\quad
+  E_3=\begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&0\\ 0&0&-1&1\end{bmatrix},\quad
+  M=E_3E_2E=\begin{bmatrix} 1&0&0&0\\ -1&1&0&0\\ 1&-2&1&0\\ -1&3&-3&1\end{bmatrix}.
+\]
+Since $M$ times the Pascal matrix is $I$, $M$ is its inverse: Pascal's triangle with
+alternating signs.
+\end{solution}
+
+\begin{exercise}\label{ex:u03-fail}
+For which numbers $d$ does elimination on
+$A=\begin{bmatrix} 2&1&0\\ 4&d&1\\ 0&1&2\end{bmatrix}$ meet a zero in a pivot position? For
+each such $d$, say whether a row exchange rescues it.
+\end{exercise}
+\begin{solution}
+The first pivot is $2$; subtracting $2$ times row~1 from row~2 gives row~2 $=(0,\,d-2,\,1)$.
+If $d=2$ the $(2,2)$ position is zero, but row~3 $=(0,1,2)$ has a $1$ below it; exchanging
+rows~2 and~3 gives pivots $2,1,1$ (the matrix becomes $\begin{bmatrix}2&1&0\\0&1&2\\0&0&1\end{bmatrix}$),
+so this failure is only temporary. If $d\neq2$, the second pivot is $d-2$; the multiplier is
+$\ell_{32}=1/(d-2)$, and the third pivot is $2-\frac{1}{d-2}$. It is zero when $d-2=\tfrac12$,
+that is $d=\tfrac52$, and then nothing lies below it: complete failure, and $A$ is singular.
+For every other $d$, elimination succeeds without exchanges.
+\end{solution}

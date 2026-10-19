@@ -1,4 +1,0 @@
-interface:
-  display_name: "Course Render Voiceover"
-  short_description: "Render silent or voiced course shorts."
-  default_prompt: "Use $course-render-voiceover to render and audit a production course-shorts run."

@@ -1,0 +1,119 @@
+1
+00:00:00,087 --> 00:00:01,950
+A test catches ninety percent of
+
+2
+00:00:01,950 --> 00:00:04,450
+cases, and you test positive.
+
+3
+00:00:04,450 --> 00:00:05,912
+So why is your chance of being
+
+4
+00:00:05,912 --> 00:00:07,812
+sick only about nine percent?
+
+5
+00:00:08,400 --> 00:00:10,075
+Picture a thousand people.
+
+6
+00:00:10,075 --> 00:00:11,650
+The disease affects one percent of
+
+7
+00:00:11,650 --> 00:00:13,987
+them, so just ten are sick.
+
+8
+00:00:14,600 --> 00:00:16,425
+The test catches ninety percent of
+
+9
+00:00:16,425 --> 00:00:18,700
+the sick, so nine of those ten
+
+10
+00:00:18,700 --> 00:00:19,750
+test positive.
+
+11
+00:00:20,367 --> 00:00:22,842
+But it also flags nine percent of
+
+12
+00:00:22,842 --> 00:00:24,092
+healthy people.
+
+13
+00:00:24,092 --> 00:00:25,280
+Nine percent of nine hundred
+
+14
+00:00:25,280 --> 00:00:27,442
+ninety is about eighty-nine more.
+
+15
+00:00:28,033 --> 00:00:30,121
+Your test was positive, so you are
+
+16
+00:00:30,121 --> 00:00:31,983
+one of these ninety-eight people.
+
+17
+00:00:31,983 --> 00:00:33,720
+Only nine of them are sick:
+
+18
+00:00:33,720 --> 00:00:34,921
+about nine percent.
+
+19
+00:00:35,487 --> 00:00:37,325
+In probabilities, the nine is
+
+20
+00:00:37,325 --> 00:00:39,925
+ninety percent of one percent.
+
+21
+00:00:39,925 --> 00:00:42,100
+The eighty-nine is nine percent of
+
+22
+00:00:42,100 --> 00:00:43,825
+the other ninety-nine percent.
+
+23
+00:00:44,433 --> 00:00:45,933
+That is Bayes' theorem:
+
+24
+00:00:45,933 --> 00:00:47,408
+the chance of disease given a
+
+25
+00:00:47,408 --> 00:00:49,546
+positive is the true positives
+
+26
+00:00:49,546 --> 00:00:50,946
+over all the positives.
+
+27
+00:00:51,567 --> 00:00:54,142
+When a disease is rare, false
+
+28
+00:00:54,142 --> 00:00:55,504
+alarms from the many healthy
+
+29
+00:00:55,504 --> 00:00:57,629
+people outnumber the real cases
+
+30
+00:00:57,629 --> 00:00:58,842
+almost ten to one.

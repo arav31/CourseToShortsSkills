@@ -1,0 +1,153 @@
+% unit: u38
+% sources: sources/004-exam-3.txt, sources/102-mit18-06scf11-ex3s-pdf-download-file.txt
+\section{Exam 3}\label{sec:u38}
+
+The Unit~III exam has three questions (34, 33 and 33 points), and each one is about reading a matrix through its eigenvalues or singular values rather than its entries. Question~1 asks what ``all singular values equal $1$'' means and builds a matrix from an orthonormal eigenvector matrix; Question~2 diagonalizes a triangular matrix to get powers and exponentials; Question~3 expands vectors in orthonormal eigenvectors. Each question is stated as an exercise; try it before reading the solution, which follows the exam's own reasoning with every step filled in. Section~\ref{sec:u37} reviews the tools.
+
+\subsection{Question 1: singular values equal to one, and a matrix built from its eigenvectors}
+
+\begin{exercise}\label{exr:u38-q1}
+\begin{enumerate}[(a)]
+\item A square matrix $A$ has all $n$ of its singular values equal to $1$. Which of these classes must $A$ belong to: singular, symmetric, orthogonal, positive definite or semidefinite, diagonal?
+\item The orthonormal columns of
+\[
+H=\frac12\begin{bmatrix}1&1&-1&-1\\1&-1&-1&1\\1&1&1&1\\1&-1&1&-1\end{bmatrix},\qquad H^{-1}=H\T,
+\]
+are eigenvectors of $B$, with eigenvalues $\lambda=0,1,2,3$ in that order. Write $B$ as a product of three specific matrices, and do the same for $C=(B+I)^{-1}$.
+\item Which classes from the list in (a) do $B$ and $C$ belong to?
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+(a) With $\Sigma=I$ the SVD reads $A=UIV\T=UV\T$, a product of orthogonal matrices, which is orthogonal: $(UV\T)\T(UV\T)=VU\T UV\T=I$. Equivalently, the $\sigma_i^{2}$ are the eigenvalues of the symmetric matrix $A\T A=V\Sigma\T\Sigma V\T$, so all $\sigma_i=1$ means $A\T A=VIV\T=I$. Nothing else is forced. $A$ is never singular, but it need not be symmetric: $U=\begin{bmatrix}0&-1\\1&0\end{bmatrix}$ and $V=I$ give the rotation $A=U$ by $90^\circ$, which is not symmetric, not diagonal, and (with eigenvalues $\pm i$) not positive definite or semidefinite.
+
+(b) The eigenvector matrix is $H$ and $H^{-1}=H\T$, so
+\[
+B=H\Lambda H^{-1}=H\begin{bmatrix}0&&&\\&1&&\\&&2&\\&&&3\end{bmatrix}H\T .
+\]
+Adding $I$ keeps the eigenvectors and adds $1$ to each eigenvalue, and inverting keeps the eigenvectors and inverts each eigenvalue:
+\[
+C=(B+I)^{-1}=H(\Lambda+I)^{-1}H^{-1}=H\begin{bmatrix}1&&&\\&1/2&&\\&&1/3&\\&&&1/4\end{bmatrix}H\T .
+\]
+(c) $B=H\Lambda H\T$ with real $\Lambda$ is symmetric. It has $\lambda=0$, so it is singular, and its eigenvalues are $\ge0$, so it is positive semidefinite (not definite). It is not orthogonal ($|\lambda|\neq1$) and, as Example~\ref{ex:u38-B} shows, not diagonal. $C$ is symmetric with eigenvalues $1,\tfrac12,\tfrac13,\tfrac14>0$: symmetric positive definite, invertible, not orthogonal, not diagonal.
+\end{solution}
+
+\begin{example}[The matrices $B$ and $C$ written out]\label{ex:u38-B}
+Multiplying out $B=\sum_i\lambda_i\vb{h}_i\vb{h}_i\T=1\cdot\vb{h}_2\vb{h}_2\T+2\,\vb{h}_3\vb{h}_3\T+3\,\vb{h}_4\vb{h}_4\T$, where $\vb{h}_i$ is column $i$ of $H$, gives
+\[
+B=\frac14\begin{bmatrix}6&-2&-4&0\\-2&6&0&-4\\-4&0&6&-2\\0&-4&-2&6\end{bmatrix},\qquad
+C=(B+I)^{-1}=\frac{1}{48}\begin{bmatrix}25&7&11&5\\7&25&5&11\\11&5&25&7\\5&11&7&25\end{bmatrix}.
+\]
+Checks: $B$ is symmetric; each row of $B$ sums to $0$, so $B\vb{h}_1=\vb{0}$ for $\vb{h}_1=\tfrac12(1,1,1,1)$; $\tr B=6=0+1+2+3$; and $B\vb{h}_2=\tfrac14\cdot\tfrac12(6+2-4+0,\,-2-6+0+4,\,-4+0+6+2,\,0+4-2-6)=\tfrac12(1,-1,1,-1)=\vb{h}_2$. For $C$, $\tr C=\tfrac{100}{48}=\tfrac{25}{12}=1+\tfrac12+\tfrac13+\tfrac14$. Notice how much easier the three-factor form is to use than these entries: the question asks for the factors because they display everything.
+\end{example}
+
+\subsection{Question 2: powers and exponentials through diagonalization}
+
+\begin{exercise}\label{exr:u38-q2}
+Let $A=\begin{bmatrix}-1&2&4\\0&0&5\\0&0&1\end{bmatrix}$.
+\begin{enumerate}[(a)]
+\item Find the three eigenvalues of $A$ and an eigenvector matrix $X$ (called $S$ on the exam).
+\item Explain why $A^{1001}=A$. Is $A^{1000}=I$? Find the three diagonal entries of $e^{At}$.
+\item The matrix $A\T A=\begin{bmatrix}1&-2&-4\\-2&4&8\\-4&8&42\end{bmatrix}$. Without computing them, how many of its eigenvalues are positive, zero, negative? Does $A\T A$ have the same eigenvectors as $A$?
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+(a) $A$ is triangular, so its eigenvalues are its diagonal entries $-1,0,1$. Eigenvectors:
+\begin{itemize}
+\item $\lambda=-1$: $(A+I)\vb{x}=\vb{0}$ has rows $(0,2,4)$, $(0,1,5)$, $(0,0,2)$, forcing $x_3=x_2=0$: $\vb{x}=(1,0,0)$.
+\item $\lambda=0$: $A\vb{x}=\vb{0}$ gives $x_3=0$ and $-x_1+2x_2=0$: $\vb{x}=(2,1,0)$.
+\item $\lambda=1$: $(A-I)\vb{x}=\vb{0}$ has rows $(-2,2,4)$, $(0,-1,5)$, $(0,0,0)$. With $x_3=1$: $x_2=5$, then $-2x_1+10+4=0$ gives $x_1=7$: $\vb{x}=(7,5,1)$.
+\end{itemize}
+So $X=\begin{bmatrix}1&2&7\\0&1&5\\0&0&1\end{bmatrix}$, upper triangular like $A$, with $X^{-1}=\begin{bmatrix}1&-2&3\\0&1&-5\\0&0&1\end{bmatrix}$.
+
+(b) $A=X\Lambda X^{-1}$ gives $A^{k}=X\Lambda^{k}X^{-1}$. Since $(-1)^{1001}=-1$, $0^{1001}=0$ and $1^{1001}=1$, we have $\Lambda^{1001}=\Lambda$ and therefore $A^{1001}=A$. But $A^{1000}\neq I$: $\Lambda^{1000}=\operatorname{diag}(1,0,1)\neq I$, and in any case a singular matrix has singular powers. (In fact $A^{1000}=A^{2}=\begin{bmatrix}1&-2&10\\0&0&5\\0&0&1\end{bmatrix}$.) For the exponential,
+\[
+e^{At}=Xe^{\Lambda t}X^{-1}=X\begin{bmatrix}e^{-t}&&\\&1&\\&&e^{t}\end{bmatrix}X^{-1}.
+\]
+$X$ and $X^{-1}$ are triangular with ones on the diagonal, so the diagonal of $e^{At}$ is $e^{-t},\ 1,\ e^{t}$. A second proof: every term $(At)^{k}/k!$ of the series is upper triangular with diagonal $(-t)^{k}/k!,\ 0^{k}/k!,\ t^{k}/k!$, and these sum to $e^{-t}$, $1$ (only the $k=0$ term survives) and $e^{t}$. Multiplying out completely,
+\[
+e^{At}=\begin{bmatrix}e^{-t}&2-2e^{-t}&7e^{t}-10+3e^{-t}\\0&1&5e^{t}-5\\0&0&e^{t}\end{bmatrix},
+\]
+which is $I$ at $t=0$ as it must be.
+
+(c) $A\T A$ is symmetric, and $\vb{x}\T A\T A\vb{x}=\|A\vb{x}\|^{2}\ge0$, so no eigenvalue is negative. Its rank equals the rank of $A$, which is $2$ (one zero eigenvalue, two independent eigenvectors for $\pm1$), so exactly one eigenvalue is $0$ and $3-1=2$ are positive. Alternatively, the signs of the eigenvalues of a symmetric matrix match the signs of its pivots: elimination subtracts $-2$ and $-4$ times row one, leaving
+\[
+\begin{bmatrix}1&-2&-4\\0&0&0\\0&0&26\end{bmatrix},
+\]
+nonzero pivots $1$ and $26$ (from $42-16$) and one zero. The eigenvectors are different: $A\T A$ is symmetric, so its eigenvectors are orthogonal, while those of $A$ are not ($(1,0,0)\cdot(2,1,0)=2$). (Numerically the eigenvalues are $0$ and $\tfrac12(47\pm\sqrt{1689})\approx2.95,\ 44.05$.)
+\end{solution}
+
+\begin{trap}
+``$\Lambda^{1001}=\Lambda$, so $\Lambda^{1000}=I$'' divides by $\Lambda$, which is not allowed when $\lambda=0$ is an eigenvalue: $0^{1000}=0$, not $1$. Cancelling a factor of $A$ from $A^{1001}=A$ is legitimate only when $A$ is invertible.
+\end{trap}
+
+\subsection{Question 3: expanding in orthonormal eigenvectors}
+
+\begin{exercise}\label{exr:u38-q3}
+The $n\times n$ matrix $A$ has orthonormal eigenvectors $\vb{q}_1,\dots,\vb{q}_n$ and positive eigenvalues $\lambda_1,\dots,\lambda_n$, so $A\vb{q}_j=\lambda_j\vb{q}_j$.
+\begin{enumerate}[(a)]
+\item What are the eigenvalues and eigenvectors of $A^{-1}$? Prove it.
+\item Any $\vb{b}$ is a combination $\vb{b}=c_1\vb{q}_1+\dots+c_n\vb{q}_n$. Give a quick formula for $c_1$.
+\item The solution of $A\vb{x}=\vb{b}$ is $A^{-1}\vb{b}=d_1\vb{q}_1+\dots+d_n\vb{q}_n$. Give a quick formula for $d_1$.
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+(a) All $\lambda_j>0$, so $A$ is invertible. Multiply $A\vb{q}_j=\lambda_j\vb{q}_j$ by $A^{-1}$ to get $\vb{q}_j=\lambda_jA^{-1}\vb{q}_j$, and divide by $\lambda_j\neq0$: $A^{-1}\vb{q}_j=\frac{1}{\lambda_j}\vb{q}_j$. Same eigenvectors, eigenvalues $1/\lambda_j$.
+
+(b) Multiply $\vb{b}=c_1\vb{q}_1+\dots+c_n\vb{q}_n$ on the left by $\vb{q}_1\T$. Orthogonality kills every term but the first, and $\vb{q}_1\T\vb{q}_1=1$:
+\[
+c_1=\vb{q}_1\T\vb{b}.
+\]
+(c) By (a), $A^{-1}$ multiplies each $\vb{q}_i$ by $1/\lambda_i$, so $A^{-1}\vb{b}=\sum_i\frac{c_i}{\lambda_i}\vb{q}_i$ and
+\[
+d_1=\frac{c_1}{\lambda_1}=\frac{\vb{q}_1\T\vb{b}}{\lambda_1}.
+\]
+\end{solution}
+
+\begin{example}[Question 3 with numbers]\label{ex:u38-q3num}
+Take $A=\begin{bmatrix}2&1\\1&2\end{bmatrix}$, with $\vb{q}_1=\tfrac{1}{\sqrt2}(1,1)$ for $\lambda_1=3$ and $\vb{q}_2=\tfrac{1}{\sqrt2}(1,-1)$ for $\lambda_2=1$, and $\vb{b}=(4,2)$. Then
+\[
+c_1=\vb{q}_1\T\vb{b}=\tfrac{6}{\sqrt2}=3\sqrt2,\qquad c_2=\vb{q}_2\T\vb{b}=\tfrac{2}{\sqrt2}=\sqrt2,
+\]
+so $\vb{b}=3\sqrt2\,\vb{q}_1+\sqrt2\,\vb{q}_2=(3,3)+(1,-1)$. Dividing by the eigenvalues, $d_1=3\sqrt2/3=\sqrt2$ and $d_2=\sqrt2/1=\sqrt2$:
+\[
+\vb{x}=A^{-1}\vb{b}=\sqrt2\,\vb{q}_1+\sqrt2\,\vb{q}_2=(1,1)+(1,-1)=(2,0).
+\]
+Check: $A(2,0)=(4,2)=\vb{b}$. No elimination and no inverse were needed, only two dot products and two divisions (Figure~\ref{fig:u38-expand}).
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=1.1,>=Stealth,font=\small]
+  \draw[->] (-0.5,0) -- (4.8,0) node[right] {$x_1$};
+  \draw[->] (0,-1.6) -- (0,3.6) node[above] {$x_2$};
+  \draw[gray,dashed] (-0.4,-0.4) -- (3.5,3.5) node[above right] {$\vb{q}_1$ line};
+  \draw[gray,dashed] (-0.4,0.4) -- (1.7,-1.7) node[below] {$\vb{q}_2$ line};
+  \draw[->,very thick,blue!70!black] (0,0) -- (4,2) node[right] {$\vb{b}=(4,2)$};
+  \draw[->,thick,blue!50] (0,0) -- (3,3) node[left=2pt] {$c_1\vb{q}_1=(3,3)$};
+  \draw[->,thick,blue!50] (3,3) -- (4,2);
+  \draw[->,very thick,red!70!black] (0,0) -- (2,0) node[below=2pt] {$\vb{x}=(2,0)$};
+  \draw[->,thick,red!50] (0,0) -- (1,1) node[above left=-1pt] {$(1,1)$};
+  \draw[->,thick,red!50] (1,1) -- (2,0);
+  \draw[->,thick,blue!50] (0,0) -- (1,-1) node[right] {$c_2\vb{q}_2=(1,-1)$};
+\end{tikzpicture}
+\caption{Solving $A\vb{x}=\vb{b}$ in the eigenvector basis. $\vb{b}$ splits along the orthonormal eigenvectors into $(3,3)+(1,-1)$; $A^{-1}$ divides the first piece by $\lambda_1=3$ and the second by $\lambda_2=1$, giving $\vb{x}=(1,1)+(1,-1)=(2,0)$.}\label{fig:u38-expand}
+\end{figure}
+
+\subsection{More practice in the same style}
+
+\begin{exercise}\label{exr:u38-sigma2}
+Every singular value of the square matrix $A$ equals $2$. What can you say about $A$? What are the singular values of $A^{-1}$ and of $A^{2}$?
+\end{exercise}
+\begin{solution}
+$\Sigma=2I$, so $A=U(2I)V\T=2(UV\T)=2Q$ with $Q$ orthogonal; equivalently $A\T A=4I$. Then $A^{-1}=\tfrac12Q\T$ has all singular values $\tfrac12$, and $A^{2}=4Q^{2}$ with $Q^{2}$ orthogonal has all singular values $4$. Such an $A$ doubles the length of every vector.
+\end{solution}
+
+\begin{exercise}\label{exr:u38-flow}
+With $B$ from Exercise~\ref{exr:u38-q1}, solve $d\vb{u}/dt=-B\vb{u}$ starting from $\vb{u}(0)=(4,0,0,0)$, and find $\lim_{t\to\infty}\vb{u}(t)$.
+\end{exercise}
+\begin{solution}
+$-B=H(-\Lambda)H\T$ has eigenvalues $0,-1,-2,-3$ with eigenvectors $\vb{h}_1,\dots,\vb{h}_4$, so
+\[
+\vb{u}(t)=\sum_{i=1}^{4}e^{-\lambda_it}(\vb{h}_i\T\vb{u}(0))\,\vb{h}_i,\qquad \vb{h}_i\T\vb{u}(0)=4\times(\text{first entry of }\vb{h}_i)=2,\,2,\,-2,\,-2.
+\]
+Hence $\vb{u}(t)=2\vb{h}_1+2e^{-t}\vb{h}_2-2e^{-2t}\vb{h}_3-2e^{-3t}\vb{h}_4$. Every term but the first decays, so $\vb{u}(t)\to2\vb{h}_1=(1,1,1,1)$: the initial total of $4$ spreads evenly. (Check at $t=0$: $2(\vb{h}_1+\vb{h}_2-\vb{h}_3-\vb{h}_4)=(1+1+1+1,\ 1-1+1-1,\ 1+1-1-1,\ 1-1-1+1)=(4,0,0,0)$.)
+\end{solution}

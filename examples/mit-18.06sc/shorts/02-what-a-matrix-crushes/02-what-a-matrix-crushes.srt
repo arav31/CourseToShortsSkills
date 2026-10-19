@@ -1,0 +1,155 @@
+1
+00:00:00,100 --> 00:00:01,575
+This matrix eats three
+
+2
+00:00:01,575 --> 00:00:03,750
+numbers and returns two.
+
+3
+00:00:03,750 --> 00:00:05,775
+Some inputs vanish completely.
+
+4
+00:00:05,775 --> 00:00:07,287
+Which ones, and how many?
+
+5
+00:00:07,867 --> 00:00:09,079
+Subtract twice row one
+
+6
+00:00:09,079 --> 00:00:11,729
+from row two: all zeros.
+
+7
+00:00:11,729 --> 00:00:13,954
+One pivot, so the rank is one.
+
+8
+00:00:14,567 --> 00:00:17,355
+Two special solutions, minus two,
+
+9
+00:00:17,355 --> 00:00:19,742
+one, zero and minus two, zero,
+
+10
+00:00:19,742 --> 00:00:21,279
+one, both go to zero.
+
+11
+00:00:21,867 --> 00:00:23,580
+So does every mix of them:
+
+12
+00:00:23,967 --> 00:00:26,167
+a whole plane, the nullspace,
+
+13
+00:00:26,167 --> 00:00:28,392
+of dimension three minus one,
+
+14
+00:00:28,392 --> 00:00:29,229
+which is two.
+
+15
+00:00:29,833 --> 00:00:32,021
+The row, one, two, two,
+
+16
+00:00:32,021 --> 00:00:34,008
+has zero dot product with both,
+
+17
+00:00:34,008 --> 00:00:35,246
+so the row space stands
+
+18
+00:00:35,246 --> 00:00:36,658
+perpendicular to that plane.
+
+19
+00:00:37,233 --> 00:00:39,733
+Take x equals minus one, three,
+
+20
+00:00:39,733 --> 00:00:40,458
+two.
+
+21
+00:00:40,458 --> 00:00:41,571
+It is the row plus
+
+22
+00:00:41,571 --> 00:00:43,196
+the first special solution.
+
+23
+00:00:43,800 --> 00:00:44,825
+Apply A.
+
+24
+00:00:44,825 --> 00:00:45,850
+The nullspace part is
+
+25
+00:00:45,850 --> 00:00:47,363
+crushed to zero,
+
+26
+00:00:47,363 --> 00:00:49,163
+and the row part lands on nine,
+
+27
+00:00:49,163 --> 00:00:50,038
+eighteen.
+
+28
+00:00:50,038 --> 00:00:51,125
+That is A x.
+
+29
+00:00:51,700 --> 00:00:54,025
+Every output is a multiple of one,
+
+30
+00:00:54,025 --> 00:00:56,488
+two: the column space.
+
+31
+00:00:56,488 --> 00:00:59,125
+Its perpendicular, through two,
+
+32
+00:00:59,125 --> 00:01:01,213
+minus one, is never reached.
+
+33
+00:01:01,800 --> 00:01:02,800
+One kept plus two
+
+34
+00:01:02,800 --> 00:01:05,400
+crushed makes three inputs.
+
+35
+00:01:05,400 --> 00:01:06,413
+One reached plus one
+
+36
+00:01:06,413 --> 00:01:08,525
+missed makes two outputs.
+
+37
+00:01:09,087 --> 00:01:10,100
+In general,
+
+38
+00:01:10,100 --> 00:01:12,438
+rank r keeps r input directions
+
+39
+00:01:12,438 --> 00:01:14,250
+and crushes n minus r.

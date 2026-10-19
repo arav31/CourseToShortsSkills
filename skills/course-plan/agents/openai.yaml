@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Plan"
+  short_description: "Ingest a course and plan its explainer shorts"
+  default_prompt: "Use $course-plan to ingest this course and plan its explainer shorts."

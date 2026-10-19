@@ -1,0 +1,904 @@
+{
+  "course": {
+    "title": "Linear Algebra",
+    "code": "18.06SC",
+    "term": "Fall 2011",
+    "institution": "MIT OpenCourseWare",
+    "instructor": "Gilbert Strang",
+    "url": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/",
+    "level": "first university course in linear algebra; assumes comfort with vectors and high-school algebra (18.02 is MIT's formal prerequisite, but calculus is not required)",
+    "textbook": "Gilbert Strang, Introduction to Linear Algebra, 4th or 5th edition",
+    "parts": [
+      "Unit I: Ax = b and the Four Subspaces",
+      "Unit II: Least Squares, Determinants and Eigenvalues",
+      "Unit III: Positive Definite Matrices and Applications",
+      "Final Exam"
+    ],
+    "unit_order_source": "OCW course navigation (sources/019-resource-index.txt lists the same sequence)"
+  },
+  "units": [
+    {
+      "id": "u01",
+      "title": "The Geometry of Linear Equations",
+      "session": "1.1",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Three ways to read n equations in n unknowns: the row picture (lines or planes meeting at a point), the column picture (a combination of A's columns that reaches b) and the matrix form Ax = b. Strang's 2x - y = 0, -x + 2y = 3 is solved by (1, 2) in both pictures, and the lecture asks when the columns can reach every b.",
+      "key_ideas": [
+        "row picture",
+        "column picture",
+        "linear combination of columns",
+        "matrix-vector product Ax",
+        "singular case: columns in a plane"
+      ],
+      "sources": [
+        "sources/069-the-geometry-of-linear-equations.txt",
+        "sources/115-the-geometry-of-linear-equations.txt",
+        "sources/116-mit18-06scf11-ses1-1sum-pdf-download-file.txt",
+        "sources/117-geometry-of-linear-algebra.txt",
+        "sources/118-mit18-06scf11-ses1-1prob-pdf-download-file.txt",
+        "sources/119-mit18-06scf11-ses1-1sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u02",
+      "title": "An Overview of Key Ideas",
+      "session": "1.2",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "A bird's-eye tour (borrowed from Strang's 18.085) of the path vectors -> matrices -> subspaces: Ax is a combination of columns, the difference matrix A has a sum matrix as its inverse, and the cyclic difference matrix C has dependent columns, so Cx = b is solvable only when b1 + b2 + b3 = 0 (its column space is a plane).",
+      "key_ideas": [
+        "linear combinations",
+        "difference matrix and its inverse",
+        "dependent vs independent columns",
+        "column space as a subspace",
+        "basis of R3"
+      ],
+      "sources": [
+        "sources/068-an-overview-of-key-ideas.txt",
+        "sources/120-an-overview-of-linear-algebra.txt",
+        "sources/121-mit18-06scf11-ses1-13sum-pdf-download-file.txt",
+        "sources/122-an-overview-of-key-ideas.txt"
+      ]
+    },
+    {
+      "id": "u03",
+      "title": "Elimination with Matrices",
+      "session": "1.3",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Gaussian elimination subtracts multiples of pivot rows to reach an upper-triangular U, then back-substitutes. Each step is an elimination matrix E_ij multiplying from the left, row exchanges are permutation matrices, and elimination fails only when a zero pivot cannot be repaired by a row exchange.",
+      "key_ideas": [
+        "pivots and multipliers",
+        "upper triangular U",
+        "back substitution",
+        "elimination matrices E21, E32",
+        "permutation matrices",
+        "associativity of matrix products"
+      ],
+      "sources": [
+        "sources/072-elimination-with-matrices.txt",
+        "sources/123-lecture-elimination-with-matrices.txt",
+        "sources/124-mit18-06scf11-ses1-2sum-pdf-download-file.txt",
+        "sources/026-elimination-with-matrices.txt",
+        "sources/125-mit18-06scf11-ses1-2prob-pdf-download-file.txt",
+        "sources/126-mit18-06scf11-ses1-2sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u04",
+      "title": "Multiplication and Inverse Matrices",
+      "session": "1.4",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Five views of AB = C: entry as row times column, columns of C as combinations of A's columns, rows of C as combinations of B's rows, a sum of column-times-row pieces, and block multiplication. A square A is invertible exactly when no nonzero x solves Ax = 0, and Gauss-Jordan elimination turns [A I] into [I A^-1].",
+      "key_ideas": [
+        "row times column",
+        "column and row pictures of AB",
+        "column times row (outer products)",
+        "block multiplication",
+        "invertible vs singular",
+        "Gauss-Jordan elimination"
+      ],
+      "sources": [
+        "sources/080-multiplication-and-inverse-matrices.txt",
+        "sources/127-multiplication-and-inverse-matrices.txt",
+        "sources/128-mit18-06scf11-ses1-3sum-pdf-download-file.txt",
+        "sources/129-inverse-matrices.txt",
+        "sources/130-mit18-06scf11-ses1-3prob-pdf-download-file.txt",
+        "sources/131-mit18-06scf11-ses1-3sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u05",
+      "title": "Factorization into A = LU",
+      "session": "1.5",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Elimination recorded as a factorization: the multipliers drop straight into a lower-triangular L with A = LU (or A = LDU with the pivots in D). Along the way (AB)^-1 = B^-1 A^-1, (AB)^T = B^T A^T, elimination costs about n^3/3 operations, and row exchanges lead to PA = LU.",
+      "key_ideas": [
+        "A = LU and A = LDU",
+        "multipliers stored in L",
+        "inverse and transpose of a product",
+        "operation count ~ n^3/3",
+        "row exchanges and PA = LU"
+      ],
+      "sources": [
+        "sources/081-factorization-into-a-lu.txt",
+        "sources/132-factorization-into-a-lu.txt",
+        "sources/133-mit18-06scf11-ses1-4sum-pdf-download-file.txt",
+        "sources/134-lu-decomposition.txt",
+        "sources/135-mit18-06scf11-ses1-4prob-pdf-download-file.txt",
+        "sources/136-mit18-06scf11-ses1-4sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u06",
+      "title": "Transposes, Permutations, Vector Spaces",
+      "session": "1.6",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Permutation matrices (n! of them, with P^-1 = P^T) complete PA = LU; transposes give symmetric matrices, and R^T R is always symmetric. Then the leap to vector spaces and subspaces: sets closed under addition and scalar multiplication, such as lines and planes through the origin in R3, with the column space of A as the first example.",
+      "key_ideas": [
+        "permutation matrices",
+        "transpose and symmetric matrices",
+        "R^T R is symmetric",
+        "vector space axioms (closure)",
+        "subspaces of R3",
+        "column space"
+      ],
+      "sources": [
+        "sources/067-transposes-permutations-vector-spaces.txt",
+        "sources/137-transposes-permutations-vector-spaces.txt",
+        "sources/138-mit18-06scf11-ses1-5sum-pdf-download-file.txt",
+        "sources/139-subspaces-of-three-dimensional-space.txt",
+        "sources/140-mit18-06scf11-ses1-5prob-pdf-download-file.txt",
+        "sources/141-mit18-06scf11-ses1-5sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u07",
+      "title": "Column Space and Nullspace",
+      "session": "1.7",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "The column space C(A) is all combinations of the columns, so Ax = b is solvable exactly when b lies in C(A). The nullspace N(A) is all solutions of Ax = 0 and is a subspace of R^n, while the solutions of Ax = b with b != 0 do not form a subspace; intersections of subspaces are subspaces, unions usually are not.",
+      "key_ideas": [
+        "column space C(A)",
+        "solvability of Ax = b",
+        "nullspace N(A)",
+        "subspace test",
+        "intersection vs union of subspaces"
+      ],
+      "sources": [
+        "sources/090-column-space-and-nullspace.txt",
+        "sources/142-column-space-and-nullspace.txt",
+        "sources/143-mit18-06scf11-ses1-6sum-pdf-download-file.txt",
+        "sources/144-vector-subspaces.txt",
+        "sources/145-mit18-06scf11-ses1-6prob-pdf-download-file.txt",
+        "sources/146-mit18-06scf11-ses1-6sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u08",
+      "title": "Solving Ax = 0: Pivot Variables, Special Solutions",
+      "session": "1.8",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Elimination on any rectangular matrix gives an echelon form U and then the reduced row echelon form R. The r pivot columns and n - r free columns organise the nullspace: setting one free variable to 1 and the rest to 0 gives a special solution, and the special solutions (the columns of N = [-F; I]) form a basis of N(A).",
+      "key_ideas": [
+        "echelon form U",
+        "rank r = number of pivots",
+        "pivot vs free variables",
+        "special solutions",
+        "reduced row echelon form R = [I F; 0 0]",
+        "nullspace matrix N"
+      ],
+      "sources": [
+        "sources/014-solving-ax-0-pivot-variables-special-solutions.txt",
+        "sources/024-solving-ax-0-pivot-variables-special-solutions.txt",
+        "sources/107-mit18-06scf11-ses1-7sum-pdf-download-file.txt",
+        "sources/108-solving-ax-0.txt",
+        "sources/109-mit18-06scf11-ses1-7prob-pdf-download-file.txt",
+        "sources/110-mit18-06scf11-ses1-7sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u09",
+      "title": "Solving Ax = b: Row Reduced Form R",
+      "session": "1.9",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Ax = b is solvable when b satisfies the same combinations that zero out rows of A; the complete solution is one particular solution (free variables set to 0) plus every nullspace vector. The rank decides the cases: r = m = n gives exactly one solution, r = n < m gives 0 or 1, r = m < n gives infinitely many, r < m and r < n gives 0 or infinitely many.",
+      "key_ideas": [
+        "solvability condition on b",
+        "particular solution",
+        "complete solution x_p + x_n",
+        "full column rank",
+        "full row rank",
+        "four rank cases"
+      ],
+      "sources": [
+        "sources/093-solving-ax-b-row-reduced-form-r.txt",
+        "sources/147-solving-ax-b-row-reduced-form-r.txt",
+        "sources/148-mit18-06scf11-ses1-8sum-pdf-download-file.txt",
+        "sources/149-solving-ax-b.txt",
+        "sources/150-mit18-06scf11-ses1-8prob-pdf-download-file.txt",
+        "sources/151-mit18-06scf11-ses1-8sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u10",
+      "title": "Independence, Basis and Dimension",
+      "session": "1.10",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Vectors are independent when no nontrivial combination gives zero, i.e. the matrix with those columns has N(A) = {0}; more than n vectors in R^n are always dependent. A basis is an independent spanning set, every basis of a space has the same size (its dimension), and so dim C(A) = r and dim N(A) = n - r.",
+      "key_ideas": [
+        "linear independence",
+        "spanning set",
+        "basis",
+        "dimension",
+        "rank = dim C(A)",
+        "dim N(A) = n - r"
+      ],
+      "sources": [
+        "sources/087-independence-basis-and-dimension.txt",
+        "sources/152-independence-basis-and-dimension.txt",
+        "sources/153-mit18-06scf11-ses1-9sum-pdf-download-file.txt",
+        "sources/154-basis-and-dimension.txt",
+        "sources/155-mit18-06scf11-ses1-9prob-pdf-download-file.txt",
+        "sources/156-mit18-06scf11-ses1-9sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u11",
+      "title": "The Four Fundamental Subspaces",
+      "session": "1.11",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Every m by n matrix has four subspaces: the column space C(A) and left nullspace N(A^T) in R^m, the row space C(A^T) and nullspace N(A) in R^n, with dimensions r, m - r, r and n - r. Elimination EA = R produces bases for all four, and the space of 3 by 3 matrices previews vector spaces whose vectors are matrices.",
+      "key_ideas": [
+        "column space",
+        "nullspace",
+        "row space",
+        "left nullspace",
+        "dimensions r, n - r, r, m - r",
+        "bases from EA = R",
+        "matrix space M"
+      ],
+      "sources": [
+        "sources/099-the-four-fundamental-subspaces.txt",
+        "sources/157-the-four-fundamental-subspaces.txt",
+        "sources/158-mit18-06scf11-ses1-10sum-pdf-download-file.txt",
+        "sources/159-computing-the-four-fundamental-subspaces.txt",
+        "sources/160-mit18-06scf11-ses1-10prob-pdf-download-file.txt",
+        "sources/161-mit18-06scf11-ses1-10sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u12",
+      "title": "Matrix Spaces; Rank 1; Small World Graphs",
+      "session": "1.12",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Vector spaces beyond R^n: the 9-dimensional space of 3 by 3 matrices with its symmetric (dimension 6), upper-triangular (6) and diagonal (3) subspaces, and the solutions of y'' + y = 0 with basis cos x, sin x. Every rank-one matrix is a column times a row, u v^T, and small-world graphs open the study of networks.",
+      "key_ideas": [
+        "matrix spaces and their dimensions",
+        "sum and intersection of subspaces",
+        "function spaces (y'' + y = 0)",
+        "rank-one matrices u v^T",
+        "small-world graphs"
+      ],
+      "sources": [
+        "sources/070-matrix-spaces-rank-1-small-world-graphs.txt",
+        "sources/162-matrix-spaces-rank-1-small-world-graphs.txt",
+        "sources/163-mit18-06scf11-ses1-11sum-pdf-download-file.txt",
+        "sources/164-matrix-spaces.txt",
+        "sources/165-mit18-06scf11-ses1-11prob-pdf-download-file.txt",
+        "sources/166-mit18-06scf11-ses1-11sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u13",
+      "title": "Graphs, Networks, Incidence Matrices",
+      "session": "1.13",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "The incidence matrix of a directed graph (one row per edge with -1 and +1) turns circuit laws into linear algebra: its nullspace holds constant potentials, independent loops span the left nullspace (Kirchhoff's current law A^T y = 0), and dim N(A^T) = m - r gives Euler's formula nodes - edges + loops = 1.",
+      "key_ideas": [
+        "incidence matrix",
+        "potential differences",
+        "Kirchhoff's current law",
+        "loops and the left nullspace",
+        "Ohm's law",
+        "Euler's formula"
+      ],
+      "sources": [
+        "sources/065-graphs-networks-incidence-matrices.txt",
+        "sources/167-graphs-networks-incidence-matrices.txt",
+        "sources/168-mit18-06scf11-ses1-12sum-pdf-download-file.txt",
+        "sources/169-graphs-and-networks.txt",
+        "sources/170-mit18-06scf11-ses1-12prob-pdf-download-file.txt",
+        "sources/171-mit18-06scf11-ses1-12sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u14",
+      "title": "Exam 1 Review",
+      "session": "1.14",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "Review of Unit I through sample questions: the possible dimensions of a span, rank and reduced echelon form of stacked block matrices such as [R; 2R], reconstructing A from the complete solution of Ax = b, and short true/false checks on subspaces, rank and invertibility, plus a recitation on exam-style problem solving.",
+      "key_ideas": [
+        "dimension of a span",
+        "rank of block matrices",
+        "recovering A from a complete solution",
+        "four subspaces review",
+        "exam problem solving"
+      ],
+      "sources": [
+        "sources/005-exam-1-review.txt",
+        "sources/022-exam-1-review.txt",
+        "sources/103-mit18-06scf11-ses1-14sum-pdf-download-file.txt",
+        "sources/006-exam-1-problem-solving.txt"
+      ]
+    },
+    {
+      "id": "u15",
+      "title": "Exam 1",
+      "session": "Exam 1",
+      "part": "Unit I: Ax = b and the Four Subspaces",
+      "summary": "The Unit I exam: deduce m, n and the rank from which right-hand sides are solvable, invert A from a sequence of elimination matrices E21, E31, E23 and recover A and L, find bases for the column space and nullspace of a 3 by 4 matrix depending on c, and read off what R = rref(A) says about A's columns.",
+      "key_ideas": [
+        "rank from solvability",
+        "elimination matrices and A^-1",
+        "A = LU from E's",
+        "column space and nullspace bases",
+        "rref and column relations"
+      ],
+      "sources": [
+        "sources/018-exam-1.txt",
+        "sources/113-mit18-06scf11-ex1-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u16",
+      "title": "Orthogonal Vectors and Subspaces",
+      "session": "2.1",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Vectors are orthogonal when x^T y = 0 (equivalently |x|^2 + |y|^2 = |x + y|^2). The row space is the orthogonal complement of the nullspace in R^n, and the column space of the left nullspace in R^m. Because N(A^T A) = N(A), the matrix A^T A is invertible exactly when A has independent columns, the doorway to least squares.",
+      "key_ideas": [
+        "orthogonal vectors",
+        "orthogonal subspaces",
+        "row space perpendicular to nullspace",
+        "orthogonal complements",
+        "N(A^T A) = N(A)"
+      ],
+      "sources": [
+        "sources/094-orthogonal-vectors-and-subspaces.txt",
+        "sources/172-orthogonal-vectors-and-subspaces.txt",
+        "sources/173-mit18-06scf11-ses2-1sum-pdf-download-file.txt",
+        "sources/027-problem-solving-orthogonal-vectors-and-subspaces.txt",
+        "sources/174-mit18-06scf11-ses2-1prob-pdf-download-file.txt",
+        "sources/175-mit18-06scf11-ses2-1sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u17",
+      "title": "Projections onto Subspaces",
+      "session": "2.2",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Projecting b onto the line through a gives p = a (a^T b / a^T a) and the rank-one projection matrix P = a a^T / a^T a. Projecting onto the column space of A requires the error e = b - A x_hat to be perpendicular to every column, giving A^T A x_hat = A^T b and P = A (A^T A)^-1 A^T with P^2 = P and P^T = P.",
+      "key_ideas": [
+        "projection onto a line",
+        "projection matrix P",
+        "P^2 = P and P^T = P",
+        "error perpendicular to the subspace",
+        "normal equations A^T A x_hat = A^T b"
+      ],
+      "sources": [
+        "sources/096-projections-onto-subspaces.txt",
+        "sources/028-lecture-15-projections-onto-subspaces.txt",
+        "sources/176-mit18-06scf11-ses2-2sum-pdf-download-file.txt",
+        "sources/029-problem-solving-projection-onto-subspaces.txt",
+        "sources/177-mit18-06scf11-ses2-2prob-pdf-download-file.txt",
+        "sources/178-mit18-06scf11-ses2-2sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u18",
+      "title": "Projection Matrices and Least Squares",
+      "session": "2.3",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Least squares fits a line C + Dt to points no line passes through by projecting b onto the column space: solve A^T A x_hat = A^T b, and the errors e = b - p lie in the left nullspace, perpendicular to the columns. The lecture fits (1, 1), (2, 2), (3, 2) with the best line 2/3 + t/2.",
+      "key_ideas": [
+        "least squares",
+        "linear regression",
+        "projection p and error e",
+        "e in the left nullspace",
+        "A^T A invertible for independent columns"
+      ],
+      "sources": [
+        "sources/097-projection-matrices-and-least-squares.txt",
+        "sources/030-lecture-16-projection-matrices-and-least-squares.txt",
+        "sources/179-mit18-06scf11-ses2-3sum-pdf-download-file.txt",
+        "sources/031-problem-solving-least-squares-approximation.txt",
+        "sources/180-mit18-06scf11-ses2-3prob-pdf-download-file.txt",
+        "sources/181-mit18-06scf11-ses2-3sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u19",
+      "title": "Orthogonal Matrices and Gram-Schmidt",
+      "session": "2.4",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Orthonormal columns give a matrix Q with Q^T Q = I (and Q^-1 = Q^T when Q is square), so projection becomes P = Q Q^T and least squares becomes x_hat = Q^T b. Gram-Schmidt turns independent vectors into orthonormal ones by subtracting their projections onto earlier directions, which factors A = QR with R upper triangular.",
+      "key_ideas": [
+        "orthonormal vectors",
+        "orthogonal matrix Q",
+        "Q^T Q = I",
+        "projection with orthonormal bases",
+        "Gram-Schmidt process",
+        "A = QR"
+      ],
+      "sources": [
+        "sources/089-orthogonal-matrices-and-gram-schmidt.txt",
+        "sources/032-lecture-17-orthogonal-matrices-and-gram-schmidt.txt",
+        "sources/182-mit18-06scf11-ses2-4sum-pdf-download-file.txt",
+        "sources/033-problem-solving-gram-schmidt-orthogonalization.txt",
+        "sources/183-mit18-06scf11-ses2-4prob-pdf-download-file.txt",
+        "sources/184-mit18-06scf11-ses2-4sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u20",
+      "title": "Properties of Determinants",
+      "session": "2.5",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "The determinant is pinned down by three properties: det I = 1, a row exchange reverses the sign, and det is linear in each row separately. From these follow the rest: equal rows give 0, row operations leave det unchanged, a triangular det is the product of the pivots, det A = 0 exactly when A is singular, det AB = det A det B and det A^T = det A.",
+      "key_ideas": [
+        "three defining properties",
+        "sign change under row exchange",
+        "linearity in each row",
+        "det = product of pivots",
+        "det A = 0 iff singular",
+        "det AB = det A det B"
+      ],
+      "sources": [
+        "sources/079-properties-of-determinants.txt",
+        "sources/035-lecture-18-properties-of-determinants.txt",
+        "sources/185-mit18-06scf11-ses2-5sum-pdf-download-file.txt",
+        "sources/036-problem-solving-properties-of-determinants.txt",
+        "sources/186-mit18-06scf11-ses2-5prob-pdf-download-file.txt",
+        "sources/187-mit18-06scf11-ses2-5sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u21",
+      "title": "Determinant Formulas and Cofactors",
+      "session": "2.6",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Splitting each row by linearity gives the big formula, a sum of n! signed products with one entry from each row and column. Grouping terms by the first row gives the cofactor expansion det A = a11 C11 + ... + a1n C1n, applied to tridiagonal matrices of 1's whose determinants repeat with period 6.",
+      "key_ideas": [
+        "big formula with n! terms",
+        "permutations and signs",
+        "cofactors C_ij",
+        "cofactor expansion",
+        "tridiagonal determinants"
+      ],
+      "sources": [
+        "sources/083-determinant-formulas-and-cofactors.txt",
+        "sources/037-lecture-19-determinant-formulas-and-cofactors.txt",
+        "sources/188-mit18-06scf11-ses2-6sum-pdf-download-file.txt",
+        "sources/038-problem-solving-determinants.txt",
+        "sources/189-mit18-06scf11-ses2-6prob-pdf-download-file.txt",
+        "sources/190-mit18-06scf11-ses2-6sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u22",
+      "title": "Cramer's Rule, Inverse Matrix and Volume",
+      "session": "2.7",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Cofactors give an explicit inverse A^-1 = C^T / det A, which yields Cramer's rule x_j = det B_j / det A (B_j is A with column j replaced by b). The absolute value of det A is the volume of the box whose edges are the rows, which gives areas of parallelograms and triangles straight from coordinates.",
+      "key_ideas": [
+        "cofactor matrix",
+        "A^-1 = C^T / det A",
+        "Cramer's rule",
+        "determinant as volume",
+        "area of a triangle from coordinates"
+      ],
+      "sources": [
+        "sources/086-cramer-s-rule-inverse-matrix-and-volume.txt",
+        "sources/039-lecture-20-cramer-s-rule-inverse-matrix-and-volume.txt",
+        "sources/191-mit18-06scf11-ses2-7sum-pdf-download-file.txt",
+        "sources/040-problem-solving-determinants-and-volume.txt",
+        "sources/192-mit18-06scf11-ses2-7prob-pdf-download-file.txt",
+        "sources/193-mit18-06scf11-ses2-7sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u23",
+      "title": "Eigenvalues and Eigenvectors",
+      "session": "2.8",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "An eigenvector keeps its direction under A: Ax = lambda x. Eigenvalues solve det(A - lambda I) = 0, their sum is the trace and their product the determinant. Examples include projections (lambda = 0 and 1), rotations with complex eigenvalues, and triangular matrices with a repeated eigenvalue but too few eigenvectors.",
+      "key_ideas": [
+        "Ax = lambda x",
+        "characteristic equation det(A - lambda I) = 0",
+        "trace = sum of eigenvalues",
+        "det = product of eigenvalues",
+        "complex eigenvalues of rotations",
+        "repeated eigenvalues"
+      ],
+      "sources": [
+        "sources/095-eigenvalues-and-eigenvectors.txt",
+        "sources/041-lecture-21-eigenvalues-and-eigenvectors.txt",
+        "sources/194-mit18-06scf11-ses2-8sum-pdf-download-file.txt",
+        "sources/042-problem-solving-eigenvalues-and-eigenvectors.txt",
+        "sources/195-mit18-06scf11-ses2-8prob-pdf-download-file.txt",
+        "sources/196-mit18-06scf11-ses2-8sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u24",
+      "title": "Diagonalization and Powers of A",
+      "session": "2.9",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "With n independent eigenvectors in S, A = S Lambda S^-1 and A^k = S Lambda^k S^-1, so u_(k+1) = A u_k is solved by u_k = c1 lambda1^k x1 + ... + cn lambdan^k xn. Distinct eigenvalues guarantee independent eigenvectors, and the Fibonacci numbers grow like ((1 + sqrt 5)/2)^k.",
+      "key_ideas": [
+        "diagonalization A = S Lambda S^-1",
+        "powers A^k",
+        "difference equations u_(k+1) = A u_k",
+        "independent eigenvectors",
+        "Fibonacci growth rate"
+      ],
+      "sources": [
+        "sources/092-diagonalization-and-powers-of-a.txt",
+        "sources/043-lecture-22-diagonalization-and-powers-of-a.txt",
+        "sources/197-mit18-06scf11-ses2-9sum-pdf-download-file.txt",
+        "sources/044-problem-solving-powers-of-a-matrix.txt",
+        "sources/198-mit18-06scf11-ses2-9prob-pdf-download-file.txt",
+        "sources/199-mit18-06scf11-ses2-9sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u25",
+      "title": "Differential Equations and exp(At)",
+      "session": "2.10",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Systems du/dt = Au are solved by pure exponentials e^(lambda t) x, so u(t) = c1 e^(lambda1 t) x1 + c2 e^(lambda2 t) x2. Stability needs Re(lambda) < 0 and a steady state needs lambda = 0; the matrix exponential e^(At) = S e^(Lambda t) S^-1 comes from the power series, and y'' + b y' + k y = 0 becomes a 2 by 2 first-order system.",
+      "key_ideas": [
+        "du/dt = Au",
+        "exponential solutions",
+        "stability and steady state",
+        "matrix exponential e^(At)",
+        "second-order equation as a system"
+      ],
+      "sources": [
+        "sources/066-differential-equations-and-exp-at.txt",
+        "sources/045-lecture-23-differential-equations-and-exp-at.txt",
+        "sources/200-mit18-06scf11-ses2-10sum-pdf-download-file.txt",
+        "sources/046-problem-solving-determinants-and-volumedifferential-equation.txt",
+        "sources/201-mit18-06scf11-ses2-10prob-pdf-download-file.txt",
+        "sources/202-mit18-06scf11-ses2-10sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u26",
+      "title": "Markov Matrices; Fourier Series",
+      "session": "2.11",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Markov matrices (nonnegative entries, columns summing to 1) always have lambda = 1 with all other |lambda| <= 1, so A^k u0 approaches the steady-state eigenvector, as in Strang's California/Massachusetts population model. Fourier series reuse projection onto an orthogonal basis: the coefficients of f in 1, cos x, sin x, ... are inner products in function space.",
+      "key_ideas": [
+        "Markov matrix",
+        "eigenvalue 1 and steady state",
+        "eigenvalues of A^T equal those of A",
+        "expansion in an orthonormal basis",
+        "Fourier series as projections"
+      ],
+      "sources": [
+        "sources/085-markov-matrices-fourier-series.txt",
+        "sources/047-lecture-24-markov-matrices-fourier-series.txt",
+        "sources/203-mit18-06scf11-ses2-11sum-pdf-download-file.txt",
+        "sources/048-problem-solving-markov-matrices.txt",
+        "sources/204-mit18-06scf11-ses2-11prob-pdf-download-file.txt",
+        "sources/205-mit18-06scf11-ses2-11sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u27",
+      "title": "Exam 2 Review",
+      "session": "2.12",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "Review of Unit II, the heart of the course: orthogonal matrices and Gram-Schmidt, projections and least squares, determinant properties and cofactors, and eigenvalues and diagonalization, practised on sample questions about projection matrices, least-squares fits and eigenvalues of special matrices.",
+      "key_ideas": [
+        "projection matrices",
+        "least squares",
+        "Gram-Schmidt",
+        "determinants",
+        "eigenvalues and diagonalization"
+      ],
+      "sources": [
+        "sources/002-exam-2-review.txt",
+        "sources/021-exam-2-review.txt",
+        "sources/100-mit18-06scf11-ses2-12sum-pdf-download-file.txt",
+        "sources/003-exam-2-problem-solving.txt"
+      ]
+    },
+    {
+      "id": "u28",
+      "title": "Exam 2",
+      "session": "Exam 2",
+      "part": "Unit II: Least Squares, Determinants and Eigenvalues",
+      "summary": "The Unit II exam with solutions: determinants of matrices built from orthonormal vectors q1, q2, q3, a least-squares line through 21 equally spaced measurements, projection matrices P_Q and P_A from Gram-Schmidt and the formula for the next vector q4, and determinants of 4 by 4 matrices with one repeated entry along the first row and column.",
+      "key_ideas": [
+        "determinants of orthonormal columns",
+        "least-squares line fit",
+        "projection matrices from Gram-Schmidt",
+        "determinant as a polynomial"
+      ],
+      "sources": [
+        "sources/016-exam-2.txt",
+        "sources/111-mit18-06scf11-ex2-pdf-download-file.txt",
+        "sources/112-mit18-06scf11-ex2s-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u29",
+      "title": "Symmetric Matrices and Positive Definiteness",
+      "session": "3.1",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Real symmetric matrices have real eigenvalues and orthonormal eigenvectors, so A = Q Lambda Q^T is a sum of projections lambda_k q_k q_k^T. The signs of the pivots match the signs of the eigenvalues, and positive definite matrices are the symmetric ones whose eigenvalues, pivots and upper-left determinants are all positive.",
+      "key_ideas": [
+        "real eigenvalues of symmetric matrices",
+        "orthonormal eigenvectors",
+        "spectral theorem A = Q Lambda Q^T",
+        "pivots and eigenvalue signs",
+        "positive definite matrices"
+      ],
+      "sources": [
+        "sources/073-symmetric-matrices-and-positive-definiteness.txt",
+        "sources/049-lecture-25-symmetric-matrices-and-positive-definiteness.txt",
+        "sources/206-mit18-06scf11-ses3-1sum-pdf-download-file.txt",
+        "sources/050-problem-solving-symmetric-matrices-and-positive-definiteness.txt",
+        "sources/207-mit18-06scf11-ses3-1prob-pdf-download-file.txt",
+        "sources/208-mit18-06scf11-ses3-1sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u30",
+      "title": "Complex Matrices; Fast Fourier Transform (FFT)",
+      "session": "3.2",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Complex vectors use the conjugate transpose: |z|^2 = conj(z)^T z, Hermitian matrices generalise symmetric ones and unitary matrices generalise orthogonal ones. The Fourier matrix F_n built from powers of w = e^(2 pi i / n) has orthogonal columns, and the fast Fourier transform splits F_n into two copies of F_(n/2), cutting the work from n^2 to about (n/2) log2 n.",
+      "key_ideas": [
+        "complex inner product",
+        "Hermitian matrices",
+        "unitary matrices",
+        "Fourier matrix F_n",
+        "fast Fourier transform"
+      ],
+      "sources": [
+        "sources/075-complex-matrices-fast-fourier-transform-fft.txt",
+        "sources/051-lecture-26-complex-matrices-fast-fourier-transform-fft.txt",
+        "sources/209-mit18-06scf11-ses3-2sum-pdf-download-file.txt",
+        "sources/052-problem-solving-complex-matrices.txt",
+        "sources/210-mit18-06scf11-ses3-2prob-pdf-download-file.txt",
+        "sources/211-mit18-06scf11-ses3-2sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u31",
+      "title": "Positive Definite Matrices and Minima",
+      "session": "3.3",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Four equivalent tests for positive definiteness (positive eigenvalues, positive leading determinants, positive pivots, x^T A x > 0 for x != 0) connect to calculus: the matrix of second derivatives decides a minimum, completing the square is elimination, and x^T A x = 1 is an ellipse or ellipsoid whose axes point along the eigenvectors.",
+      "key_ideas": [
+        "tests for positive definiteness",
+        "quadratic form x^T A x",
+        "second-derivative (Hessian) test",
+        "completing the square = elimination",
+        "ellipsoids and principal axes"
+      ],
+      "sources": [
+        "sources/074-positive-definite-matrices-and-minima.txt",
+        "sources/053-lecture-27-positive-definite-matrices-and-minima.txt",
+        "sources/212-mit18-06scf11-ses3-3sum-pdf-download-file.txt",
+        "sources/054-problem-solving-positive-definite-matrices-and-minima.txt",
+        "sources/213-mit18-06scf11-ses3-3prob-pdf-download-file.txt",
+        "sources/214-mit18-06scf11-ses3-3sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u32",
+      "title": "Similar Matrices and Jordan Form",
+      "session": "3.4",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "A^T A is positive definite when A has independent columns. Similar matrices B = M^-1 A M share eigenvalues and numbers of independent eigenvectors, so each family has a simplest member: the diagonal Lambda when A is diagonalizable, otherwise a Jordan form with one Jordan block per independent eigenvector.",
+      "key_ideas": [
+        "A^T A positive definite",
+        "similar matrices B = M^-1 A M",
+        "shared eigenvalues",
+        "Jordan blocks",
+        "Jordan normal form"
+      ],
+      "sources": [
+        "sources/091-similar-matrices-and-jordan-form.txt",
+        "sources/055-lecture-28-similar-matrices-and-jordan-form.txt",
+        "sources/215-mit18-06scf11-ses3-4sum-pdf-download-file.txt",
+        "sources/056-problem-solving-similar-matrices.txt",
+        "sources/216-mit18-06scf11-ses3-4prob-pdf-download-file.txt",
+        "sources/217-mit18-06scf11-ses3-4sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u33",
+      "title": "Singular Value Decomposition",
+      "session": "3.5",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Every matrix factors as A = U Sigma V^T: an orthonormal basis v of the row space maps to an orthonormal basis u of the column space with A v_i = sigma_i u_i. The v's are eigenvectors of A^T A, the sigma^2 are its eigenvalues and the u's come from A A^T, worked on A = [[4, 4], [-3, 3]] and on a rank-one example with a nullspace.",
+      "key_ideas": [
+        "A = U Sigma V^T",
+        "singular values sigma_i",
+        "eigenvectors of A^T A and A A^T",
+        "orthonormal bases for the four subspaces",
+        "rank-one SVD"
+      ],
+      "sources": [
+        "sources/084-singular-value-decomposition.txt",
+        "sources/057-lecture-29-singular-value-decomposition.txt",
+        "sources/218-mit18-06scf11-ses3-5sum-pdf-download-file.txt",
+        "sources/058-problem-solving-determinants-and-volumecomputing-the-singula.txt",
+        "sources/219-mit18-06scf11-ses3-5prob-pdf-download-file.txt",
+        "sources/220-mit18-06scf11-ses3-5sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u34",
+      "title": "Linear Transformations and their Matrices",
+      "session": "3.6",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "A transformation is linear when T(v + w) = T(v) + T(w) and T(cv) = cT(v); projections and rotations are linear, shifting the plane is not. Once input and output bases are chosen, every linear T is a matrix whose j-th column records T of the j-th basis vector, so even differentiation of polynomials becomes a matrix.",
+      "key_ideas": [
+        "linearity conditions",
+        "examples and non-examples",
+        "matrix of T in chosen bases",
+        "basis choice (eigenvectors give diagonal)",
+        "differentiation as a matrix"
+      ],
+      "sources": [
+        "sources/098-linear-transformations-and-their-matrices.txt",
+        "sources/059-lecture-30-linear-transformations-and-their-matrices.txt",
+        "sources/221-mit18-06scf11-ses3-6sum-pdf-download-file.txt",
+        "sources/060-problem-solving-linear-transformations.txt",
+        "sources/222-mit18-06scf11-ses3-6prob-pdf-download-file.txt",
+        "sources/223-mit18-06scf11-ses3-6sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u35",
+      "title": "Change of Basis; Image Compression",
+      "session": "3.7",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Image and video compression switch from the standard pixel basis to a better one (Fourier cosines as in JPEG's 8 by 8 blocks, or Haar wavelets) and keep only the large coefficients. Changing basis by W turns the matrix of a transformation into the similar matrix W^-1 A W, which is diagonal in an eigenvector basis.",
+      "key_ideas": [
+        "image compression",
+        "Fourier and wavelet bases",
+        "thresholding coefficients",
+        "change-of-basis matrix W",
+        "similar matrices W^-1 A W"
+      ],
+      "sources": [
+        "sources/076-change-of-basis-image-compression.txt",
+        "sources/061-lecture-31-change-of-basis-image-compression.txt",
+        "sources/224-mit18-06scf11-ses3-7sum-pdf-download-file.txt",
+        "sources/062-problem-solving-change-of-basis.txt",
+        "sources/225-mit18-06scf11-ses3-7prob-pdf-download-file.txt",
+        "sources/226-mit18-06scf11-ses3-7sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u36",
+      "title": "Left and Right Inverses; Pseudoinverse",
+      "session": "3.8",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Full column rank gives a left inverse (A^T A)^-1 A^T and full row rank a right inverse A^T (A A^T)^-1. For any matrix, A maps the row space one-to-one onto the column space; the pseudoinverse A+ = V Sigma+ U^T inverts that map and gives the shortest least-squares solution.",
+      "key_ideas": [
+        "two-sided inverse",
+        "left inverse",
+        "right inverse",
+        "row space to column space is invertible",
+        "pseudoinverse via SVD"
+      ],
+      "sources": [
+        "sources/088-left-and-right-inverses-pseudoinverse.txt",
+        "sources/063-lecture-33-left-and-right-inverses-pseudoinverse.txt",
+        "sources/227-mit18-06scf11-ses3-8sum-pdf-download-file.txt",
+        "sources/064-problem-solving-pseudoinverses.txt",
+        "sources/228-mit18-06scf11-ses3-8prob-pdf-download-file.txt",
+        "sources/229-mit18-06scf11-ses3-8sol-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u37",
+      "title": "Exam 3 Review",
+      "session": "3.9",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "Review of Unit III through sample problems on eigenvalues and eigenvectors, du/dt = Au and e^(At), symmetric and positive definite matrices, similar matrices and the SVD; elimination is set aside because it does not preserve eigenvalues.",
+      "key_ideas": [
+        "eigenvalues review",
+        "differential equations and e^(At)",
+        "symmetric and positive definite matrices",
+        "similarity",
+        "SVD"
+      ],
+      "sources": [
+        "sources/010-exam-3-review.txt",
+        "sources/023-exam-3-review.txt",
+        "sources/106-mit18-06scf11-ses3-9sum-pdf-download-file.txt",
+        "sources/011-exam-3-problem-solving.txt"
+      ]
+    },
+    {
+      "id": "u38",
+      "title": "Exam 3",
+      "session": "Exam 3",
+      "part": "Unit III: Positive Definite Matrices and Applications",
+      "summary": "The Unit III exam with solutions: what it means for every singular value to equal 1 (A is orthogonal), writing B = H Lambda H^-1 and (B + I)^-1 from an orthonormal Hadamard-type eigenvector matrix H, powers of A through diagonalization, and classifying matrices as symmetric, orthogonal, singular or positive (semi)definite.",
+      "key_ideas": [
+        "singular values all 1",
+        "diagonalization with orthonormal eigenvectors",
+        "powers of A",
+        "classes of special matrices"
+      ],
+      "sources": [
+        "sources/004-exam-3.txt",
+        "sources/102-mit18-06scf11-ex3s-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u39",
+      "title": "Final Course Review",
+      "session": "Final review",
+      "part": "Final Exam",
+      "summary": "The last review lecture solves past final-exam questions with the whole course: the four subspaces, projections and least squares, eigenvalues, and the special matrices (symmetric, orthogonal, projection, permutation, positive definite), followed by a recitation that works one full final-exam problem.",
+      "key_ideas": [
+        "four subspaces in exam questions",
+        "projections",
+        "eigenvalues",
+        "special matrices",
+        "final exam problem solving"
+      ],
+      "sources": [
+        "sources/071-final-course-review.txt",
+        "sources/230-final-course-review.txt",
+        "sources/231-mit18-06scf11-finalrevsum-pdf-download-file.txt",
+        "sources/020-final-exam-problem-solving.txt"
+      ]
+    },
+    {
+      "id": "u40",
+      "title": "Final Exam",
+      "session": "Final exam",
+      "part": "Final Exam",
+      "summary": "A nine-question final with solutions spanning the course: special solutions and rref of a 3 by 4 matrix, the inverse of a triangular U, rank of block matrices, independent columns and A^T A, energy x^T A x in an eigenvector basis, Gram-Schmidt, eigenvalues, projections and least squares, and a tridiagonal 3-2-1 matrix.",
+      "key_ideas": [
+        "nullspace and rref",
+        "inverse of triangular matrices",
+        "rank of block matrices",
+        "A^T A and independent columns",
+        "eigenvector expansions",
+        "projections and least squares"
+      ],
+      "sources": [
+        "sources/009-final-exam.txt",
+        "sources/105-mit18-06scf11-final-exs-pdf-download-file.txt"
+      ]
+    },
+    {
+      "id": "u41",
+      "title": "Final 18.06 Lecture (2023)",
+      "session": "Bonus",
+      "part": "Final Exam",
+      "summary": "Strang's farewell 18.06 lecture from May 2023, added to this OCW course: tributes from colleagues around a compact review that runs elimination on a 3 by 3 system, then finds rank 2 and two special solutions for a 3 by 4 matrix whose third row is the sum of the first two, ending on row rank = column rank.",
+      "key_ideas": [
+        "elimination review",
+        "rank of a 3 by 4 matrix",
+        "special solutions",
+        "row rank equals column rank"
+      ],
+      "sources": [
+        "sources/012-final-18-06-lecture-2023.txt",
+        "sources/013-final-18-06-lecture-2023.txt"
+      ]
+    }
+  ]
+}

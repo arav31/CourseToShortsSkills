@@ -1,0 +1,331 @@
+% unit: u02
+% sources: sources/068-an-overview-of-key-ideas.txt, sources/120-an-overview-of-linear-algebra.txt, sources/121-mit18-06scf11-ses1-13sum-pdf-download-file.txt, sources/122-an-overview-of-key-ideas.txt, short_plan.json (s01)
+\section{An overview of key ideas}\label{sec:u02}
+
+Before the course settles into elimination, it is worth seeing the whole road at once.
+Linear algebra moves from \emph{vectors} to \emph{matrices} to \emph{subspaces}: what you do
+with vectors is take combinations; a matrix packages those combinations as a single
+operation $\vb{x}\mapsto A\vb{x}$; and the set of all combinations is a subspace. This
+section, adapted from Strang's opening review in 18.085, follows two $3\times3$ matrices that
+differ in a single column. One is invertible and its inverse can be written down by hand; the
+other has dependent columns, solves $C\vb{x}=\vb{b}$ only for special $\vb{b}$, and shows
+what a subspace is. Almost every idea of Part~I appears here in preview, and later sections
+make each one precise.
+
+\subsection{Vectors: take their combinations}
+
+Work in $\R^3$, the space of vectors with three real components, with
+\[
+  \vb{u}=\begin{bmatrix} 1\\ -1\\ 0\end{bmatrix},\qquad
+  \vb{v}=\begin{bmatrix} 0\\ 1\\ -1\end{bmatrix},\qquad
+  \vb{w}=\begin{bmatrix} 0\\ 0\\ 1\end{bmatrix}.
+\]
+The only operations we need are multiplying a vector by a scalar and adding vectors, which
+together produce linear combinations $x_1\vb{u}+x_2\vb{v}+x_3\vb{w}$
+(Definition~\ref{def:u01-combination}). All multiples $c\,\vb{u}$ fill a line through the
+origin. All multiples of $\vb{v}$ fill a second line. Because $\vb{v}$ is not a multiple of
+$\vb{u}$, the combinations $x_1\vb{u}+x_2\vb{v}$ fill something bigger than either line: a
+plane through the origin. Whether adding $\vb{w}$ fills all of $\R^3$ is the question the
+rest of the section answers.
+
+\subsection{Matrices: the difference matrix and its inverse}
+
+Put the three vectors into the columns of a matrix. Then the combination with weights
+$x_1,x_2,x_3$ is exactly the matrix-vector product of Definition~\ref{def:u01-Ax}:
+\begin{equation}\label{eq:u02-A}
+  A\vb{x}=\begin{bmatrix} 1 & 0 & 0\\ -1 & 1 & 0\\ 0 & -1 & 1\end{bmatrix}
+  \begin{bmatrix} x_1\\ x_2\\ x_3\end{bmatrix}
+  = x_1\vb{u}+x_2\vb{v}+x_3\vb{w}
+  = \begin{bmatrix} x_1\\ x_2-x_1\\ x_3-x_2\end{bmatrix}.
+\end{equation}
+The calculation is the same as before but the point of view has changed. Before, numbers
+$x_j$ multiplied vectors; now the matrix $A$ acts on the vector $\vb{x}$ and produces an
+output. This $A$ is a \emph{difference matrix}: each output component is a difference of
+consecutive inputs (with $x_0=0$).
+
+\begin{example}[Differences of squares]\label{ex:u02-squares}
+Feed in the squares $\vb{x}=(1,4,9)$:
+\[
+  A\begin{bmatrix} 1\\ 4\\ 9\end{bmatrix}
+  =\begin{bmatrix} 1\\ 4-1\\ 9-4\end{bmatrix}=\begin{bmatrix} 1\\ 3\\ 5\end{bmatrix}.
+\]
+Differences of consecutive squares are the odd numbers, since $(k+1)^2-k^2=2k+1$.
+\end{example}
+
+The deeper question runs backwards: given the output $\vb{b}$, find the input $\vb{x}$ with
+$A\vb{x}=\vb{b}$. The three equations are
+\[
+  x_1=b_1,\qquad x_2-x_1=b_2,\qquad x_3-x_2=b_3 .
+\]
+Because $A$ is lower triangular they can be solved from the top down: $x_1=b_1$, then
+$x_2=b_1+b_2$, then $x_3=b_1+b_2+b_3$. Read the answer as a matrix times $\vb{b}$: the
+coefficients of $b_1$ form the first column, and so on.
+\begin{equation}\label{eq:u02-S}
+  \vb{x}=\begin{bmatrix} b_1\\ b_1+b_2\\ b_1+b_2+b_3\end{bmatrix}
+  =\begin{bmatrix} 1 & 0 & 0\\ 1 & 1 & 0\\ 1 & 1 & 1\end{bmatrix}
+  \begin{bmatrix} b_1\\ b_2\\ b_3\end{bmatrix} = S\vb{b}.
+\end{equation}
+The matrix $S$ takes running sums. It undoes $A$, and $A$ undoes $S$:
+
+\begin{proposition}[The sum matrix inverts the difference matrix]\label{prop:u02-sum}
+For every $\vb{x}\in\R^3$, $S(A\vb{x})=\vb{x}$, and for every $\vb{b}\in\R^3$,
+$A(S\vb{b})=\vb{b}$. Consequently $A\vb{x}=\vb{b}$ has exactly one solution for every
+$\vb{b}$, namely $\vb{x}=S\vb{b}$, and $A\vb{x}=\vb{0}$ only for $\vb{x}=\vb{0}$.
+\end{proposition}
+
+\begin{proof}
+Running sums of differences telescope:
+\[
+  S(A\vb{x}) = S\begin{bmatrix} x_1\\ x_2-x_1\\ x_3-x_2\end{bmatrix}
+  = \begin{bmatrix} x_1\\ x_1+(x_2-x_1)\\ x_1+(x_2-x_1)+(x_3-x_2)\end{bmatrix}
+  = \begin{bmatrix} x_1\\ x_2\\ x_3\end{bmatrix}.
+\]
+Differences of running sums return the original entries:
+$A(S\vb{b}) = \bigl(b_1,\ (b_1+b_2)-b_1,\ (b_1+b_2+b_3)-(b_1+b_2)\bigr)=(b_1,b_2,b_3)$.
+The second identity shows that $\vb{x}=S\vb{b}$ solves $A\vb{x}=\vb{b}$. If $\vb{x}$ is any
+solution, then $\vb{x}=S(A\vb{x})=S\vb{b}$ by the first identity, so the solution is unique.
+With $\vb{b}=\vb{0}$ this unique solution is $S\vb{0}=\vb{0}$.
+\end{proof}
+
+A matrix that undoes $A$ in this way is called the \emph{inverse} of $A$ and written
+$A^{-1}$; here $A^{-1}=S$. Section~\ref{sec:u04} defines inverses in general and shows how to
+compute them. Think of $A$ as a transform taking $\vb{x}$ to $\vb{b}$ and of $S$ as the
+inverse transform taking $\vb{b}$ back to $\vb{x}$. For example $S(1,3,5)=(1,1+3,1+3+5)=(1,4,9)$
+recovers the squares. Calculus has the same structure: differences are the discrete version of
+the derivative, running sums the discrete version of the integral, and
+Proposition~\ref{prop:u02-sum} is a small fundamental theorem of calculus.
+
+\subsection{The cyclic difference matrix}
+
+Keep $\vb{u}$ and $\vb{v}$ but replace $\vb{w}$ by $\vb{w}^{*}=(-1,0,1)$. The new matrix
+\begin{equation}\label{eq:u02-C}
+  C\vb{x}=\begin{bmatrix} 1 & 0 & -1\\ -1 & 1 & 0\\ 0 & -1 & 1\end{bmatrix}
+  \begin{bmatrix} x_1\\ x_2\\ x_3\end{bmatrix}
+  =\begin{bmatrix} x_1-x_3\\ x_2-x_1\\ x_3-x_2\end{bmatrix}
+\end{equation}
+still takes differences, but now cyclically: the first row compares $x_1$ with $x_3$, as if
+the three entries sat on a circle. Only one column changed, yet $C$ behaves completely
+differently from $A$.
+
+\emph{Zero output from a nonzero input.} If $x_1=x_2=x_3=c$, every difference is zero, so
+$C(c,c,c)=\vb{0}$. A whole line of inputs, all multiples of $(1,1,1)$, is sent to zero.
+
+\begin{proposition}[No inverse when a nonzero vector goes to zero]\label{prop:u02-noinverse}
+If $C\vb{x}=\vb{0}$ for some $\vb{x}\neq\vb{0}$, then there is no matrix $T$ with
+$T(C\vb{y})=\vb{y}$ for all $\vb{y}$; that is, $C$ has no inverse.
+\end{proposition}
+
+\begin{proof}
+Such a $T$ would give $\vb{x}=T(C\vb{x})=T\vb{0}=\vb{0}$, since any matrix times the zero
+vector is the zero vector. This contradicts $\vb{x}\neq\vb{0}$. Once $C$ has crushed
+$\vb{x}$ to zero, nothing can bring it back.
+\end{proof}
+
+\emph{Solvable only for special right-hand sides.} Write out $C\vb{x}=\vb{b}$ and add the
+three equations. The left sides cancel, $(x_1-x_3)+(x_2-x_1)+(x_3-x_2)=0$, so the right
+sides must satisfy $0=b_1+b_2+b_3$. This condition is not only necessary but sufficient.
+
+\begin{proposition}[When the cyclic system is solvable]\label{prop:u02-solvable}
+$C\vb{x}=\vb{b}$ has a solution if and only if $b_1+b_2+b_3=0$. In that case the solutions
+are exactly
+\[
+  \vb{x} = \begin{bmatrix} 0\\ b_2\\ b_2+b_3\end{bmatrix} + c\begin{bmatrix} 1\\ 1\\ 1\end{bmatrix},
+  \qquad c\in\R .
+\]
+\end{proposition}
+
+\begin{proof}
+Necessity was shown above by adding the equations. Conversely, suppose $b_1+b_2+b_3=0$ and
+let $\vb{x}_p=(0,\,b_2,\,b_2+b_3)$. Then
+\[
+  C\vb{x}_p = \begin{bmatrix} 0-(b_2+b_3)\\ b_2-0\\ (b_2+b_3)-b_2\end{bmatrix}
+  = \begin{bmatrix} b_1\\ b_2\\ b_3\end{bmatrix},
+\]
+using $-(b_2+b_3)=b_1$. Adding $c(1,1,1)$ does not change $C\vb{x}$, because
+$C(c,c,c)=\vb{0}$. Finally, if $\vb{x}$ is any solution, then $\vb{y}=\vb{x}-\vb{x}_p$ satisfies
+$C\vb{y}=\vb{b}-\vb{b}=\vb{0}$, so $y_2-y_1=0$ and $y_3-y_2=0$; hence $\vb{y}=c(1,1,1)$ for
+some $c$, and every solution has the stated form.
+\end{proof}
+
+In a physical model where $x_1,x_2,x_3$ are positions of masses joined in a ring by springs
+and $\vb{b}$ holds the applied forces, the condition $b_1+b_2+b_3=0$ says the forces must
+balance; the free constant $c$ says the whole ring can be shifted without changing any
+spring.
+
+\begin{example}[Solving and failing with $C$]\label{ex:u02-cyclic}
+Take $\vb{b}=(1,2,-3)$. Its components sum to $0$, so the system is solvable, and
+Proposition~\ref{prop:u02-solvable} gives $\vb{x}_p=(0,\,2,\,2-3)=(0,2,-1)$. Check:
+$C\vb{x}_p=(0-(-1),\ 2-0,\ -1-2)=(1,2,-3)$. All solutions are $(0,2,-1)+c(1,1,1)$, for
+instance $(1,3,0)$ with $c=1$. For $\vb{b}=(1,1,1)$ the components sum to $3\neq0$, and
+$C\vb{x}=\vb{b}$ has no solution at all.
+\end{example}
+
+\subsection{Subspaces: what all the combinations fill}
+
+Which vectors $\vb{b}$ are combinations of the columns $\vb{u},\vb{v},\vb{w}^{*}$ of $C$?
+Each column has components adding to zero, and that property survives addition and
+scalar multiplication, so every combination $C\vb{x}$ lies on the plane
+$b_1+b_2+b_3=0$. Proposition~\ref{prop:u02-solvable} says that every vector on that plane is
+reached. So \emph{all vectors $C\vb{x}$} form exactly the plane $b_1+b_2+b_3=0$. In fact
+$\vb{w}^{*}=-(\vb{u}+\vb{v})$ lies in the plane of $\vb{u}$ and $\vb{v}$ and adds nothing
+new (Proposition~\ref{prop:u01-dependent}). For $A$, Proposition~\ref{prop:u02-sum} says
+every $\vb{b}$ in $\R^3$ is reached, so the combinations of $\vb{u},\vb{v},\vb{w}$ fill all of
+$\R^3$. Figure~\ref{fig:u02-plane} shows the difference.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[>=Stealth]
+\begin{axis}[view={44}{16}, width=11cm, height=9cm, axis x line=none, axis y line=none, axis z line=center, axis line style={gray!70},
+  ticks=none, zlabel={$b_3$},
+  xmin=-1.7, xmax=1.7, ymin=-1.7, ymax=1.7, zmin=-2.7, zmax=2.7, clip=false]
+  \addplot3[surf, shader=faceted, colormap={single}{color=(blue!12) color=(blue!12)},
+    faceted color=blue!45, opacity=0.65, samples=7, domain=-1.3:1.3, y domain=-1.3:1.3] {-x-y};
+  \draw[->,very thick] (0,0,0) -- (1,-1,0) node[below left] {$\vb{u}$};
+  \draw[->,very thick] (0,0,0) -- (0,1,-1) node[below right] {$\vb{v}$};
+  \draw[->,very thick,blue] (0,0,0) -- (-1,0,1) node[left] {$\vb{w}^{*}$};
+  \draw[->,very thick,red!75!black] (0,0,0) -- (0,0,1) node[right] {$\vb{w}$};
+  \draw[thick,densely dotted,red!75!black] (0,0,1) -- (-0.333,-0.333,0.667);
+  \fill[red!75!black] (-0.333,-0.333,0.667) circle (1.6pt);
+  \node[blue!70!black,font=\small] at (1.3,1.3,-2.6) [below] {$b_1+b_2+b_3=0$};
+\end{axis}
+\end{tikzpicture}
+\caption{The columns $\vb{u}=(1,-1,0)$, $\vb{v}=(0,1,-1)$ and $\vb{w}^{*}=(-1,0,1)$ of the
+cyclic matrix $C$ all lie in the plane $b_1+b_2+b_3=0$ (shaded), so every $C\vb{x}$ stays in
+that plane. The third column $\vb{w}=(0,0,1)$ of the difference matrix $A$ points out of the
+plane (the dotted segment drops from its tip to the nearest point of the plane), so the
+combinations of $\vb{u},\vb{v},\vb{w}$ fill all of $\R^3$.}\label{fig:u02-plane}
+\end{figure}
+
+Here are the words for what we have seen; Sections~\ref{sec:u06}, \ref{sec:u07} and
+\ref{sec:u10} develop them in full.
+
+\begin{definition}[Independent and dependent vectors]\label{def:u02-independent}
+Vectors $\vb{v}_1,\dots,\vb{v}_n$ are \emph{dependent} if some combination
+$c_1\vb{v}_1+\cdots+c_n\vb{v}_n$ with weights not all zero equals the zero vector. Otherwise
+they are \emph{independent}: the only combination giving $\vb{0}$ is the one with all
+weights zero.
+\end{definition}
+
+In matrix language, the columns of a matrix are independent exactly when $A\vb{x}=\vb{0}$
+forces $\vb{x}=\vb{0}$. So $\vb{u},\vb{v},\vb{w}$ are independent
+(Proposition~\ref{prop:u02-sum}), while $\vb{u}+\vb{v}+\vb{w}^{*}=C(1,1,1)=\vb{0}$ shows that
+$\vb{u},\vb{v},\vb{w}^{*}$ are dependent.
+
+\begin{definition}[Vector space, subspace, basis]\label{def:u02-subspace}
+A \emph{vector space} is a collection of vectors closed under linear combinations: any
+combination of vectors in the collection is again in it. A \emph{subspace} is a vector space
+contained in a larger one. A \emph{basis} of $\R^n$ is a set of $n$ independent vectors in
+$\R^n$.
+\end{definition}
+
+The plane $b_1+b_2+b_3=0$ is a subspace of $\R^3$: it is the set of all combinations of
+$\vb{u}$ and $\vb{v}$, and a combination of combinations is a combination. A filled triangle
+with corners $\vb{0},\vb{u},\vb{v}$ is \emph{not} a subspace, because $2\vb{u}$ leaves it.
+Taking all combinations of some vectors is the standard way to build a subspace, and it
+always produces a subspace. The subspaces of $\R^3$ are: the origin alone, the lines
+through the origin, the planes through the origin, and $\R^3$ itself, of dimensions
+$0,1,2,3$. The zero vector belongs to every one of them, since $0\cdot\vb{v}=\vb{0}$.
+
+For $n$ vectors in $\R^n$ there are three equivalent ways to say ``basis'', which this
+section has seen side by side for $\vb{u},\vb{v},\vb{w}$: (i) the vectors are independent;
+(ii) their combinations fill $\R^n$; (iii) the $n\times n$ matrix with those columns is
+invertible. The vectors $\vb{u},\vb{v},\vb{w}^{*}$ fail all three. The proof that the three
+statements always agree comes in Section~\ref{sec:u10}.
+
+\begin{example}[A basis of the plane from Section~\ref{sec:u01}]\label{ex:u02-basis2}
+The columns $\vb{a}_1=(2,-1)$ and $\vb{a}_2=(-1,2)$ of the first example of the course form a
+basis of $\R^2$. They are independent: if $c_1\vb{a}_1+c_2\vb{a}_2=\vb{0}$ then
+$2c_1-c_2=0$ and $-c_1+2c_2=0$; the first gives $c_2=2c_1$, and the second becomes
+$-c_1+4c_1=3c_1=0$, so $c_1=c_2=0$. Their combinations fill $\R^2$: we found
+$1\,\vb{a}_1+2\,\vb{a}_2=(0,3)$, and $\vb{a}_1+\vb{a}_2=(1,1)$, and
+Exercise~\ref{ex:u01-every-b} gives the weights for every $\vb{b}$. And the matrix
+$\begin{bmatrix} 2 & -1\\ -1 & 2\end{bmatrix}$ is invertible, since each $\vb{b}$ has exactly
+one pair of weights.
+\end{example}
+
+\begin{trap}
+Dependence is not the same as ``two columns are parallel''. No column of $C$ is a multiple of
+another, yet the three columns are dependent because $\vb{u}+\vb{v}+\vb{w}^{*}=\vb{0}$. To
+test three vectors you must look for a combination of all of them, not compare them in pairs.
+\end{trap}
+
+\subsection{Looking ahead: rectangular matrices}
+
+The habit to build is to look at a matrix and ask what it \emph{does}. $A$ takes differences
+and can be undone; $C$ takes cyclic differences, crushes the constant vectors and reaches
+only a plane. Matrices need not be square: a $7\times3$ matrix sends $\R^3$ into $\R^7$, can
+reach at most a three-dimensional part of $\R^7$, and has no inverse. A matrix that keeps
+appearing with rectangular $A$ is $A\T A$: it is square ($3\times3$ here) and symmetric, and
+it will be the key to least squares in Part~II (Section~\ref{sec:u17}).
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u02-quiz}
+A matrix $A$ has the property that \emph{all} solutions of $A\vb{x}=(1,4,1,1)$ are
+\[
+  \vb{x}=\begin{bmatrix} 0\\ 1\\ 1\end{bmatrix} + c\begin{bmatrix} 0\\ 2\\ 1\end{bmatrix},
+  \qquad c\in\R .
+\]
+Say everything you can about the columns $\vb{c}_1,\vb{c}_2,\vb{c}_3$ of $A$.
+\end{exercise}
+\begin{solution}
+Since $\vb{x}$ has three components, $A$ has three columns, and since $\vb{b}=(1,4,1,1)$ has
+four, each column lies in $\R^4$. Taking $c=0$ gives $A(0,1,1)=\vb{b}$, that is,
+$\vb{c}_2+\vb{c}_3=\vb{b}$. Taking $c=1$ gives $A(0,3,2)=\vb{b}$; subtracting,
+$A(0,2,1)=\vb{0}$, that is, $2\vb{c}_2+\vb{c}_3=\vb{0}$. Subtract the first relation from the
+second: $\vb{c}_2=-\vb{b}$, and then $\vb{c}_3=\vb{b}-\vb{c}_2=2\vb{b}$. So
+$\vb{c}_2=(-1,-4,-1,-1)$ and $\vb{c}_3=(2,8,2,2)$.
+
+About $\vb{c}_1$: it cannot be a multiple of $\vb{b}$. If $\vb{c}_1=k\vb{b}$, then
+$A(1,k,0)=k\vb{b}-k\vb{b}=\vb{0}$, and $(0,1,1)+(1,k,0)$ would be another solution of
+$A\vb{x}=\vb{b}$ whose first component is $1$, which is not of the given form. Conversely,
+if $\vb{c}_1$ is not a multiple of $\vb{b}$, then $A\vb{x}=x_1\vb{c}_1+(2x_3-x_2)\vb{b}=\vb{0}$
+forces $x_1=0$ and $x_2=2x_3$ (two non-parallel vectors combine to zero only with zero
+weights), so the solutions of $A\vb{x}=\vb{0}$ are exactly the multiples of $(0,2,1)$, as
+required. Hence: $\vb{c}_1$ is any vector of $\R^4$ that is not a multiple of $\vb{b}$
+(in particular not $\vb{0}$), and nothing more can be said.
+\end{solution}
+
+\begin{exercise}\label{ex:u02-four}
+Let $A_4$ be the $4\times4$ difference matrix, $A_4\vb{x}=(x_1,\,x_2-x_1,\,x_3-x_2,\,x_4-x_3)$.
+Write $A_4$ and its inverse $S_4$, and use $S_4$ to solve $A_4\vb{x}=(1,3,5,7)$.
+\end{exercise}
+\begin{solution}
+Solving from the top, $x_1=b_1$, $x_2=b_1+b_2$, $x_3=b_1+b_2+b_3$,
+$x_4=b_1+b_2+b_3+b_4$, so
+\[
+  A_4=\begin{bmatrix} 1&0&0&0\\ -1&1&0&0\\ 0&-1&1&0\\ 0&0&-1&1\end{bmatrix},\qquad
+  S_4=A_4^{-1}=\begin{bmatrix} 1&0&0&0\\ 1&1&0&0\\ 1&1&1&0\\ 1&1&1&1\end{bmatrix}.
+\]
+Then $\vb{x}=S_4(1,3,5,7)=(1,\,4,\,9,\,16)$: running sums of odd numbers are the squares.
+Check: $A_4(1,4,9,16)=(1,3,5,7)$.
+\end{solution}
+
+\begin{exercise}\label{ex:u02-cyclic}
+For the cyclic matrix $C$ of \eqref{eq:u02-C}, decide which of $\vb{b}=(1,0,-1)$,
+$(2,-3,1)$ and $(1,1,0)$ lie in the plane of all $C\vb{x}$, and solve $C\vb{x}=\vb{b}$ when it
+is possible.
+\end{exercise}
+\begin{solution}
+Use Proposition~\ref{prop:u02-solvable}. For $(1,0,-1)$ the sum is $0$; the particular
+solution is $(0,\,b_2,\,b_2+b_3)=(0,0,-1)$, and indeed $C(0,0,-1)=(0+1,\,0-0,\,-1-0)=(1,0,-1)$.
+All solutions: $(0,0,-1)+c(1,1,1)$. For $(2,-3,1)$ the sum is $0$; the particular solution
+is $(0,-3,-2)$, and $C(0,-3,-2)=(0+2,\,-3-0,\,-2+3)=(2,-3,1)$. All solutions:
+$(0,-3,-2)+c(1,1,1)$. For $(1,1,0)$ the sum is $2\neq0$, so this $\vb{b}$ is off the plane
+and there is no solution.
+\end{solution}
+
+\begin{exercise}\label{ex:u02-which}
+Which of these subsets of $\R^3$ are subspaces? (a) all $\vb{b}$ with $b_1+b_2+b_3=0$;
+(b) all $\vb{b}$ with $b_1+b_2+b_3=1$; (c) all multiples of $(1,1,1)$; (d) all $\vb{b}$
+with $b_1\ge0$; (e) the zero vector alone.
+\end{exercise}
+\begin{solution}
+(a) Yes: it is the plane of all combinations of $\vb{u}$ and $\vb{v}$, and directly, if two
+vectors have component sums $0$, so does $c\vb{b}+d\vb{b}'$. (b) No: the zero vector has sum
+$0\neq1$, and every subspace contains $\vb{0}$. (c) Yes: a line through the origin;
+$c(1,1,1)+d(1,1,1)=(c+d)(1,1,1)$. It is also the set of $\vb{x}$ with $C\vb{x}=\vb{0}$.
+(d) No: $(1,0,0)$ is in the set but $-1\cdot(1,0,0)$ is not; the set is closed under
+addition but not under multiplication by negative numbers. (e) Yes: $\vb{0}+\vb{0}=\vb{0}$
+and $c\,\vb{0}=\vb{0}$; this is the smallest subspace.
+\end{solution}

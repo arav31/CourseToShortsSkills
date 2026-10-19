@@ -1,0 +1,245 @@
+% unit: u14
+% sources: sources/005-exam-1-review.txt, sources/022-exam-1-review.txt, sources/103-mit18-06scf11-ses1-14sum-pdf-download-file.txt, sources/006-exam-1-problem-solving.txt
+\section{Exam 1 review}\label{sec:u14}
+
+The first exam covers Part I, Sections~\ref{sec:u01}--\ref{sec:u13}, with the emphasis on
+rectangular matrices: nullspaces, ranks, complete solutions and the four subspaces. This section
+collects the essential facts in one place and then works through the review problems of the course,
+which test understanding by approaching familiar ideas from unfamiliar directions, for instance by
+giving the answer and asking for the matrix.
+
+\subsection{The essentials of Part I}
+
+\begin{itemize}
+\item \textbf{Elimination} (Sections~\ref{sec:u03}--\ref{sec:u05}). Row operations are
+multiplications by elementary matrices: $E_{32}E_{31}E_{21}A=U$, so $A=LU$ with the multipliers in
+$L$ (with row exchanges, $PA=LU$). Gauss--Jordan reduces $\begin{bmatrix}A&I\end{bmatrix}$ to
+$\begin{bmatrix}I&A^{-1}\end{bmatrix}$ when $A$ is invertible.
+\item \textbf{Subspaces} (Sections~\ref{sec:u06}--\ref{sec:u07}). A subspace contains $\vb{0}$ and
+is closed under addition and scalar multiplication. Intersections of subspaces are subspaces;
+unions usually are not.
+\item \textbf{Rank and special solutions} (Section~\ref{sec:u08}). $r=$ number of pivots;
+$R=\operatorname{rref}(A)$ has the block form $\begin{bmatrix}I&F\\0&0\end{bmatrix}$ (pivot columns
+first), and the special solutions are the columns of $N=\begin{bmatrix}-F\\I\end{bmatrix}$.
+\item \textbf{Complete solution} (Section~\ref{sec:u09}). $A\vb{x}=\vb{b}$ is solvable iff
+$\vb{b}\in\Col{A}$; then $\vb{x}=\vb{x}_p+\vb{x}_n$. Full column rank $r=n$: at most one solution;
+full row rank $r=m$: at least one (Table~\ref{tab:u09-cases}).
+\item \textbf{Basis and dimension} (Section~\ref{sec:u10}). Independent and spanning; every basis of
+a space has the same size. Pivot columns of $A$ are a basis of $\Col{A}$.
+\item \textbf{Four subspaces} (Section~\ref{sec:u11}). Dimensions $r$, $n-r$, $r$, $m-r$ for
+$\Col{A}$, $\Nul{A}$, $\Col{A\T}$, $\Nul{A\T}$. Row operations preserve the row space and the
+nullspace.
+\item \textbf{Beyond $\R^n$} (Sections~\ref{sec:u12}--\ref{sec:u13}). Spaces of matrices and
+functions; rank one means $\vb{u}\vb{v}\T$; for a connected graph, $\Nul{A}$ is the constants,
+$\Nul{A\T}$ is spanned by loops, and $n-m+\ell=1$.
+\end{itemize}
+
+Figure~\ref{fig:u14-flow} is the algorithm for $A\vb{x}=\vb{b}$ that runs through all of it.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,font=\small,node distance=0.55cm,
+    box/.style={draw,rounded corners=2pt,fill=blue!5,align=center,inner sep=4pt,text width=4.2cm},
+    dec/.style={draw,diamond,aspect=2.6,fill=orange!10,align=center,inner sep=1pt,text width=2.9cm}]
+  \node[box] (elim) {eliminate $\begin{bmatrix}A&\vb{b}\end{bmatrix}\to\begin{bmatrix}R&\vb{d}\end{bmatrix}$;\\ count pivots: $r$};
+  \node[dec,below=of elim] (test) {zero rows of $R$\\have $d_i=0$?};
+  \node[box,right=1.1cm of test,text width=3.2cm,fill=gray!10] (none) {no solution:\\$\vb{b}\notin\Col{A}$};
+  \node[box,below=of test] (xp) {$\vb{x}_p$: free variables $=0$,\\pivot variables from $\vb{d}$};
+  \node[box,below=of xp] (xn) {special solutions $\vb{s}_1,\dots,\vb{s}_{n-r}$\\(columns of $N$)};
+  \node[box,below=of xn,text width=5.4cm] (all) {$\vb{x}=\vb{x}_p+c_1\vb{s}_1+\dots+c_{n-r}\vb{s}_{n-r}$\\unique exactly when $r=n$};
+  \draw[->] (elim) -- (test);
+  \draw[->] (test) -- node[above] {no} (none);
+  \draw[->] (test) -- node[right] {yes} (xp);
+  \draw[->] (xp) -- (xn);
+  \draw[->] (xn) -- (all);
+\end{tikzpicture}
+\caption{Solving $A\vb{x}=\vb{b}$ for any $m\times n$ matrix. When $r=m$ there are no zero rows and
+the test always passes; when $r=n$ there are no special solutions.}
+\label{fig:u14-flow}
+\end{figure}
+
+\subsection{Solved review problems}
+
+\begin{example}[The dimension of a span]\label{ex:u14-span}
+\emph{Nonzero vectors $\vb{u},\vb{v},\vb{w}\in\R^7$ span a subspace. What are its possible
+dimensions?}
+The answer is $1$, $2$ or $3$. A basis can be chosen from among the three spanning vectors, so the
+dimension is at most $3$; it is at least $1$ because the vectors are nonzero. All three values
+occur: $\vb{u}=\vb{v}=\vb{w}$ gives $1$, and three independent vectors give $3$.
+\end{example}
+
+\begin{example}[Stacked echelon forms]\label{ex:u14-blocks}
+\emph{A $5\times3$ matrix $R$ in reduced echelon form has $r=3$ pivots. (a) Find $\Nul{R}$. (b) Find
+the reduced echelon form and the rank of the $10\times3$ matrix $B=\begin{bmatrix}R\\2R\end{bmatrix}$.
+(c) Do the same for the $10\times6$ matrix $C=\begin{bmatrix}R&R\\R&0\end{bmatrix}$. (d) Find
+$\dim\Nul{C\T}$.}
+
+(a) Three pivots in three columns: no free variables, so $\Nul{R}=\{\vb{0}\}$. In fact
+$R=\begin{bmatrix}I_3\\0\end{bmatrix}$ is forced: three pivots equal to $1$, zeros elsewhere in
+their columns, two zero rows.
+
+(b) Subtract $2\times$(rows $1$--$5$) from rows $6$--$10$: $B\to\begin{bmatrix}R\\0\end{bmatrix}$,
+which is already in reduced form. The rank is $3$, not $6$: the bottom rows of $B$ are multiples of
+the top rows.
+
+(c) Work with block rows. Subtract the top block row from the bottom one, then add the new bottom
+block row to the top one, then multiply the bottom by $-1$:
+\[
+\begin{bmatrix}R&R\\R&0\end{bmatrix}\to\begin{bmatrix}R&R\\0&-R\end{bmatrix}\to
+\begin{bmatrix}R&0\\0&-R\end{bmatrix}\to\begin{bmatrix}R&0\\0&R\end{bmatrix}.
+\]
+Moving the zero rows (rows $4,5$ and $9,10$) to the bottom gives
+$\begin{bmatrix}I_6\\0\end{bmatrix}$. The rank is $6$.
+
+(d) $C$ is $10\times6$ of rank $6$, so $\dim\Nul{C\T}=m-r=10-6=4$ (and $\dim\Nul{C}=6-6=0$).
+\end{example}
+
+\begin{example}[From the complete solution back to the matrix]\label{ex:u14-recover}
+\emph{The complete solution of $A\vb{x}=(2,4,2)$ is}
+\[
+\vb{x}=\begin{bmatrix}2\\0\\0\end{bmatrix}+c\begin{bmatrix}1\\1\\0\end{bmatrix}+d\begin{bmatrix}0\\0\\1\end{bmatrix}.
+\]
+\emph{Find the shape of $A$, its rank, $A$ itself, and the $\vb{b}$ for which $A\vb{x}=\vb{b}$ is
+solvable.}
+
+$\vb{x}$ and $\vb{b}$ both have three components, so $A$ is $3\times3$. The two vectors multiplying
+$c$ and $d$ are independent and lie in $\Nul{A}$; nothing else does (otherwise there would be more
+free constants), so $\dim\Nul{A}=2$ and $r=3-2=1$. To recover $A$: $A(2,0,0)=2\,\vb{a}_1=(2,4,2)$
+gives $\vb{a}_1=(1,2,1)$; $A(0,0,1)=\vb{a}_3=\vb{0}$; and $A(1,1,0)=\vb{a}_1+\vb{a}_2=\vb{0}$ gives
+$\vb{a}_2=-\vb{a}_1$. Hence
+\[
+A=\begin{bmatrix}1&-1&0\\2&-2&0\\1&-1&0\end{bmatrix},\qquad
+A\begin{bmatrix}2\\0\\0\end{bmatrix}=\begin{bmatrix}2\\4\\2\end{bmatrix}.
+\]
+$A\vb{x}=\vb{b}$ is solvable exactly when $\vb{b}\in\Col{A}$, i.e.\ when $\vb{b}$ is a multiple of
+$(1,2,1)$. This is the case $r<m$, $r<n$: zero or infinitely many solutions.
+\end{example}
+
+\begin{example}[A factored matrix]\label{ex:u14-CD}
+\emph{Let}
+\[
+B=CD=\begin{bmatrix}1&1&0\\0&1&0\\1&0&1\end{bmatrix}\begin{bmatrix}1&0&-1&2\\0&1&1&-1\\0&0&0&0\end{bmatrix}.
+\]
+\emph{Without multiplying, find a basis of $\Nul{B}$ and the complete solution of
+$B\vb{x}=(1,0,1)$.}
+
+$B$ is $3\times4$, so $\Nul{B}\subseteq\R^4$. The first factor $C$ is invertible: in a combination of
+its columns giving $\vb{0}$, the second row forces the weight of column~2 to be $0$, and columns~1
+and~3 are clearly independent. By Proposition~\ref{prop:u08-same-null}, $\Nul{CD}=\Nul{D}$, and $D$ is
+already in reduced form with pivot columns $1,2$ and $F=\begin{bmatrix}-1&2\\1&-1\end{bmatrix}$.
+The special solutions (columns of $\begin{bmatrix}-F\\I\end{bmatrix}$) are
+\[
+\vb{s}_1=(1,-1,1,0),\qquad\vb{s}_2=(-2,1,0,1),
+\]
+a basis of $\Nul{B}$ (and $\rank B=2$). For a particular solution, note that the first column of $B$
+is $C$ times the first column of $D$, which is the first column of $C$, namely $(1,0,1)$, exactly the
+right-hand side. So $\vb{x}_p=(1,0,0,0)$ and
+\[
+\vb{x}=\begin{bmatrix}1\\0\\0\\0\end{bmatrix}+c\begin{bmatrix}1\\-1\\1\\0\end{bmatrix}
++d\begin{bmatrix}-2\\1\\0\\1\end{bmatrix}.
+\]
+Any other solution would serve equally well as $\vb{x}_p$; this one is simply the most convenient.
+\end{example}
+
+\begin{example}[A square system with a parameter]\label{ex:u14-k}
+\emph{Let $A=\begin{bmatrix}1&1&1\\1&2&3\\3&4&k\end{bmatrix}$ and $\vb{b}=(2,3,7)$. (a) For which $k$
+does $A\vb{x}=\vb{b}$ have exactly one solution? (b) Infinitely many? (c) Find $A=LU$. (d) Find the
+complete solution for every $k$.}
+
+Eliminate on the augmented matrix and record the steps, since part (c) needs them. $E_{21}$ subtracts
+row~1 from row~2, $E_{31}$ subtracts $3\times$row~1 from row~3, and $E_{32}$ subtracts row~2 from
+row~3:
+\[
+\left[\begin{array}{ccc|c}1&1&1&2\\1&2&3&3\\3&4&k&7\end{array}\right]\to
+\left[\begin{array}{ccc|c}1&1&1&2\\0&1&2&1\\0&1&k-3&1\end{array}\right]\to
+\left[\begin{array}{ccc|c}1&1&1&2\\0&1&2&1\\0&0&k-5&0\end{array}\right].
+\]
+(a) The third pivot is $k-5$. For $k\ne5$, $A$ is invertible and the solution is unique.
+(b) For $k=5$ the third row becomes $0=0$, consistent, and $x_3$ is free: infinitely many solutions.
+(Had the last entry been nonzero, $k=5$ would give no solution at all.)
+(c) $U$ is the final left block, and $L=E_{21}^{-1}E_{31}^{-1}E_{32}^{-1}$ holds the multipliers
+$1,3,1$ in their positions:
+\[
+A=\begin{bmatrix}1&0&0\\1&1&0\\3&1&1\end{bmatrix}\begin{bmatrix}1&1&1\\0&1&2\\0&0&k-5\end{bmatrix}.
+\]
+(d) For $k\ne5$: $x_3=0$, then $x_2=1$, then $x_1=2-1-0=1$, so $\vb{x}=(1,1,0)$. For $k=5$: set
+$x_3=c$; then $x_2=1-2c$ and $x_1=2-x_2-x_3=1+c$, so
+\[
+\vb{x}=\begin{bmatrix}1\\1\\0\end{bmatrix}+c\begin{bmatrix}1\\-2\\1\end{bmatrix}.
+\]
+Check: with $k=5$, $A(1,-2,1)=(1-2+1,\,1-4+3,\,3-8+5)=\vb{0}$.
+\end{example}
+
+\subsection{Quick checks}
+
+The following short questions test whether the definitions are understood. Each answer is followed
+by its reason.
+\begin{enumerate}[1.]
+\item \emph{$A$ is square and $\Nul{A}=\{\vb{0}\}$. What is $\Nul{A\T}$?} Also $\{\vb{0}\}$: $r=n=m$, so
+$\dim\Nul{A\T}=m-r=0$.
+\item \emph{Do the invertible $5\times5$ matrices form a subspace of the $25$-dimensional space of
+$5\times5$ matrices?} No: the zero matrix is not invertible, and $I+(-I)=0$. (The singular matrices
+fail too: $\operatorname{diag}(1,0)+\operatorname{diag}(0,1)=I$ in the $2\times2$ case.)
+\item \emph{If $B^2=0$, must $B=0$?} No: $B=\begin{bmatrix}0&1\\0&0\end{bmatrix}$ has $B^2=0$.
+\item \emph{An $n\times n$ system with independent columns is solvable for every $\vb{b}$.} True:
+$r=n=m$, so $A$ is invertible and $\vb{x}=A^{-1}\vb{b}$.
+\item \emph{If $m=n$, the row space equals the column space.} False: for
+$B=\begin{bmatrix}0&1\\0&0\end{bmatrix}$ the row space is the line through $(0,1)$ and the column
+space is the line through $(1,0)$. Only the dimensions agree. (For a symmetric matrix they are equal.)
+\item \emph{$A$ and $-A$ have the same four subspaces.} True: each subspace contains $-\vb{v}$
+whenever it contains $\vb{v}$.
+\item \emph{If $A$ and $B$ have the same four subspaces, then $A$ is a multiple of $B$.} False: every
+invertible $3\times3$ matrix has $\Col{A}=\Col{A\T}=\R^3$ and both nullspaces $\{\vb{0}\}$, yet
+$I$ and $\operatorname{diag}(1,2,3)$ are not multiples of each other. What \emph{is} forced is equal
+rank.
+\item \emph{If two rows of $A$ are exchanged, which subspaces stay the same?} The row space and the
+nullspace. The column space can change: exchanging the rows of $\begin{bmatrix}1&0\\0&0\end{bmatrix}$
+moves $\Col{A}$ from the line through $(1,0)$ to the line through $(0,1)$.
+\item \emph{Why can $\vb{v}=(1,2,3)$ not be both a row of $A$ and in $\Nul{A}$?} The entry of
+$A\vb{v}$ in that row would be $\vb{v}\cdot\vb{v}=1+4+9=14\ne0$. In fact the row space and the
+nullspace meet only in $\vb{0}$, and they are perpendicular, the first topic of Part II
+(Section~\ref{sec:u16}).
+\end{enumerate}
+
+\begin{trap}
+Stacking copies of rows does not add rank. In Example~\ref{ex:u14-blocks} it is tempting to say
+$\rank\begin{bmatrix}R\\2R\end{bmatrix}=6$ because the matrix ``contains $R$ twice''; but rank
+counts independent rows, and the rows of $2R$ are multiples of those of $R$. In
+$\begin{bmatrix}R&R\\R&0\end{bmatrix}$, by contrast, the second block column breaks the dependence,
+and the rank does double.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u14-dims}
+$A$ is $3\times5$ of rank $3$. Give the dimensions of its four subspaces. Is $A\vb{x}=\vb{b}$
+solvable for every $\vb{b}$? Can a solution be unique?
+\end{exercise}
+\begin{solution}
+$\dim\Col{A}=3$, $\dim\Nul{A}=5-3=2$, $\dim\Col{A\T}=3$, $\dim\Nul{A\T}=3-3=0$. Since $r=m=3$,
+$\Col{A}=\R^3$ and every $\vb{b}$ is reachable. Since $r<n$, there are two free variables, so every
+solvable system has infinitely many solutions, never exactly one.
+\end{solution}
+
+\begin{exercise}\label{exr:u14-k}
+For which numbers $k$ are $(1,1,0)$, $(0,1,1)$, $(1,0,k)$ linearly independent? For the exceptional
+value, find the dependency.
+\end{exercise}
+\begin{solution}
+Put them in the columns of $A=\begin{bmatrix}1&0&1\\1&1&0\\0&1&k\end{bmatrix}$ and eliminate:
+row~2 $-$ row~1 gives $(0,1,-1)$, then row~3 $-$ row~2 gives $(0,0,k+1)$. Three pivots unless
+$k=-1$, so the vectors are independent exactly when $k\ne-1$. For $k=-1$ the free variable
+$x_3=1$ gives $x_2=1$ and $x_1=-1$: $-(1,1,0)+(0,1,1)+(1,0,-1)=\vb{0}$.
+\end{solution}
+
+\begin{exercise}\label{exr:u14-invertible}
+$M$ is an invertible matrix. Which of the four subspaces of $A$ are unchanged in $MA$ (when $M$ is
+$m\times m$)? Which are unchanged in $AM$ (when $M$ is $n\times n$)?
+\end{exercise}
+\begin{solution}
+$MA$: the nullspace is unchanged ($MA\vb{x}=\vb{0}\iff A\vb{x}=\vb{0}$) and so is the row space
+(the rows of $MA$ are combinations of the rows of $A$, and conversely via $M^{-1}$); this is
+Theorem~\ref{thm:u11-row}. The column space and left nullspace may change, as row exchanges show.
+$AM$: transposing, $(AM)\T=M\T A\T$ with $M\T$ invertible, so by the first part $A\T$ and $M\T A\T$
+have the same nullspace and row space; that is, $AM$ has the same left nullspace and column space as
+$A$. Its nullspace and row space may change. In every case the rank is unchanged.
+\end{solution}

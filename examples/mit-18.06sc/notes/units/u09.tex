@@ -1,0 +1,323 @@
+% unit: u09
+% sources: sources/093-solving-ax-b-row-reduced-form-r.txt, sources/147-solving-ax-b-row-reduced-form-r.txt, sources/148-mit18-06scf11-ses1-8sum-pdf-download-file.txt, sources/149-solving-ax-b.txt, sources/150-mit18-06scf11-ses1-8prob-pdf-download-file.txt, sources/151-mit18-06scf11-ses1-8sol-pdf-download-file.txt
+\section{\texorpdfstring{Solving \(A\vb{x}=\vb{b}\): row reduced form \(R\)}{Solving Ax = b: row reduced form R}}\label{sec:u09}
+
+Section~\ref{sec:u08} found every solution of $A\vb{x}=\vb{0}$. Now the right-hand side is a
+general vector $\vb{b}\in\R^m$, and three questions arise: \emph{is there} a solution, \emph{how
+do we find one}, and \emph{what are all of them}? Elimination answers all three. A solution
+exists only when $\vb{b}$ passes a test that elimination produces; every solution is one
+particular solution plus a vector from the nullspace; and the rank $r$ alone predicts whether there
+are $0$, $1$ or infinitely many solutions.
+
+\subsection{When is \texorpdfstring{\(A\vb{x}=\vb{b}\)}{Ax = b} solvable?}
+
+Keep the matrix of Section~\ref{sec:u08}, whose third row is the sum of the first two:
+\[
+A=\begin{bmatrix}1&2&2&2\\2&4&6&8\\3&6&8&10\end{bmatrix}.
+\]
+Adding the first two equations of $A\vb{x}=\vb{b}$ gives the left side of the third, so a solution
+can exist only if $b_1+b_2=b_3$. With $\vb{b}=(1,5,17)$ there is no solution; with $b_1=1$, $b_2=5$
+the only acceptable third component is $b_3=6$.
+
+Elimination discovers this condition by itself. We attach $\vb{b}$ as an extra column, forming
+the \emph{augmented matrix} $\begin{bmatrix}A&\vb{b}\end{bmatrix}$, and do to the last column
+whatever we do to the rows of $A$:
+\[
+\left[\begin{array}{cccc|c}1&2&2&2&b_1\\2&4&6&8&b_2\\3&6&8&10&b_3\end{array}\right]
+\longrightarrow
+\left[\begin{array}{cccc|c}1&2&2&2&b_1\\0&0&2&4&b_2-2b_1\\0&0&2&4&b_3-3b_1\end{array}\right]
+\longrightarrow
+\left[\begin{array}{cccc|c}1&2&2&2&b_1\\0&0&2&4&b_2-2b_1\\0&0&0&0&b_3-b_2-b_1\end{array}\right].
+\]
+The last row is the equation $0=b_3-b_2-b_1$. If a row of $A$ is wiped out, the same
+combination of the entries of $\vb{b}$ must vanish. For $\vb{b}=(1,5,6)$ the last column becomes
+$(1,3,0)$ and the system is consistent.
+
+There are now two descriptions of the good right-hand sides. Section~\ref{sec:u07} said that
+$A\vb{x}=\vb{b}$ is solvable exactly when $\vb{b}\in\Col{A}$, because $A\vb{x}$ is the combination
+of the columns with weights $x_1,\dots,x_n$. Elimination says: whenever a combination of the
+rows gives the zero row, the same combination of the $b_i$ must give zero. These are not
+obviously the same, but they are.
+
+\begin{theorem}[Solvability]\label{thm:u09-solvable}
+For an $m\times n$ matrix $A$ and $\vb{b}\in\R^m$ the following are equivalent:
+\begin{enumerate}[(a)]
+\item $A\vb{x}=\vb{b}$ has a solution;
+\item $\vb{b}\in\Col{A}$;
+\item $\vb{y}\T\vb{b}=0$ for every $\vb{y}\in\R^m$ with $\vb{y}\T A=\vb{0}\T$ (every combination of
+rows that gives the zero row also gives zero when applied to $\vb{b}$).
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+(a)$\Leftrightarrow$(b): $A\vb{x}=x_1\vb{a}_1+\dots+x_n\vb{a}_n$, so $A\vb{x}=\vb{b}$ asks
+exactly for weights that produce $\vb{b}$ from the columns.
+
+(a)$\Rightarrow$(c): if $A\vb{x}=\vb{b}$ and $\vb{y}\T A=\vb{0}\T$, then
+$\vb{y}\T\vb{b}=\vb{y}\T A\vb{x}=\vb{0}\T\vb{x}=0$.
+
+(c)$\Rightarrow$(a): let $E$ be the invertible matrix that records the elimination steps, so that
+$EA=R$ is the reduced row echelon form, and let $r=\rank A$. Then $A\vb{x}=\vb{b}$ is equivalent
+to $R\vb{x}=E\vb{b}$. For $i>r$, row $i$ of $R$ is zero, so the $i$th row $\vb{y}_i\T$ of $E$
+satisfies $\vb{y}_i\T A=\vb{0}\T$, and by (c) the $i$th entry of $E\vb{b}$, namely
+$\vb{y}_i\T\vb{b}$, is $0$. Hence the zero rows of $R\vb{x}=E\vb{b}$ read $0=0$. In the first
+$r$ rows, set every free variable to $0$; since the pivot columns of $R$ are columns of the
+identity, the $i$th pivot variable equals the $i$th entry of $E\vb{b}$. This $\vb{x}$ solves
+$R\vb{x}=E\vb{b}$, hence $A\vb{x}=E^{-1}R\vb{x}=E^{-1}E\vb{b}=\vb{b}$.
+\end{proof}
+
+The vectors $\vb{y}$ in (c) form the left nullspace $\Nul{A\T}$, the fourth of the subspaces in
+Section~\ref{sec:u11}. In the example, $\vb{y}=(-1,-1,1)$ gives the condition
+$-b_1-b_2+b_3=0$.
+
+\subsection{The complete solution \texorpdfstring{\(\vb{x}_p+\vb{x}_n\)}{xp + xn}}
+
+The proof just given also finds a solution.
+
+\begin{definition}[Particular solution]\label{def:u09-particular}
+When $A\vb{x}=\vb{b}$ is solvable, the \emph{particular solution} $\vb{x}_p$ is the solution whose
+free variables are all $0$. Its pivot variables come from back substitution, or directly from the
+last column of the reduced augmented matrix $\begin{bmatrix}R&\vb{d}\end{bmatrix}$.
+\end{definition}
+
+\begin{example}[A particular solution]\label{ex:u09-particular}
+For $\vb{b}=(1,5,6)$, set the free variables $x_2=x_4=0$. The two remaining equations are
+$x_1+2x_3=1$ and $2x_3=3$, so $x_3=\tfrac32$ and $x_1=1-3=-2$. Carrying the elimination on to
+the reduced form gives the same numbers without back substitution:
+\[
+\left[\begin{array}{cccc|c}1&2&2&2&1\\0&0&2&4&3\\0&0&0&0&0\end{array}\right]
+\longrightarrow
+\left[\begin{array}{cccc|c}1&2&0&-2&-2\\0&0&1&2&\tfrac32\\0&0&0&0&0\end{array}\right]
+=\begin{bmatrix}R&\vb{d}\end{bmatrix},\qquad
+\vb{x}_p=\begin{bmatrix}-2\\0\\\tfrac32\\0\end{bmatrix}.
+\]
+The entries of $\vb{d}$ sit in the pivot positions of $\vb{x}_p$ and zeros sit in the free
+positions. Check: $A\vb{x}_p=(-2+3,\,-4+9,\,-6+12)=(1,5,6)$.
+\end{example}
+
+\begin{theorem}[Complete solution]\label{thm:u09-complete}
+Suppose $A\vb{x}_p=\vb{b}$. Then $\vb{x}$ solves $A\vb{x}=\vb{b}$ if and only if
+$\vb{x}=\vb{x}_p+\vb{x}_n$ for some $\vb{x}_n\in\Nul{A}$.
+\end{theorem}
+\begin{proof}
+If $\vb{x}_n\in\Nul{A}$ then $A(\vb{x}_p+\vb{x}_n)=A\vb{x}_p+A\vb{x}_n=\vb{b}+\vb{0}=\vb{b}$.
+Conversely, if $A\vb{x}=\vb{b}$ then $A(\vb{x}-\vb{x}_p)=\vb{b}-\vb{b}=\vb{0}$, so
+$\vb{x}_n=\vb{x}-\vb{x}_p$ lies in $\Nul{A}$ and $\vb{x}=\vb{x}_p+\vb{x}_n$.
+\end{proof}
+
+\begin{example}[All solutions for \texorpdfstring{\(\vb{b}=(1,5,6)\)}{b = (1,5,6)}]\label{ex:u09-complete}
+The nullspace was found in Example~\ref{ex:u08-special}. Therefore
+\[
+\vb{x}_{\text{complete}}=
+\begin{bmatrix}-2\\0\\\tfrac32\\0\end{bmatrix}
++c_1\begin{bmatrix}-2\\1\\0\\0\end{bmatrix}
++c_2\begin{bmatrix}2\\0\\-2\\1\end{bmatrix},\qquad c_1,c_2\in\R.
+\]
+There is no free constant in front of $\vb{x}_p$: tripling it would give right-hand side $3\vb{b}$.
+The constants belong to the nullspace part, because only there do multiples and sums keep the
+right-hand side at $\vb{0}$.
+\end{example}
+
+Geometrically, $\Nul{A}$ is a two-dimensional subspace of $\R^4$, and the solutions of
+$A\vb{x}=\vb{b}$ form a copy of it shifted away from the origin so that it passes through
+$\vb{x}_p$. That shifted copy is \emph{not} a subspace (it does not contain $\vb{0}$ when
+$\vb{b}\neq\vb{0}$). Figure~\ref{fig:u09-planes} shows the same structure in $\R^3$.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=0.95,>=Stealth]
+  % lower plane: the nullspace
+  \fill[blue!8] (-3,-0.8) -- (2.6,-0.8) -- (3.8,0.8) -- (-1.8,0.8) -- cycle;
+  \draw[blue!60!black] (-3,-0.8) -- (2.6,-0.8) -- (3.8,0.8) -- (-1.8,0.8) -- cycle;
+  \node[blue!60!black,anchor=west,font=\small] at (3.95,0.1) {$\Nul{A}$: solutions of $A\vb{x}=\vb{0}$};
+  % upper plane: the shifted copy
+  \fill[orange!12] (-2.4,1.6) -- (3.2,1.6) -- (4.4,3.2) -- (-1.2,3.2) -- cycle;
+  \draw[orange!70!black] (-2.4,1.6) -- (3.2,1.6) -- (4.4,3.2) -- (-1.2,3.2) -- cycle;
+  \node[orange!70!black,anchor=west,font=\small] at (4.55,2.5) {$\vb{x}_p+\Nul{A}$: solutions of $A\vb{x}=\vb{b}$};
+  % vectors
+  \coordinate (O) at (-0.6,-0.2);
+  \coordinate (P) at (0,2.2);
+  \coordinate (N) at (1.6,0.25);
+  \coordinate (X) at ($(P)+(N)-(O)$);
+  \fill (O) circle (1.5pt) node[below left,font=\small] {$\vb{0}$};
+  \draw[->,thick] (O) -- (P) node[midway,left,font=\small] {$\vb{x}_p$};
+  \draw[->,thick,blue!60!black] (O) -- (N) node[midway,below,font=\small] {$\vb{x}_n$};
+  \draw[->,thick,orange!70!black] (O) -- (X) node[pos=0.47,right=3pt,font=\small] {$\vb{x}=\vb{x}_p+\vb{x}_n$};
+  \draw[dashed,->,blue!60!black] (P) -- (X);
+  \fill (P) circle (1.3pt);
+\end{tikzpicture}
+\caption{The complete solution. The nullspace is a subspace through $\vb{0}$; the solutions of
+$A\vb{x}=\vb{b}$ form the parallel copy through $\vb{x}_p$. For the $1\times3$ matrix
+$A=\begin{bmatrix}1&-5&2\end{bmatrix}$ and $b=9$ these are the parallel planes $x-5y+2z=0$
+and $x-5y+2z=9$, and $\vb{x}_p=(9,0,0)$ (Exercise~\ref{exr:u09-planes}).}
+\label{fig:u09-planes}
+\end{figure}
+
+\subsection{The rank decides the number of solutions}
+
+Let $A$ be $m\times n$ of rank $r$, so $r\le m$ and $r\le n$. The two extreme cases, \emph{full
+column rank} $r=n$ and \emph{full row rank} $r=m$, behave in opposite ways.
+
+\begin{theorem}[Full rank]\label{thm:u09-fullrank}
+\begin{enumerate}[(a)]
+\item $r=n$ if and only if $\Nul{A}=\{\vb{0}\}$, if and only if $A\vb{x}=\vb{b}$ has at most one
+solution for every $\vb{b}$. Then $R=\begin{bmatrix}I\\0\end{bmatrix}$.
+\item $r=m$ if and only if $A\vb{x}=\vb{b}$ has at least one solution for every $\vb{b}\in\R^m$.
+Then $R=\begin{bmatrix}I&F\end{bmatrix}$ (with the columns of $I$ possibly interleaved with those of
+$F$) has no zero rows, and there are $n-m$ free variables.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+(a) If $r=n$ there are no free variables, hence no special solutions, and
+Theorem~\ref{thm:u08-special} gives $\Nul{A}=\{\vb{0}\}$; by Theorem~\ref{thm:u09-complete}
+two solutions differ by a nullspace vector, so there is at most one. If $r<n$, a special solution
+$\vb{s}\ne\vb{0}$ exists, and $\vb{0}$ and $\vb{s}$ are two solutions of $A\vb{x}=\vb{0}$.
+With all $n$ columns pivot columns, $R$ is the $n\times n$ identity above $m-n$ zero rows.
+
+(b) If $r=m$, the matrix $R$ has no zero rows, so condition (c) of Theorem~\ref{thm:u09-solvable}
+is never tested and the construction in its proof solves $A\vb{x}=\vb{b}$ for every $\vb{b}$. If
+$r<m$, take $\vb{y}\T$ to be the last row of $E$ (where $EA=R$). It is nonzero because $E$ is
+invertible, and $\vb{y}\T A$ is the last row of $R$, which is zero. For $\vb{b}=\vb{y}$ we get
+$\vb{y}\T\vb{b}=\|\vb{y}\|^2\ne0$, so this $\vb{b}$ has no solution.
+\end{proof}
+
+\begin{example}[Full column rank: tall and thin]\label{ex:u09-tall}
+$A=\begin{bmatrix}1&3\\2&1\\6&1\\5&1\end{bmatrix}$ has two columns pointing in different
+directions, so $r=n=2$ and $R=\begin{bmatrix}I\\0\end{bmatrix}$ with two zero rows. For
+$\vb{b}=(4,3,7,6)$, the sum of the columns, the unique solution is $\vb{x}=(1,1)$. For
+$\vb{b}=(1,0,0,0)$ the first two equations force $x_1=-\tfrac15$, $x_2=\tfrac25$, and then the
+third equation gives $6(-\tfrac15)+\tfrac25=-\tfrac45\ne0$: no solution. A random $\vb{b}$ in
+$\R^4$ has no solution, because $\Col{A}$ is only a plane.
+\end{example}
+
+\begin{example}[Full row rank: short and wide]\label{ex:u09-wide}
+Transpose the last matrix: $A=\begin{bmatrix}1&2&6&5\\3&1&1&1\end{bmatrix}$, again of rank $2$,
+now $r=m=2<n=4$. Elimination gives
+\[
+R=\begin{bmatrix}1&0&-\tfrac45&-\tfrac35\\[2pt]0&1&\tfrac{17}{5}&\tfrac{14}{5}\end{bmatrix},
+\]
+with no zero rows, so every $\vb{b}\in\R^2$ is reachable, and there are $n-r=2$ free variables.
+For $\vb{b}=(3,4)$, the sum of the first two columns, $\vb{x}_p=(1,1,0,0)$, and after scaling the
+special solutions by $5$,
+\[
+\vb{x}=\begin{bmatrix}1\\1\\0\\0\end{bmatrix}+c\begin{bmatrix}4\\-17\\5\\0\end{bmatrix}
++d\begin{bmatrix}3\\-14\\0\\5\end{bmatrix}.
+\]
+(Check: $A(4,-17,5,0)=(4-34+30,\;12-17+5)=(0,0)$.) Infinitely many solutions, for every $\vb{b}$.
+\end{example}
+
+When $r=m=n$, both parts of Theorem~\ref{thm:u09-fullrank} apply: $A$ is square and invertible,
+$R=I$, and $\vb{x}=A^{-1}\vb{b}$ is the one and only solution. For instance
+$A=\begin{bmatrix}1&2\\3&1\end{bmatrix}$ has rank $2$ and
+$A^{-1}=\tfrac15\begin{bmatrix}-1&2\\3&-1\end{bmatrix}$. In the remaining case $r<m$ and
+$r<n$, both failures occur: some $\vb{b}$ are unreachable (zero rows in $R$), and whenever a
+solution exists there are infinitely many (free variables). The running example
+of this section is of that kind. Table~\ref{tab:u09-cases} summarises.
+
+\begin{table}[ht]\centering
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & $r=m=n$ & $r=n<m$ & $r=m<n$ & $r<m,\ r<n$\\
+\midrule
+shape of $R$ & $I$ & $\begin{bmatrix}I\\0\end{bmatrix}$ & $\begin{bmatrix}I&F\end{bmatrix}$ & $\begin{bmatrix}I&F\\0&0\end{bmatrix}$\\[10pt]
+number of solutions & $1$ & $0$ or $1$ & $\infty$ & $0$ or $\infty$\\
+example & $\begin{bmatrix}1&2\\3&1\end{bmatrix}$ & Example~\ref{ex:u09-tall} & Example~\ref{ex:u09-wide} & Example~\ref{ex:u09-complete}\\
+\bottomrule
+\end{tabular}
+\caption{The rank tells everything about the \emph{number} of solutions of $A\vb{x}=\vb{b}$
+(with the pivot columns of $R$ moved first).}
+\label{tab:u09-cases}
+\end{table}
+
+\subsection{A system with parameters}
+
+\begin{example}[Solvability depends on \texorpdfstring{\(\vb{b}\)}{b}]\label{ex:u09-params}
+Solve $x-2y-2z=b_1$, $2x-5y-4z=b_2$, $4x-9y-8z=b_3$. Eliminate on the augmented matrix
+(row~2 $-\,2\,$row~1, row~3 $-\,4\,$row~1, then row~3 $-$ row~2):
+\[
+\left[\begin{array}{ccc|c}1&-2&-2&b_1\\2&-5&-4&b_2\\4&-9&-8&b_3\end{array}\right]\longrightarrow
+\left[\begin{array}{ccc|c}1&-2&-2&b_1\\0&-1&0&b_2-2b_1\\0&-1&0&b_3-4b_1\end{array}\right]\longrightarrow
+\left[\begin{array}{ccc|c}1&-2&-2&b_1\\0&-1&0&b_2-2b_1\\0&0&0&b_3-b_2-2b_1\end{array}\right].
+\]
+If $b_3-b_2-2b_1\ne0$ there is no solution. If $b_3=2b_1+b_2$, continue to the reduced form:
+multiply row~2 by $-1$ and add twice the new row~2 to row~1, giving
+\[
+\left[\begin{array}{ccc|c}1&0&-2&5b_1-2b_2\\0&1&0&2b_1-b_2\\0&0&0&0\end{array}\right].
+\]
+The pivot variables are $x,y$ and the free variable is $z$. Setting $z=0$ gives
+$\vb{x}_p=(5b_1-2b_2,\;2b_1-b_2,\;0)$; setting $z=1$ in $R\vb{x}=\vb{0}$ gives the special solution
+$(2,0,1)$. So
+\[
+\vb{x}=\begin{bmatrix}5b_1-2b_2\\2b_1-b_2\\0\end{bmatrix}+c\begin{bmatrix}2\\0\\1\end{bmatrix},
+\qquad\text{provided } b_3=2b_1+b_2.
+\]
+Here $m=n=3$ and $r=2$: the case ``$0$ or $\infty$''.
+\end{example}
+
+\begin{trap}
+The complete solution is \emph{not} ``any combination of $\vb{x}_p$ and $\vb{x}_n$''. The
+coefficient of $\vb{x}_p$ must be exactly $1$; only the nullspace part carries free constants.
+Relatedly, ``the'' particular solution is just a convenient choice: $\vb{x}_p+\vb{x}_n$ is an
+equally good particular solution for any $\vb{x}_n\in\Nul{A}$. And an invertible $A$ still has a
+nullspace, namely $\{\vb{0}\}$; it is not empty.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u09-false}
+Explain why each statement is false. (a) The complete solution is any linear combination of
+$\vb{x}_p$ and $\vb{x}_n$. (b) A system $A\vb{x}=\vb{b}$ has at most one particular solution.
+(c) If $A$ is invertible, there is no solution $\vb{x}_n$ in the nullspace.
+\end{exercise}
+\begin{solution}
+(a) The coefficient of $\vb{x}_p$ must be $1$: $A(2\vb{x}_p)=2\vb{b}\ne\vb{b}$ unless
+$\vb{b}=\vb{0}$. (b) If $\vb{x}_p$ is a particular solution and $\vb{x}_n\in\Nul{A}$, then
+$\vb{x}_p+\vb{x}_n$ is another one; the choice ``free variables $=0$'' is a convention.
+(c) $\vb{x}_n=\vb{0}$ is always in the nullspace.
+\end{solution}
+
+\begin{exercise}\label{exr:u09-gj}
+Let $U=\begin{bmatrix}1&2&3\\0&0&4\end{bmatrix}$ and $\vb{c}=(5,8)$. Use Gauss--Jordan
+elimination to reduce $\begin{bmatrix}U&\vb{0}\end{bmatrix}$ and $\begin{bmatrix}U&\vb{c}\end{bmatrix}$
+to $\begin{bmatrix}R&\vb{0}\end{bmatrix}$ and $\begin{bmatrix}R&\vb{d}\end{bmatrix}$, solve
+$R\vb{x}=\vb{0}$ and $R\vb{x}=\vb{d}$, and check the answers in $U\vb{x}=\vb{0}$ and
+$U\vb{x}=\vb{c}$.
+\end{exercise}
+\begin{solution}
+Divide row~2 by $4$, then subtract $3\times$row~2 from row~1:
+\[
+\left[\begin{array}{ccc|c}1&2&3&5\\0&0&4&8\end{array}\right]\longrightarrow
+\left[\begin{array}{ccc|c}1&2&3&5\\0&0&1&2\end{array}\right]\longrightarrow
+\left[\begin{array}{ccc|c}1&2&0&-1\\0&0&1&2\end{array}\right],
+\]
+so $R=\begin{bmatrix}1&2&0\\0&0&1\end{bmatrix}$ and $\vb{d}=(-1,2)$ (the zero column stays zero).
+$R\vb{x}=\vb{0}$ says $x_1=-2x_2$, $x_3=0$: the nullspace is all $c(-2,1,0)$. $R\vb{x}=\vb{d}$ has
+$\vb{x}_p=(-1,0,2)$, so all solutions are $(-1,0,2)+c(-2,1,0)$. Checks:
+$U(-2,1,0)=(-2+2,0)=\vb{0}$ and $U(-1,0,2)=(-1+6,\,8)=(5,8)=\vb{c}$.
+\end{solution}
+
+\begin{exercise}\label{exr:u09-sameC}
+Suppose $A\vb{x}=\vb{b}$ and $C\vb{x}=\vb{b}$ have the same complete solutions for every
+$\vb{b}$. Must $A=C$?
+\end{exercise}
+\begin{solution}
+Yes. Take any vector $\vb{v}$ of the right size and set $\vb{b}=A\vb{v}$. Then $\vb{v}$ solves
+$A\vb{x}=\vb{b}$, so by hypothesis it also solves $C\vb{x}=\vb{b}$: $C\vb{v}=A\vb{v}$. Choosing
+$\vb{v}$ to be the $j$th column of the identity shows that column $j$ of $C$ equals column $j$ of
+$A$, for every $j$.
+\end{solution}
+
+\begin{exercise}\label{exr:u09-planes}
+Let $S$ be the set of points $(x,y,z)$ with $x-5y+2z=9$ and $S_0$ the set with
+$x-5y+2z=0$. (a) Describe $S$ and $S_0$ and how they are related. (b) Fill in the blanks so that
+every point of $S$ has the form
+$(x,y,z)=(\,\underline{\ \ }\,,0,0)+c_1(\,\underline{\ \ }\,,1,0)+c_2(\,\underline{\ \ }\,,0,1)$.
+\end{exercise}
+\begin{solution}
+(a) Both are planes in $\R^3$ (one linear equation removes one of three degrees of freedom).
+Subtracting the equations would give $0=9$, so they never meet: they are parallel. $S_0$ is the
+nullspace of $A=\begin{bmatrix}1&-5&2\end{bmatrix}$ and passes through the origin; $S$ is the
+solution set of $A\vb{x}=9$. (b) The particular solution with free variables $y=z=0$ is
+$x=9$. The pivot variable is $x$ and the special solutions of $A\vb{x}=0$ are $(5,1,0)$ (from
+$x-5=0$) and $(-2,0,1)$ (from $x+2=0$). Hence
+$(x,y,z)=(9,0,0)+c_1(5,1,0)+c_2(-2,0,1)$: go from $S_0$ to $S$ by the vector $(9,0,0)$, exactly
+the structure of Figure~\ref{fig:u09-planes}.
+\end{solution}

@@ -1,0 +1,12 @@
+{
+  "name": "course-to-shorts",
+  "version": "2.0.0",
+  "description": "Turn a course link into complete LaTeX study notes and narrated 3Blue1Brown-style explainer shorts for Reels, Shorts and TikTok.",
+  "author": {
+    "name": "Arav",
+    "url": "https://github.com/arav31"
+  },
+  "homepage": "https://github.com/arav31/CourseToShortsSkills",
+  "repository": "https://github.com/arav31/CourseToShortsSkills",
+  "keywords": ["education", "course-notes", "manim", "explainer-video", "latex", "instagram-reels", "skills"]
+}
