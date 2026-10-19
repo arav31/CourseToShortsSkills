@@ -86,3 +86,26 @@ def find_scene_class(scene_path: str | Path) -> str:
 def estimate_seconds(text: str) -> float:
     words = len(re.findall(r"[\w'’-]+", text))
     return max(MIN_BEAT_SECONDS, words / WORDS_PER_SECOND + 0.5)
+
+
+def split_word_timings(words: list | None) -> list | None:
+    """Split TTS boundaries that cover several words ("So park") into one entry per word.
+
+    edge-tts occasionally reports two words as one boundary; cue("park") and caption alignment
+    need single words. The span is shared out in proportion to each word's length.
+    """
+    if not words:
+        return words
+    out = []
+    for start, end, text in words:
+        parts = str(text).split()
+        if len(parts) <= 1:
+            out.append([start, end, text])
+            continue
+        total = sum(len(p) for p in parts)
+        t = float(start)
+        for part in parts:
+            step = (float(end) - float(start)) * len(part) / total
+            out.append([round(t, 3), round(t + step, 3), part])
+            t += step
+    return out

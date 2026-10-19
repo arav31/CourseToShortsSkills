@@ -159,3 +159,11 @@ def test_transient_tex_failures_are_told_apart_from_latex_errors():
     assert shortkit._TRANSIENT_TEX.search("failed to download bundle file")
     assert not shortkit._TRANSIENT_TEX.search("! Undefined control sequence.")
     assert not shortkit._TRANSIENT_TEX.search("! Missing $ inserted.")
+
+
+def test_multi_word_tts_boundaries_are_split():
+    words = [[0.0, 0.4, "So park"], [0.4, 0.7, "drops"], [0.7, 1.3, "from five"]]
+    split = beatlib.split_word_timings(words)
+    assert [w for _, _, w in split] == ["So", "park", "drops", "from", "five"]
+    assert split[0][0] == 0.0 and split[1][1] == 0.4 and split[1][0] == round(0.4 * 2 / 6, 3)
+    assert beatlib.split_word_timings(None) is None

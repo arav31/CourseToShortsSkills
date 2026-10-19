@@ -192,7 +192,7 @@ def synthesize(short_dir: Path, engine: str = "edge-tts", voice: str | None = No
             "audio": str(clip.relative_to(short_dir)),
             "audio_seconds": round(duration, 3),
             "duration": round(duration + BREATH_SECONDS, 3),
-            "words": json.loads(words_file.read_text()) if words_file.exists() else None,
+            "words": beatlib.split_word_timings(json.loads(words_file.read_text())) if words_file.exists() else None,
         })
         timing["beats"].append(entry)
     for stale in audio_dir.iterdir():

@@ -846,8 +846,11 @@ class ShortScene(Scene):
         real object at once: ``self.title("Bayes", FadeIn(grid))``. With ``play=False`` the
         title is only registered and returned; animate it yourself (e.g. inside a bigger play).
         """
-        mob = text(s, size=size, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
-        if "\n" in getattr(mob, "text", "") or mob.height > TITLE_ZONE.height:
+        for trial in (size, size - 4, size - 8):  # a slightly smaller title beats a wrapped one
+            mob = text(s, size=trial, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
+            if "\n" not in getattr(mob, "text", "") and mob.height <= TITLE_ZONE.height:
+                break
+        else:
             self._issue("warning", "long-title", f"title {s!r} wraps or shrinks; shorten it to one line")
         TITLE_ZONE.fit(mob, buff=0.05, upscale=False)
         old, self._title_mob = self._title_mob, mob
@@ -1102,7 +1105,7 @@ def _load_timing(beats: list[dict[str, str]]):
         if entry and " ".join(str(entry.get("text", "")).split()) == b["text"]:
             durations[b["id"]] = float(entry["duration"])
             if entry.get("words"):
-                words[b["id"]] = entry["words"]
+                words[b["id"]] = _beatlib.split_word_timings(entry["words"])  # older timing.json files
             if entry.get("audio_seconds"):
                 spoken[b["id"]] = float(entry["audio_seconds"])
         else:
