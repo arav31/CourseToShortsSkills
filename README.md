@@ -7,7 +7,28 @@
 ![Codex plugin](https://img.shields.io/badge/Codex-plugin-10a37f)
 ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-5-6e56cf)
 
-<!-- SHOWCASE -->
+<table>
+<tr>
+<td align="center" width="20%"><a href="docs/media/01-rows-columns.mp4"><img src="docs/media/01-rows-columns.gif" width="170" alt="Rows vs columns"></a><br><sub><b>Two pictures of one system</b></sub></td>
+<td align="center" width="20%"><a href="docs/media/02-four-subspaces.mp4"><img src="docs/media/02-four-subspaces.gif" width="170" alt="What a matrix crushes"></a><br><sub><b>What a matrix crushes</b></sub></td>
+<td align="center" width="20%"><a href="docs/media/03-least-squares.mp4"><img src="docs/media/03-least-squares.gif" width="170" alt="Least squares"></a><br><sub><b>Best fit: a right angle</b></sub></td>
+<td align="center" width="20%"><a href="docs/media/04-eigenvectors.mp4"><img src="docs/media/04-eigenvectors.gif" width="170" alt="Eigenvectors"></a><br><sub><b>Follow the eigenvectors</b></sub></td>
+<td align="center" width="20%"><a href="docs/media/05-svd.mp4"><img src="docs/media/05-svd.gif" width="170" alt="SVD"></a><br><sub><b>Circle in, ellipse out</b></sub></td>
+</tr>
+</table>
+
+<p align="center"><sub>Five narrated shorts made from <a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/">MIT 18.06SC Linear Algebra</a> by agents using these skills. Click a preview for the full video with sound (60–80 s each).</sub></p>
+
+<table>
+<tr>
+<td width="25%"><a href="docs/media/linear-algebra-notes.pdf"><img src="docs/media/notes-title.png" alt="Notes title page"></a></td>
+<td width="25%"><a href="docs/media/linear-algebra-notes.pdf"><img src="docs/media/notes-p11.png" alt="Notes: the geometry of linear equations"></a></td>
+<td width="25%"><a href="docs/media/linear-algebra-notes.pdf"><img src="docs/media/notes-p98.png" alt="Notes: least squares"></a></td>
+<td width="25%"><a href="docs/media/linear-algebra-notes.pdf"><img src="docs/media/notes-p180.png" alt="Notes: linear transformations"></a></td>
+</tr>
+</table>
+
+<p align="center"><sub>…and <a href="docs/media/linear-algebra-notes.pdf">221 pages of notes</a> for the same course: 41 sections, 155 theorems with proofs, 152 worked examples, 76 figures, 172 solved exercises. Sources, plan and scenes are in <a href="examples/">examples/</a>.</sub></p>
 
 A set of five [Agent Skills](https://agentskills.io) for Claude Code and Codex. Point your agent at a
 course (MIT OpenCourseWare or any course site, a syllabus, lecture PDFs, a folder of notes) and it:
@@ -100,6 +121,7 @@ hash-bound approvals, so nothing is called done unless someone saw that exact fi
 - **Real LaTeX in video** via tectonic → PDF → SVG, so no full TeX install is needed; colour macros (`\cB{}`, `\cG{}`, …) for semantic colouring.
 - **Narration-timed beats**: `with self.beat("id"):` lasts as long as that line's voiceover, so picture and voice stay in sync and captions use real word timings.
 - **A layout checker** that runs on the live scene after every beat: overlapping text, text outside the safe area or in the caption band, unreadably small text, and text that hides or is crossed by arrows and curves.
+- **Helpers for common visuals**: `stage_plane`, `vec`, `matrix_grid` (addressable rows/columns), `live_text` counters, `ortho` 3D projection, `clipped_line`, `axis_numbers`, `swap`, `cue("word")` to land motion on a spoken word, and `spoken(89)` to assert that narration matches computed numbers.
 
 ### Quality gates
 
@@ -124,9 +146,25 @@ videos crashed.
 Current models can do the creative part directly and check their own work by looking at
 rendered frames and pages. So v2 keeps the hard-won quality rules from that audit as the
 skills' rubric ([video](skills/course-video/references/quality-bar.md),
-[notes](skills/course-notes/references/notes-style.md)) and keeps the code small (about 3,400
-lines across eleven scripts) and focused on what code is good at: extraction, compilation, rendering, sync,
+[notes](skills/course-notes/references/notes-style.md)) and keeps the code small (about 4,100
+lines across twelve scripts) and focused on what code is good at: extraction, compilation, rendering, sync,
 measurement and gating.
+
+## How the skills were tested
+
+The skills were tested the way they will be used: fresh agents received only a skill folder
+and a one-line request, with no extra coaching, and reported every point of friction.
+
+- **1 planner** crawled MIT 18.06SC (247 sources), wrote the 41-unit outline and the 5-short plan.
+- **6 notes writers** wrote the 41 units in parallel (about 7 each) with parallel-safe unit builds.
+- **5 video makers** each storyboarded, coded, narrated, rendered, reviewed and approved one short.
+- **1 standalone test** made the Bayes short from a single sentence, with no course behind it.
+
+Their reports found real bugs that were fixed while they worked, for example: fraction bars that
+rendered invisibly, narration drifting from the picture on cached re-renders, a deep-copy blow-up
+that made `TransformMatchingShapes` hang, a notes preamble that broke PDF bookmarks, a crawler that
+missed the course's own lecture order, and checks that were laxer than their documentation. Each fix
+landed in the scripts, the tests or the skill text, so the next run starts from it.
 
 ## Development
 
@@ -136,6 +174,15 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt pytest
 ```
 
 CI runs the unit tests and a full render job (Manim + TeX Live + FFmpeg) on every push.
+The skills follow the open Agent Skills format, so they also work in other agents that load
+`SKILL.md` folders; the plugin manifests cover Claude Code (`.claude-plugin/`) and Codex
+(`.codex-plugin/`, `.agents/plugins/`).
 Contributions that make the skills teach better are welcome: sharper rubric items,
 toolkit helpers for common visuals, better extraction for course sites, more voice engines,
 and publishing adapters for other platforms.
+
+## Licence of the examples
+
+The example notes, videos and scenes in `examples/` and `docs/media/` are derived from MIT
+OpenCourseWare 18.06SC (Gilbert Strang) and shared under
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). MIT OpenCourseWare does not endorse them.

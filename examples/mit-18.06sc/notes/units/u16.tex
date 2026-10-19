@@ -1,0 +1,351 @@
+% unit: u16
+% sources: sources/094-orthogonal-vectors-and-subspaces.txt, sources/172-orthogonal-vectors-and-subspaces.txt, sources/173-mit18-06scf11-ses2-1sum-pdf-download-file.txt, sources/027-problem-solving-orthogonal-vectors-and-subspaces.txt, sources/174-mit18-06scf11-ses2-1prob-pdf-download-file.txt, sources/175-mit18-06scf11-ses2-1sol-pdf-download-file.txt
+\section{Orthogonal vectors and subspaces}\label{sec:u16}
+
+Part~I found the four fundamental subspaces of an $m\times n$ matrix and their dimensions:
+the row space $\Col{A\T}$ and nullspace $\Nul{A}$ in $\R^n$, of dimensions $r$ and $n-r$, and
+the column space $\Col{A}$ and left nullspace $\Nul{A\T}$ in $\R^m$, of dimensions $r$ and
+$m-r$ (Section~\ref{sec:u11}). This section adds the geometry: the subspaces meet at right
+angles, in pairs. That fact is ``part two'' of the fundamental theorem of linear algebra
+(part one being the dimensions), and it is what makes the central problem of this part of the
+course solvable: finding the best $\vb{x}$ when $A\vb{x}=\vb{b}$ has no solution. The
+section ends with the matrix $A\T A$ that will carry that problem.
+
+\subsection{Orthogonal vectors: the dot product test}
+
+\begin{definition}[Length and orthogonality]\label{def:u16-orth}
+The \emph{length} of $\vb{x}\in\R^n$ is $\|\vb{x}\|=\sqrt{\vb{x}\T\vb{x}}$, where
+$\vb{x}\T\vb{x}=x_1^2+\cdots+x_n^2$. Two vectors $\vb{x},\vb{y}\in\R^n$ are
+\emph{orthogonal} (perpendicular), written $\vb{x}\perp\vb{y}$, when
+\[
+  \vb{x}\T\vb{y}=x_1y_1+x_2y_2+\cdots+x_ny_n=0 .
+\]
+\end{definition}
+
+Writing the dot product as $\vb{x}\T\vb{y}$, a row times a column, is deliberate: it lets
+dot products sit inside matrix products. For real vectors $\vb{x}\T\vb{y}=\vb{y}\T\vb{x}$,
+and $\vb{x}\T\vb{x}>0$ unless $\vb{x}=\vb{0}$. Why is ``dot product zero'' the right test for a
+right angle in $n$ dimensions? Because it is exactly what Pythagoras requires.
+
+\begin{proposition}[Pythagoras]\label{prop:u16-pythagoras}
+For $\vb{x},\vb{y}\in\R^n$,
+$\ \|\vb{x}\|^2+\|\vb{y}\|^2=\|\vb{x}+\vb{y}\|^2$ if and only if $\vb{x}\T\vb{y}=0$.
+\end{proposition}
+
+\begin{proof}
+Expand the right side by the rules of matrix multiplication:
+\[
+  \|\vb{x}+\vb{y}\|^2=(\vb{x}+\vb{y})\T(\vb{x}+\vb{y})
+  =\vb{x}\T\vb{x}+\vb{x}\T\vb{y}+\vb{y}\T\vb{x}+\vb{y}\T\vb{y}
+  =\|\vb{x}\|^2+2\,\vb{x}\T\vb{y}+\|\vb{y}\|^2 .
+\]
+The two sides of the Pythagoras equation therefore differ by exactly $2\,\vb{x}\T\vb{y}$,
+which vanishes precisely when $\vb{x}\T\vb{y}=0$.
+\end{proof}
+
+\begin{example}[A right triangle in \texorpdfstring{$\R^3$}{R3}]\label{ex:u16-pythagoras}
+Let $\vb{x}=(1,2,3)$ and $\vb{y}=(2,-1,0)$. Then $\vb{x}\T\vb{y}=2-2+0=0$, so the vectors
+are orthogonal. The lengths confirm it:
+$\|\vb{x}\|^2=1+4+9=14$, $\|\vb{y}\|^2=4+1+0=5$, and $\vb{x}+\vb{y}=(3,1,3)$ has
+$\|\vb{x}+\vb{y}\|^2=9+1+9=19=14+5$.
+\end{example}
+
+Two small consequences of the definition are worth stating. The zero vector is orthogonal to
+every vector, since $\vb{0}\T\vb{y}=0$; and it is the only vector orthogonal to itself, since
+$\vb{x}\T\vb{x}=\|\vb{x}\|^2$.
+
+\subsection{Orthogonal subspaces}
+
+\begin{definition}[Orthogonal subspaces]\label{def:u16-orthsub}
+Subspaces $S$ and $T$ of $\R^n$ are \emph{orthogonal}, $S\perp T$, if every vector in $S$ is
+orthogonal to every vector in $T$: $\vb{s}\T\vb{t}=0$ for all $\vb{s}\in S$, $\vb{t}\in T$.
+\end{definition}
+
+The wall and the floor of a room are \emph{not} orthogonal subspaces of $\R^3$, even though we
+call them perpendicular planes: the line along the crease where they meet lies in both, and a
+nonzero vector on that line is not orthogonal to itself. More generally:
+
+\begin{proposition}\label{prop:u16-meet}
+If $S\perp T$, then $S\cap T=\{\vb{0}\}$.
+\end{proposition}
+
+\begin{proof}
+If $\vb{v}\in S\cap T$, then $\vb{v}$ is orthogonal to itself, so
+$\|\vb{v}\|^2=\vb{v}\T\vb{v}=0$ and $\vb{v}=\vb{0}$.
+\end{proof}
+
+In the plane $\R^2$ the subspaces are $\{\vb{0}\}$, lines through the origin, and $\R^2$
+itself. The zero subspace is orthogonal to everything; a line is never orthogonal to the whole
+plane (it is not orthogonal to itself); two lines are orthogonal exactly when they meet at
+$90^\circ$. The converse of Proposition~\ref{prop:u16-meet} is false: two lines meeting at
+$45^\circ$ share only $\vb{0}$ but are not orthogonal.
+
+Checking orthogonality of subspaces does not require testing infinitely many pairs.
+
+\begin{lemma}[Spanning vectors suffice]\label{lem:u16-span}
+If $S=\Span\{\vb{s}_1,\dots,\vb{s}_k\}$ and $T=\Span\{\vb{t}_1,\dots,\vb{t}_\ell\}$, then
+$S\perp T$ if and only if $\vb{s}_i\T\vb{t}_j=0$ for all $i,j$.
+\end{lemma}
+
+\begin{proof}
+One direction is immediate. For the other, take $\vb{s}=\sum_i c_i\vb{s}_i$ and
+$\vb{t}=\sum_j d_j\vb{t}_j$; then
+$\vb{s}\T\vb{t}=\sum_{i,j}c_id_j\,\vb{s}_i\T\vb{t}_j=0$.
+\end{proof}
+
+\subsection{The row space is orthogonal to the nullspace}
+
+\begin{theorem}[Orthogonality of the fundamental subspaces]\label{thm:u16-rowperp}
+For every $m\times n$ matrix $A$, the row space is orthogonal to the nullspace in $\R^n$, and
+the column space is orthogonal to the left nullspace in $\R^m$:
+\[
+  \Col{A\T}\perp\Nul{A},\qquad \Col{A}\perp\Nul{A\T}.
+\]
+\end{theorem}
+
+\begin{proof}
+Let $\vb{x}\in\Nul{A}$. Writing $A$ by rows,
+\[
+  A\vb{x}=\begin{bmatrix}\text{row }1\\ \vdots\\ \text{row }m\end{bmatrix}\vb{x}
+  =\begin{bmatrix}(\text{row }1)\cdot\vb{x}\\ \vdots\\ (\text{row }m)\cdot\vb{x}\end{bmatrix}
+  =\begin{bmatrix}0\\ \vdots\\ 0\end{bmatrix},
+\]
+so $\vb{x}$ is orthogonal to every row of $A$. The rows span the row space, so by
+Lemma~\ref{lem:u16-span} $\vb{x}$ is orthogonal to every vector in $\Col{A\T}$. (Explicitly:
+$(c_1\,\text{row }1+\cdots+c_m\,\text{row }m)\cdot\vb{x}=c_1\cdot 0+\cdots+c_m\cdot 0=0$.)
+The second statement is the first one applied to the matrix $A\T$, whose row space is
+$\Col{A}$ and whose nullspace is $\Nul{A\T}$.
+\end{proof}
+
+There is more: the dimensions add up to the whole space ($r+(n-r)=n$ and $r+(m-r)=m$), so each
+subspace contains \emph{all} the vectors orthogonal to its partner, not just some of them.
+
+\begin{definition}[Orthogonal complement]\label{def:u16-complement}
+The \emph{orthogonal complement} of a subspace $V\subseteq\R^n$ is
+$V^{\perp}=\{\vb{w}\in\R^n:\ \vb{w}\T\vb{v}=0\text{ for every }\vb{v}\in V\}$.
+\end{definition}
+
+\begin{theorem}[Fundamental theorem, part two]\label{thm:u16-complements}
+For every $m\times n$ matrix $A$,
+\[
+  \Nul{A}=\Col{A\T}^{\perp},\quad \Col{A\T}=\Nul{A}^{\perp}\ \ \text{in }\R^n,
+  \qquad
+  \Nul{A\T}=\Col{A}^{\perp},\quad \Col{A}=\Nul{A\T}^{\perp}\ \ \text{in }\R^m .
+\]
+Moreover, for any subspace $V\subseteq\R^n$, $\dim V+\dim V^{\perp}=n$.
+\end{theorem}
+
+\begin{proof}
+\emph{$\Nul{A}=\Col{A\T}^{\perp}$.} Theorem~\ref{thm:u16-rowperp} gives
+$\Nul{A}\subseteq\Col{A\T}^{\perp}$. Conversely, if $\vb{w}$ is orthogonal to the whole row
+space, it is orthogonal to each row, so every component of $A\vb{w}$ is zero and
+$\vb{w}\in\Nul{A}$.
+
+\emph{Dimension count.} Given $V$ with basis $\vb{v}_1,\dots,\vb{v}_k$, let $B$ be the
+$k\times n$ matrix with these vectors as rows. Then $V=\Col{B\T}$, so
+$V^{\perp}=\Nul{B}$ by the first step, and $\dim\Nul{B}=n-\rank B=n-k$.
+
+\emph{$\Col{A\T}=\Nul{A}^{\perp}$.} Theorem~\ref{thm:u16-rowperp} gives
+$\Col{A\T}\subseteq\Nul{A}^{\perp}$. By the dimension count,
+$\dim\Nul{A}^{\perp}=n-(n-r)=r=\dim\Col{A\T}$. A subspace contained in another of the same
+dimension equals it.
+
+The statements in $\R^m$ follow by applying these to $A\T$.
+\end{proof}
+
+\begin{corollary}[Splitting a vector]\label{cor:u16-split}
+Every $\vb{x}\in\R^n$ can be written in exactly one way as $\vb{x}=\vb{x}_r+\vb{x}_n$ with
+$\vb{x}_r\in\Col{A\T}$ and $\vb{x}_n\in\Nul{A}$. Likewise every $\vb{b}\in\R^m$ splits
+uniquely into a part in $\Col{A}$ and a part in $\Nul{A\T}$.
+\end{corollary}
+
+\begin{proof}
+Put a basis of the row space ($r$ vectors) together with a basis of the nullspace ($n-r$
+vectors). If a combination of all $n$ vectors is zero, move the nullspace terms to the other
+side: the vector $\sum c_i\vb{u}_i=-\sum d_j\vb{w}_j$ lies in both subspaces, hence is
+$\vb{0}$ by Proposition~\ref{prop:u16-meet}, and independence within each basis forces all
+$c_i$, $d_j$ to vanish. So the $n$ vectors are independent, hence a basis of $\R^n$, and
+every $\vb{x}$ is uniquely a combination of them. The same argument works in $\R^m$.
+\end{proof}
+
+Figure~\ref{fig:u16-bigpicture} is the picture to keep in mind for the rest of the course.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[>=Stealth,font=\small,scale=0.92]
+    \begin{scope}[rotate=-12]
+      \filldraw[fill=blue!10,draw=blue!60] (0,0) rectangle (-2.8,1.7);
+      \filldraw[fill=orange!12,draw=orange!70!black] (0,0) rectangle (2.7,-1.7);
+      \draw (0,0.3) -- (0.3,0.3) -- (0.3,0);
+      \node[align=center] at (-1.4,0.85) {row space\\ $\Col{A\T}$\\ dim $r$};
+      \node[align=center] at (1.35,-0.85) {nullspace\\ $\Nul{A}$\\ dim $n-r$};
+      \fill (0,0) circle (1.3pt) node[below left] {$\vb{0}$};
+    \end{scope}
+    \node at (-1.9,2.3) {$\R^n$};
+    \begin{scope}[xshift=8.9cm,rotate=12]
+      \filldraw[fill=blue!10,draw=blue!60] (0,0) rectangle (2.8,1.7);
+      \filldraw[fill=orange!12,draw=orange!70!black] (0,0) rectangle (-2.7,-1.7);
+      \draw (0,0.3) -- (-0.3,0.3) -- (-0.3,0);
+      \node[align=center] at (1.4,0.85) {column space\\ $\Col{A}$\\ dim $r$};
+      \node[align=center] at (-1.35,-0.85) {left nullspace\\ $\Nul{A\T}$\\ dim $m-r$};
+      \fill (0,0) circle (1.3pt) node[below right] {$\vb{0}$};
+    \end{scope}
+    \node at (10.8,2.3) {$\R^m$};
+    \draw[->,thick] (-0.9,2.05) to[bend left=15] node[above] {$A\vb{x}$} (9.8,2.1);
+  \end{tikzpicture}
+  \caption{The four subspaces with their right angles. In $\R^n$ the row space and nullspace
+  are orthogonal complements (dimensions $r+(n-r)=n$); in $\R^m$ the column space and left
+  nullspace are (dimensions $r+(m-r)=m$). Every $A\vb{x}$ lands in the column space.}
+  \label{fig:u16-bigpicture}
+\end{figure}
+
+\begin{example}[A plane perpendicular to a row]\label{ex:u16-plane}
+Take $A=\begin{bmatrix}1&2&5\\2&4&10\end{bmatrix}$. Row~2 is twice row~1, so $r=1$ and the
+row space is the line through $(1,2,5)$. The nullspace has dimension $3-1=2$: it is the plane
+$x_1+2x_2+5x_3=0$, with special solutions $(-2,1,0)$ and $(-5,0,1)$. Both are orthogonal to
+$(1,2,5)$: $-2+2+0=0$ and $-5+0+5=0$. The second row adds nothing; the nullspace is the plane
+whose normal vector is $(1,2,5)$, exactly as in calculus. Notice what cannot happen: the row
+space and nullspace of a matrix with three columns can never be two perpendicular
+\emph{lines} in $\R^3$, because their dimensions must add to $3$.
+\end{example}
+
+\begin{example}[Finding \texorpdfstring{$S^{\perp}$}{the complement} in \texorpdfstring{$\R^4$}{R4}]\label{ex:u16-sperp}
+Let $S=\Span\{(1,2,2,3),\,(1,3,3,2)\}$. A vector $\vb{x}$ is in $S^{\perp}$ when it is
+orthogonal to both spanning vectors (Lemma~\ref{lem:u16-span}), that is, when
+$\vb{x}\in\Nul{B}$ for the matrix $B$ with those vectors as rows. Elimination subtracts row~1
+from row~2:
+\[
+  B=\begin{bmatrix}1&2&2&3\\1&3&3&2\end{bmatrix}\longrightarrow
+  \begin{bmatrix}1&2&2&3\\0&1&1&-1\end{bmatrix}.
+\]
+The rank is $2$, so $\dim S^{\perp}=4-2=2$. With $x_3=a$ and $x_4=b$ free, row~2 gives
+$x_2=-a+b$ and row~1 gives $x_1=-2x_2-2x_3-3x_4=-5b$. Hence
+\[
+  \vb{x}=a\begin{bmatrix}0\\-1\\1\\0\end{bmatrix}+b\begin{bmatrix}-5\\1\\0\\1\end{bmatrix},
+\]
+and $(0,-1,1,0)$, $(-5,1,0,1)$ form a basis for $S^{\perp}$ (check: each has zero dot product
+with both rows of $B$). By Corollary~\ref{cor:u16-split} the four vectors together are a basis
+of $\R^4$ (the $4\times 4$ matrix with them as columns has determinant $53\neq 0$), so every
+$\vb{v}\in\R^4$ splits uniquely into a piece of $S$ plus a piece of $S^{\perp}$.
+\end{example}
+
+\begin{example}[The left nullspace of a tall matrix]\label{ex:u16-short}
+The matrix of the best-fit problem in Sections~\ref{sec:u17} and~\ref{sec:u18} is
+\[
+  A=\begin{bmatrix}1&0\\1&1\\1&2\end{bmatrix}.
+\]
+Its column space is a plane in $\R^3$ (the columns are independent), so its orthogonal
+complement $\Nul{A\T}$ is a line. Solving $A\T\vb{y}=\vb{0}$, i.e.\ $y_1+y_2+y_3=0$ and
+$y_2+2y_3=0$, gives $y_2=-2y_3$, $y_1=y_3$: the line through $(1,-2,1)$. Indeed
+$(1,-2,1)\cdot(1,1,1)=0$ and $(1,-2,1)\cdot(0,1,2)=0$. Any $\vb{b}\in\R^3$ that is not in the
+plane has a nonzero component along this line; that component will be the error vector
+of least squares.
+\end{example}
+
+\subsection{The matrix \texorpdfstring{$A\T A$}{A-transpose-A}}
+
+The main problem of this part of the course is to solve $A\vb{x}=\vb{b}$ ``as well as
+possible'' when it has no solution. This is the normal situation for a tall matrix: a
+satellite's position measured a thousand times gives a thousand equations in a handful of
+unknowns, and noise in $\vb{b}$ pushes it off the column space. Throwing away equations until
+the system is square discards information; we want to use every measurement. The equation that
+does this, derived in Section~\ref{sec:u17}, is
+\[
+  A\T A\,\hat{\vb{x}}=A\T\vb{b}.
+\]
+Whatever $A$ is, $A\T A$ is square ($n\times n$) and symmetric, since
+$(A\T A)\T=A\T(A\T)\T=A\T A$. The question is when it is invertible.
+
+\begin{theorem}[\texorpdfstring{$A\T A$}{A-transpose-A} has the same nullspace as \texorpdfstring{$A$}{A}]\label{thm:u16-ata}
+For every $m\times n$ matrix $A$: $\ \Nul{A\T A}=\Nul{A}$ and $\rank(A\T A)=\rank A$.
+Consequently $A\T A$ is invertible if and only if the columns of $A$ are independent.
+\end{theorem}
+
+\begin{proof}
+If $A\vb{x}=\vb{0}$ then $A\T A\vb{x}=\vb{0}$. Conversely, suppose $A\T A\vb{x}=\vb{0}$ and
+multiply on the left by $\vb{x}\T$:
+\[
+  0=\vb{x}\T A\T A\vb{x}=(A\vb{x})\T(A\vb{x})=\|A\vb{x}\|^2 ,
+\]
+so $A\vb{x}=\vb{0}$. Equal nullspaces in $\R^n$ give equal ranks, $n-\dim\Nul{A}$. The square
+matrix $A\T A$ is invertible exactly when its nullspace is $\{\vb{0}\}$, that is, when
+$\Nul{A}=\{\vb{0}\}$, which means the columns of $A$ are independent.
+\end{proof}
+
+\begin{example}[Invertible and singular \texorpdfstring{$A\T A$}{A-transpose-A}]\label{ex:u16-ata}
+For $A=\begin{bmatrix}1&1\\1&2\\1&5\end{bmatrix}$ the columns are independent and
+\[
+  A\T A=\begin{bmatrix}1&1&1\\1&2&5\end{bmatrix}\begin{bmatrix}1&1\\1&2\\1&5\end{bmatrix}
+  =\begin{bmatrix}3&8\\8&30\end{bmatrix},
+\]
+which is invertible ($3\cdot 30-8\cdot 8=26\neq 0$). Changing the second column to $(3,3,3)$
+makes the rank $1$, and then $A\T A=\begin{bmatrix}3&9\\9&27\end{bmatrix}$ has rank $1$ as
+well: the vector $(3,-1)$ is in the nullspace of both $A$ and $A\T A$. For the matrix of
+Example~\ref{ex:u16-short}, $A\T A=\begin{bmatrix}3&3\\3&5\end{bmatrix}$, invertible as the
+theorem promises.
+\end{example}
+
+\begin{trap}
+Orthogonality of subspaces is much stronger than meeting only at $\vb{0}$. And
+``perpendicular'' planes in the everyday sense, like a wall and the floor, are not orthogonal
+subspaces. When you test $S\perp T$, test every spanning vector of $S$ against every
+spanning vector of $T$; when you claim $T=S^{\perp}$, also check that the dimensions add up
+to $n$.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}[Fredholm's alternative]\label{ex:u16-fredholm}
+Exactly one of these problems has a solution: $A\vb{x}=\vb{b}$, or $A\T\vb{y}=\vb{0}$ with
+$\vb{y}\T\vb{b}=1$. (If $\vb{b}\notin\Col{A}$, then $\vb{b}$ is not orthogonal to
+$\Nul{A\T}$.) Multiply the equations $x_1-x_2=1$, $x_2-x_3=1$, $x_1-x_3=1$ by numbers
+$y_1,y_2,y_3$ chosen so that the equations add up to $0=1$.
+\end{exercise}
+
+\begin{solution}
+Take $y_1=1$, $y_2=1$, $y_3=-1$. The left sides add to
+$(x_1-x_2)+(x_2-x_3)-(x_1-x_3)=0$, while the right sides add to $1+1-1=1$. So the system
+implies $0=1$ and has no solution. In matrix language $\vb{y}=(1,1,-1)$ satisfies
+$A\T\vb{y}=\vb{0}$ (it is in the left nullspace) and $\vb{y}\T\vb{b}=1\neq 0$, so $\vb{b}$ is
+not orthogonal to $\Nul{A\T}$ and therefore not in $\Col{A}=\Nul{A\T}^{\perp}$.
+\end{solution}
+
+\begin{exercise}\label{ex:u16-four}
+You are given four nonzero vectors $\vb{r},\vb{n},\vb{c},\vb{l}$ in $\R^2$.
+(a) What conditions must they satisfy to be bases for $\Col{A\T}$, $\Nul{A}$, $\Col{A}$,
+$\Nul{A\T}$ of some $2\times 2$ matrix $A$? (b) Give one such matrix.
+\end{exercise}
+
+\begin{solution}
+(a) Each subspace has a one-vector basis, so all four have dimension $1$ and $r=1$; the
+dimension counts $1+1=2$ hold automatically. What remains is orthogonality:
+$\vb{r}\T\vb{n}=0$ and $\vb{c}\T\vb{l}=0$. These are also sufficient, by part (b).
+(b) Take $A=\vb{c}\,\vb{r}\T$. Every column is a multiple of $\vb{c}$ and every row a multiple
+of $\vb{r}$, so $\Col{A}$ is the line through $\vb{c}$ and $\Col{A\T}$ the line through
+$\vb{r}$. The nullspaces are then the orthogonal complements, the lines through $\vb{n}$ and
+$\vb{l}$ (Theorem~\ref{thm:u16-complements}).
+\end{solution}
+
+\begin{exercise}\label{ex:u16-impossible}
+Is there a matrix whose row space contains $(1,2,1)$ and whose nullspace contains
+$(1,-2,1)$?
+\end{exercise}
+
+\begin{solution}
+No. The row space and the nullspace are orthogonal (Theorem~\ref{thm:u16-rowperp}), but
+$(1,2,1)\cdot(1,-2,1)=1-4+1=-2\neq 0$.
+\end{solution}
+
+\begin{exercise}\label{ex:u16-splitb}
+For $A=\begin{bmatrix}1&0\\1&1\\1&2\end{bmatrix}$ (Example~\ref{ex:u16-short}), split
+$\vb{b}=(6,0,0)$ into a vector in $\Col{A}$ plus a vector in $\Nul{A\T}$.
+\end{exercise}
+
+\begin{solution}
+$\Nul{A\T}$ is the line through $\vb{n}=(1,-2,1)$. Write $\vb{b}=\vb{p}+t\vb{n}$ with
+$\vb{p}\in\Col{A}$; dotting with $\vb{n}$ kills $\vb{p}$ (Theorem~\ref{thm:u16-rowperp}), so
+$\vb{n}\T\vb{b}=t\,\vb{n}\T\vb{n}$, i.e.\ $6=6t$ and $t=1$. Hence the left-nullspace part is
+$(1,-2,1)$ and $\vb{p}=\vb{b}-(1,-2,1)=(5,2,-1)$. Check that $\vb{p}$ really is in the column
+space: $5(1,1,1)-3(0,1,2)=(5,2,-1)$. This is the projection computed again in
+Sections~\ref{sec:u17} and~\ref{sec:u18}.
+\end{solution}

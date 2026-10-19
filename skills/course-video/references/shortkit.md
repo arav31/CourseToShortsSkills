@@ -103,6 +103,8 @@ assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
 
 ## Changelog (SHORTKIT_VERSION)
 
+- 2.3: plates draw above diagrams and below their own text regardless of transform order;
+  `label(math=True)` keeps LaTeX colours unless `color=` is given.
 - 2.2: `TransformMatchingShapes`/`save_state` no longer slow down (ownership kept outside mobjects);
   exact line-versus-text checks; `axis_numbers()`; stalled renders are stopped with the last play
   logged; `audit.py approve` refuses renders with errors; `audit.py frames --montage`.
@@ -130,6 +132,9 @@ assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
   example by animating them one by one before grouping). Remove what you added: `self.remove(*group)`.
 - Do not build a live number by swapping submobjects in your own updater (stale glyphs) or with
   `DecimalNumber`/`MathTex` (they need a `latex` binary); use `live_text()`.
+- `path_arc` is measured counter-clockwise: positive arcs bend left of the direction of travel.
+  Check flight paths of moving labels in frames; flip the sign if they cross other objects.
+- `cue("word", nth=1)` counts occurrences from zero.
 - Stroke widths are in Manim units where 1 = 0.01 scene units; on a 9-unit-wide frame the
   defaults look thick, and `vec()` already uses a phone-friendly width.
 

@@ -1,0 +1,188 @@
+% unit: u37
+% sources: sources/010-exam-3-review.txt, sources/023-exam-3-review.txt, sources/106-mit18-06scf11-ses3-9sum-pdf-download-file.txt, sources/011-exam-3-problem-solving.txt
+\section{Exam 3 review}\label{sec:u37}
+
+The third exam is about understanding a matrix through its eigenvalues: $d\vb{u}/dt=A\vb{u}$ and $e^{At}$ (Section~\ref{sec:u25}), symmetric matrices $A=Q\Lambda Q\T$ (Section~\ref{sec:u29}), positive definite matrices (Section~\ref{sec:u31}), similar matrices (Section~\ref{sec:u32}) and the SVD (Section~\ref{sec:u33}). Linear transformations wait for the final. This review collects the facts that make eigenvalue questions fast and then works the review problems in full.
+
+\subsection{Why elimination is set aside}
+
+Elimination was the engine of the first two thirds of the course, but it is the wrong tool now: row operations change the eigenvalues. The operations that preserve eigenvalues are similarity transformations.
+
+\begin{proposition}[Similar matrices share eigenvalues]\label{prop:u37-similar}
+If $B=M^{-1}AM$ with $M$ invertible, then $A$ and $B$ have the same characteristic polynomial, hence the same eigenvalues with the same multiplicities. If $A\vb{x}=\lambda\vb{x}$ then $B(M^{-1}\vb{x})=\lambda M^{-1}\vb{x}$, and $B^{k}=M^{-1}A^{k}M$ for every $k$.
+\end{proposition}
+\begin{proof}
+Since $B-\lambda I=M^{-1}(A-\lambda I)M$,
+\[
+\det(B-\lambda I)=\det M^{-1}\,\det(A-\lambda I)\,\det M=\det(A-\lambda I).
+\]
+For the eigenvectors, $BM^{-1}\vb{x}=M^{-1}AMM^{-1}\vb{x}=\lambda M^{-1}\vb{x}$. Finally, writing $B^{k}$ as $k$ copies of $M^{-1}AM$, each inner pair $MM^{-1}$ cancels and leaves $M^{-1}A^{k}M$.
+\end{proof}
+
+So if powers of $A$ grow, so do powers of $B$; if one decays, the other does too. In the language of Section~\ref{sec:u35}, similar matrices represent the same transformation in different bases.
+
+\begin{example}[Elimination moves eigenvalues; similarity does not]\label{ex:u37-elim}
+$A=\begin{bmatrix}2&1\\1&2\end{bmatrix}$ has trace $4$ and determinant $3$, so $\lambda=1,3$. One elimination step gives $U=\begin{bmatrix}2&1\\0&3/2\end{bmatrix}$, whose eigenvalues are its diagonal entries $2$ and $3/2$: the determinant survived ($2\cdot\tfrac32=3$) but the trace did not. With $M=\begin{bmatrix}1&1\\0&1\end{bmatrix}$ and $M^{-1}=\begin{bmatrix}1&-1\\0&1\end{bmatrix}$,
+\[
+M^{-1}AM=\begin{bmatrix}1&-1\\0&1\end{bmatrix}\begin{bmatrix}2&3\\1&3\end{bmatrix}=\begin{bmatrix}1&0\\1&3\end{bmatrix},
+\]
+which is triangular with eigenvalues $1$ and $3$, the same as $A$.
+\end{example}
+
+\subsection{Eigenvalues of the special matrices}
+
+Most exam questions are answered by knowing where each special family keeps its eigenvalues (Figure~\ref{fig:u37-plane}). The proofs are short and worth knowing.
+
+\begin{proposition}[Where the eigenvalues live]\label{prop:u37-where}
+Let $A\vb{x}=\lambda\vb{x}$ with $\vb{x}\neq\vb{0}$ (complex entries allowed).
+\begin{enumerate}[(a)]
+\item If $Q$ is orthogonal, $|\lambda|=1$.
+\item If $P$ is a projection ($P^{2}=P$), $\lambda=0$ or $1$.
+\item If $A$ is real symmetric, $\lambda$ is real; if $A$ is real skew-symmetric ($A\T=-A$), $\lambda$ is purely imaginary.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+(a) Orthogonal matrices preserve length: $\|Q\vb{x}\|^{2}=\bar{\vb{x}}\T Q\T Q\vb{x}=\|\vb{x}\|^{2}$. Taking lengths in $Q\vb{x}=\lambda\vb{x}$ gives $\|\vb{x}\|=|\lambda|\,\|\vb{x}\|$, so $|\lambda|=1$.
+(b) $\lambda\vb{x}=P\vb{x}=P^{2}\vb{x}=\lambda^{2}\vb{x}$, so $\lambda(\lambda-1)\vb{x}=\vb{0}$ and $\lambda\in\{0,1\}$.
+(c) Let $s=\bar{\vb{x}}\T A\vb{x}=\lambda\,\bar{\vb{x}}\T\vb{x}=\lambda\|\vb{x}\|^{2}$. Since $A$ is real, the conjugate of the number $s$ is $\vb{x}\T A\bar{\vb{x}}$, and transposing this $1\times1$ matrix gives $\bar{\vb{x}}\T A\T\vb{x}$. If $A\T=A$ this is $s$ itself, so $s$ is real and so is $\lambda=s/\|\vb{x}\|^{2}$. If $A\T=-A$ it is $-s$, so $s$ and $\lambda$ are purely imaginary.
+\end{proof}
+
+\begin{remark}[Which matrices have orthogonal eigenvectors]\label{rem:u37-normal}
+A real matrix has a full set of orthonormal (possibly complex) eigenvectors exactly when $AA\T=A\T A$. Symmetric matrices pass ($A^{2}$ on both sides), skew-symmetric matrices pass ($-A^{2}$ on both sides) and orthogonal matrices pass ($I$ on both sides). The proof goes through Schur's triangular form and is not needed for the exam; the symmetric case is the spectral theorem of Section~\ref{sec:u29}. When the eigenvectors are complex, ``orthogonal'' means $\bar{\vb{x}}\T\vb{y}=0$: conjugate the first vector.
+\end{remark}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=1.45,>=Stealth,font=\small]
+  \draw[->] (-1.9,0) -- (2.6,0) node[right] {$\operatorname{Re}\lambda$};
+  \draw[->] (0,-1.8) -- (0,1.9) node[above] {$\operatorname{Im}\lambda$};
+  \draw[thick,gray] (0,0) circle (1);
+  \node[gray!70!black,anchor=east] at (-0.55,-1.05) {orthogonal: $|\lambda|=1$};
+  \draw[line width=2.2pt,green!50!black,opacity=0.55] (0.04,0) -- (2.45,0);
+  \node[green!40!black,below] at (2.0,-0.05) {pos.\ definite};
+  \draw[line width=2.2pt,violet,opacity=0.35] (0,-1.75) -- (0,1.75);
+  \node[violet,right] at (0.05,1.65) {skew-symmetric};
+  \fill[red!70!black] (1,0) circle (1.6pt) node[above right] {$1$};
+  \fill[red!70!black] (0,0) circle (1.6pt) node[below left] {$0$};
+  \fill[orange!80!black] (-1,0) circle (1.6pt) node[below left] {$-1$};
+  \fill[blue!70!black] (0,1.414) circle (1.6pt) node[left] {$\sqrt2\,i$};
+  \fill[blue!70!black] (0,-1.414) circle (1.6pt) node[left] {$-\sqrt2\,i$};
+  \fill[teal] (0.6,0.8) circle (1.6pt) node[right] {$0.6+0.8i$};
+  \fill[teal] (0.6,-0.8) circle (1.6pt) node[right] {$0.6-0.8i$};
+\end{tikzpicture}
+\caption{Where eigenvalues live. Symmetric: the real axis; positive definite: the positive real axis; skew-symmetric: the imaginary axis (the matrix of Example~\ref{ex:u37-skew} has $0,\pm\sqrt2\,i$); orthogonal: the unit circle (the rotation of Exercise~\ref{exr:u37-pqr} has $0.6\pm0.8i$); projections: only $0$ and $1$; reflections and symmetric orthogonal matrices: only $\pm1$.}\label{fig:u37-plane}
+\end{figure}
+
+Two more facts round out the toolkit. Markov matrices (Section~\ref{sec:u26}) have $\lambda=1$ and all $|\lambda|\le1$. Adding $cI$ or multiplying by $c$ keeps the eigenvectors and shifts or scales the eigenvalues: $A+cI$ has $\lambda+c$, and $cA$ has $c\lambda$.
+
+\subsection{Solved review problems}
+
+\begin{example}[A skew-symmetric system $d\vb{u}/dt=A\vb{u}$]\label{ex:u37-skew}
+Solve $\dfrac{d\vb{u}}{dt}=A\vb{u}$ for $A=\begin{bmatrix}0&-1&0\\1&0&-1\\0&1&0\end{bmatrix}$.
+
+\emph{Eigenvalues.} Rows one and three are negatives of each other, so $A$ is singular and $\lambda_1=0$. Also $A\T=-A$, so the other eigenvalues are imaginary. Expanding,
+\[
+\det(A-\lambda I)=\begin{vmatrix}-\lambda&-1&0\\1&-\lambda&-1\\0&1&-\lambda\end{vmatrix}=-\lambda^{3}-2\lambda=-\lambda(\lambda^{2}+2),
+\]
+so $\lambda=0,\ \sqrt2\,i,\ -\sqrt2\,i$. Solving $(A-\lambda I)\vb{x}=\vb{0}$: the first row gives $x_2=-\lambda x_1$ and the second $x_3=x_1-\lambda x_2=(1+\lambda^{2})x_1$, so
+\[
+\vb{x}_1=\begin{bmatrix}1\\0\\1\end{bmatrix},\qquad \vb{x}_2=\begin{bmatrix}1\\-\sqrt2\,i\\-1\end{bmatrix}\ (\lambda=\sqrt2\,i),\qquad \vb{x}_3=\begin{bmatrix}1\\\sqrt2\,i\\-1\end{bmatrix}\ (\lambda=-\sqrt2\,i).
+\]
+They are orthogonal, as Remark~\ref{rem:u37-normal} promises: $\bar{\vb{x}}_1\T\vb{x}_2=1+0-1=0$ and $\bar{\vb{x}}_2\T\vb{x}_3=1+(\sqrt2\,i)(\sqrt2\,i)+1=1-2+1=0$.
+
+\emph{General solution.} $\vb{u}(t)=c_1\vb{x}_1+c_2e^{\sqrt2\,it}\vb{x}_2+c_3e^{-\sqrt2\,it}\vb{x}_3$. Each $e^{\pm\sqrt2\,it}$ has absolute value $1$ and travels around the unit circle, so the solution neither grows nor decays. It is periodic: everything returns to its starting value when $\sqrt2\,T=2\pi$, that is $T=\pi\sqrt2$.
+
+\emph{The exponential.} Since $A$ has three independent eigenvectors, the eigenvector matrix $X$ diagonalizes it and
+\[
+e^{At}=Xe^{\Lambda t}X^{-1},\qquad e^{\Lambda t}=\begin{bmatrix}1&&\\&e^{\sqrt2\,it}&\\&&e^{-\sqrt2\,it}\end{bmatrix}.
+\]
+A real form avoids complex arithmetic: the characteristic polynomial gives $A^{3}=-2A$ (Cayley--Hamilton), so the power series collapses to
+\[
+e^{At}=I+\frac{\sin\sqrt2\,t}{\sqrt2}\,A+\frac{1-\cos\sqrt2\,t}{2}\,A^{2},\qquad A^{2}=\begin{bmatrix}-1&0&1\\0&-2&0\\1&0&-1\end{bmatrix}.
+\]
+For $\vb{u}(0)=(1,0,0)$ this gives $\vb{u}(t)=\bigl(\tfrac{1+\cos\sqrt2\,t}{2},\ \tfrac{\sin\sqrt2\,t}{\sqrt2},\ \tfrac{1-\cos\sqrt2\,t}{2}\bigr)$, whose length is $1$ for all $t$ (Exercise~\ref{exr:u37-expskew}).
+\end{example}
+
+\begin{example}[A matrix known only by its eigenvectors]\label{ex:u37-givenx}
+A $3\times3$ matrix has eigenvalues $0$, $c$, $2$ with eigenvectors
+$\vb{x}_1=(1,1,1)$, $\vb{x}_2=(1,-1,0)$, $\vb{x}_3=(1,1,-2)$. For which $c$ is it diagonalizable, symmetric, positive definite, Markov, or twice a projection?
+
+The three vectors are not just independent but orthogonal ($\vb{x}_1\cdot\vb{x}_2=0$, $\vb{x}_1\cdot\vb{x}_3=0$, $\vb{x}_2\cdot\vb{x}_3=0$), and that settles most parts.
+\begin{itemize}
+\item \emph{Diagonalizable}: for every $c$; three independent eigenvectors are all that matter, even if $c$ repeats $0$ or $2$.
+\item \emph{Symmetric}: for every real $c$. Normalizing gives $A=Q\Lambda Q\T$, which is symmetric when $\Lambda$ is real; a symmetric matrix cannot have a non-real eigenvalue. Explicitly,
+\[
+A=\begin{bmatrix}\tfrac{c}{2}+\tfrac13&\tfrac13-\tfrac{c}{2}&-\tfrac23\\[2pt]\tfrac13-\tfrac{c}{2}&\tfrac{c}{2}+\tfrac13&-\tfrac23\\[2pt]-\tfrac23&-\tfrac23&\tfrac43\end{bmatrix}.
+\]
+\item \emph{Positive definite}: never, because $\lambda=0$ is not positive. It is positive \emph{semidefinite} for $c\ge0$.
+\item \emph{Markov}: never; a Markov matrix has no eigenvalue larger than $1$, and here $\lambda=2$.
+\item \emph{$\tfrac12A$ a projection}: its eigenvalues $0$, $c/2$, $1$ must all be $0$ or $1$, and it is symmetric, so $c=0$ or $c=2$. For $c=2$ the formula gives $\tfrac12A=I-\tfrac13\vb{x}_1\vb{x}_1\T$, the projection onto the plane perpendicular to $(1,1,1)$.
+\end{itemize}
+Without orthogonal eigenvectors, symmetric, positive definite and projection would all have failed.
+\end{example}
+
+\begin{example}[Reading an SVD]\label{ex:u37-svd}
+Suppose $A=U\Sigma V\T$ with $U$ and $V$ having two columns each.
+\begin{enumerate}[(a)]
+\item $\Sigma=\begin{bmatrix}3&0\\0&2\end{bmatrix}$: $A$ is $2\times2$ and invertible, since all three factors are; $|\det A|=3\cdot2=6$.
+\item $\Sigma=\begin{bmatrix}3&0\\0&-5\end{bmatrix}$: impossible. Singular values are never negative.
+\item $\Sigma=\begin{bmatrix}3&0\\0&0\end{bmatrix}$: $A=3\vb{u}_1\vb{v}_1\T$ has rank one, a one-dimensional nullspace, and orthonormal bases of all four subspaces can be read off: $\vb{v}_1$ for the row space, $\vb{v}_2$ for $\Nul{A}$ (since $A\vb{v}_2=0\vb{u}_2$), $\vb{u}_1$ for $\Col{A}$ and $\vb{u}_2$ for $\Nul{A\T}$.
+\end{enumerate}
+To \emph{compute} an SVD, take $V$ from the eigenvectors of $A\T A$ and $\sigma_i=\sqrt{\lambda_i}$, then get each $\vb{u}_i$ from $A\vb{v}_i=\sigma_i\vb{u}_i$. For $A=\begin{bmatrix}4&4\\-3&3\end{bmatrix}$: $A\T A=\begin{bmatrix}25&7\\7&25\end{bmatrix}$ has $\lambda=32,18$ with $\vb{v}_1=\tfrac{1}{\sqrt2}(1,1)$, $\vb{v}_2=\tfrac{1}{\sqrt2}(1,-1)$. Then $A\vb{v}_1=(4\sqrt2,0)$ gives $\sigma_1=4\sqrt2$, $\vb{u}_1=(1,0)$, and $A\vb{v}_2=(0,-3\sqrt2)$ gives $\sigma_2=3\sqrt2$, $\vb{u}_2=(0,-1)$.
+\end{example}
+
+\begin{trap}
+Taking $U$ from the eigenvectors of $AA\T$ independently of $V$ can produce a wrong sign. For the matrix just above, $AA\T=\begin{bmatrix}32&0\\0&18\end{bmatrix}$ suggests $\vb{u}_2=(0,1)$, and then $U\Sigma V\T\neq A$. Eigenvectors are only determined up to sign; $A\vb{v}_i=\sigma_i\vb{u}_i$ fixes the sign of $\vb{u}_i$ once $\vb{v}_i$ is chosen.
+\end{trap}
+
+\begin{example}[Symmetric and orthogonal]\label{ex:u37-symorth}
+Suppose $A$ is both symmetric and orthogonal. Its eigenvalues are real (symmetric) with $|\lambda|=1$ (orthogonal), so each is $1$ or $-1$. Hence: $A$ need not be positive definite ($\begin{bmatrix}1&0\\0&-1\end{bmatrix}$ is a counterexample); it must have repeated eigenvalues once $n\ge3$; it is diagonalizable, even with orthonormal eigenvectors; it is invertible, as every orthogonal matrix is. Finally $P=\tfrac12(A+I)$ is a projection: it is symmetric, and $A^{2}=A\T A=I$ gives
+\[
+P^{2}=\tfrac14(A^{2}+2A+I)=\tfrac14(2A+2I)=\tfrac12(A+I)=P.
+\]
+(Or: the eigenvalues $\pm1$ of $A$ become $1$ and $0$.) For instance the exchange matrix $A=\begin{bmatrix}0&1\\1&0\end{bmatrix}$ gives $P=\tfrac12\begin{bmatrix}1&1\\1&1\end{bmatrix}$, the projection onto the line through $(1,1)$.
+\end{example}
+
+\begin{example}[Five tests for positive definiteness]\label{ex:u37-pd}
+For a symmetric matrix the following are equivalent (Sections~\ref{sec:u29} and~\ref{sec:u31}): all $\lambda_i>0$; all pivots $>0$; all upper-left determinants $>0$; $\vb{x}\T A\vb{x}>0$ for $\vb{x}\neq\vb{0}$; $A=R\T R$ with independent columns in $R$. For
+$K=\begin{bmatrix}2&-1&0\\-1&2&-1\\0&-1&2\end{bmatrix}$:
+the upper-left determinants are $2,3,4$; the pivots are their ratios $2,\tfrac32,\tfrac43$; the eigenvalues are $2-\sqrt2,\ 2,\ 2+\sqrt2$ (sum $6=\tr K$, product $4=\det K$); and
+\[
+\vb{x}\T K\vb{x}=2x_1^{2}+2x_2^{2}+2x_3^{2}-2x_1x_2-2x_2x_3=x_1^{2}+(x_1-x_2)^{2}+(x_2-x_3)^{2}+x_3^{2},
+\]
+which is zero only when $x_1=x_2=x_3=0$. Every test agrees: $K$ is positive definite.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u37-pqr}
+Let $\vb{a}=(3,4)$. Find the eigenvalues and eigenvectors of (a) the projection $P=\vb{a}\vb{a}\T/\vb{a}\T\vb{a}$, (b) the rotation $Q=\begin{bmatrix}0.6&-0.8\\0.8&0.6\end{bmatrix}$, (c) the reflection $R=2P-I$.
+\end{exercise}
+\begin{solution}
+(a) $P=\frac{1}{25}\begin{bmatrix}9&12\\12&16\end{bmatrix}$. A projection has $\lambda\in\{0,1\}$. $P\vb{a}=\vb{a}(\vb{a}\T\vb{a})/(\vb{a}\T\vb{a})=\vb{a}$, so $\vb{a}=(3,4)$ has $\lambda=1$; $\vb{b}=(-4,3)$ is perpendicular to $\vb{a}$, so $P\vb{b}=\vb{a}(\vb{a}\T\vb{b})/25=\vb{0}$ and $\lambda=0$.
+(b) $0.6^{2}+0.8^{2}=1$, so $Q$ is the rotation with $\cos\theta=0.6$, $\sin\theta=0.8$. $\det(Q-\lambda I)=(0.6-\lambda)^{2}+0.64=0$ gives $\lambda=0.6\pm0.8i$, a conjugate pair on the unit circle. For $\lambda=0.6+0.8i$, $Q-\lambda I=\begin{bmatrix}-0.8i&-0.8\\0.8&-0.8i\end{bmatrix}$, whose second row is $i$ times the first, and $\vb{x}=(1,-i)$ solves $-0.8i(1)-0.8(-i)=0$. The other eigenvector is the conjugate $(1,i)$.
+(c) $R=\frac{1}{25}\begin{bmatrix}-7&24\\24&7\end{bmatrix}$ has the same eigenvectors as $P$, with $\lambda\mapsto2\lambda-1$: $R\vb{a}=\vb{a}$ ($\lambda=1$) and $R\vb{b}=-\vb{b}$ ($\lambda=-1$). A reflection keeps the mirror line and flips the perpendicular direction.
+\end{solution}
+
+\begin{exercise}\label{exr:u37-expskew}
+Show that if $A$ is real and skew-symmetric, then $e^{At}$ is an orthogonal matrix, so every solution of $d\vb{u}/dt=A\vb{u}$ keeps its length. Check this for the solution $\vb{u}(t)$ found in Example~\ref{ex:u37-skew}.
+\end{exercise}
+\begin{solution}
+Transposing the series term by term gives $(e^{At})\T=e^{A\T t}=e^{-At}$. Since $At$ and $-At$ commute, $e^{At}e^{-At}=e^{0}=I$, so $(e^{At})\T e^{At}=I$ and $\|\vb{u}(t)\|=\|e^{At}\vb{u}(0)\|=\|\vb{u}(0)\|$. With $C=\cos\sqrt2\,t$ and $S=\sin\sqrt2\,t$,
+\[
+\|\vb{u}(t)\|^{2}=\frac{(1+C)^{2}}{4}+\frac{S^{2}}{2}+\frac{(1-C)^{2}}{4}=\frac{2+2C^{2}}{4}+\frac{S^{2}}{2}=\frac{1+C^{2}+S^{2}}{2}=1=\|\vb{u}(0)\|^{2}.
+\]
+\end{solution}
+
+\begin{exercise}\label{exr:u37-notsimilar}
+$A=\begin{bmatrix}1&1\\0&1\end{bmatrix}$ and $I$ have the same eigenvalues. Are they similar?
+\end{exercise}
+\begin{solution}
+No. Every matrix similar to $I$ is $M^{-1}IM=I$ itself, and $A\neq I$. Same eigenvalues is necessary for similarity but not sufficient: $A$ has only one independent eigenvector, $(1,0)$, while $I$ has two (Section~\ref{sec:u32} on Jordan form).
+\end{solution}
+
+\begin{exercise}\label{exr:u37-pieces}
+$A=U\Sigma V\T$ with $U=I$, $\Sigma=\begin{bmatrix}3&0\\0&0\end{bmatrix}$ and $V=\frac{1}{\sqrt2}\begin{bmatrix}1&-1\\1&1\end{bmatrix}$. Find $A$ and a basis for each of its four subspaces.
+\end{exercise}
+\begin{solution}
+$A=\sigma_1\vb{u}_1\vb{v}_1\T=3\begin{bmatrix}1\\0\end{bmatrix}\frac{1}{\sqrt2}\begin{bmatrix}1&1\end{bmatrix}=\frac{3}{\sqrt2}\begin{bmatrix}1&1\\0&0\end{bmatrix}$. Row space: $\vb{v}_1=\tfrac{1}{\sqrt2}(1,1)$. Nullspace: $\vb{v}_2=\tfrac{1}{\sqrt2}(-1,1)$; check $A\vb{v}_2=\tfrac{3}{2}(-1+1,0)=\vb{0}$. Column space: $\vb{u}_1=(1,0)$. Left nullspace: $\vb{u}_2=(0,1)$, and indeed the second row of $A$ is zero.
+\end{solution}

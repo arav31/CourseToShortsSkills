@@ -1,0 +1,306 @@
+% unit: u17
+% sources: sources/096-projections-onto-subspaces.txt, sources/028-lecture-15-projections-onto-subspaces.txt, sources/176-mit18-06scf11-ses2-2sum-pdf-download-file.txt, sources/029-problem-solving-projection-onto-subspaces.txt, sources/177-mit18-06scf11-ses2-2prob-pdf-download-file.txt, sources/178-mit18-06scf11-ses2-2sol-pdf-download-file.txt
+\section{Projections onto subspaces}\label{sec:u17}
+
+Section~\ref{sec:u16} showed that $\R^m$ splits into the column space of $A$ and the left
+nullspace, at right angles. Projection makes that split computable: given $\vb{b}$, find the
+point $\vb{p}$ of a subspace closest to $\vb{b}$. The answer is pinned down by a single right
+angle, the error $\vb{e}=\vb{b}-\vb{p}$ must be perpendicular to the subspace, and it leads to
+three formulas to remember: the coefficients $\hat{\vb{x}}$, the projection $\vb{p}$, and the
+projection matrix $P$. We do the one-dimensional case first and then repeat every step for a
+subspace of any dimension.
+
+\subsection{Projecting onto a line}
+
+Let $\vb{a}\neq\vb{0}$ and $\vb{b}$ be vectors in $\R^m$. The point of the line through
+$\vb{a}$ closest to $\vb{b}$ is some multiple $\vb{p}=\hat{x}\,\vb{a}$. Trigonometry would
+express $\hat{x}$ with $\cos\theta$; linear algebra only needs the right angle in
+Figure~\ref{fig:u17-line}: the error $\vb{e}=\vb{b}-\hat{x}\vb{a}$ is perpendicular to
+$\vb{a}$.
+\[
+  \vb{a}\T(\vb{b}-\hat{x}\vb{a})=0
+  \quad\Longrightarrow\quad
+  \hat{x}\,\vb{a}\T\vb{a}=\vb{a}\T\vb{b}
+  \quad\Longrightarrow\quad
+  \hat{x}=\frac{\vb{a}\T\vb{b}}{\vb{a}\T\vb{a}},\qquad
+  \vb{p}=\vb{a}\,\frac{\vb{a}\T\vb{b}}{\vb{a}\T\vb{a}} .
+\]
+Two sanity checks: doubling $\vb{b}$ doubles $\vb{p}$; doubling $\vb{a}$ (or replacing it by
+$-\vb{a}$) does not change $\vb{p}$, because the line is the same: replacing $\vb{a}$ by $2\vb{a}$ multiplies the
+numerator and the denominator by $4$.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[>=Stealth,scale=1.15]
+    \draw[gray] (-0.9,-0.3) -- (4.8,1.6) node[right] {line through $\vb{a}$};
+    \draw[->,very thick,blue] (0,0) -- (3,1) node[below right] {$\vb{a}$};
+    \draw[->,very thick,red!75!black] (0,0) -- (1.4,2.4) node[above left] {$\vb{b}$};
+    \draw[->,very thick,green!50!black] (0,0) -- (1.98,0.66) node[below=3pt] {$\vb{p}=\hat{x}\vb{a}$};
+    \draw[->,thick,dashed] (1.98,0.66) -- (1.4,2.4) node[midway,right] {$\vb{e}=\vb{b}-\vb{p}$};
+    \draw[shift={(1.98,0.66)},rotate=18.43] (0.2,0) -- (0.2,0.2) -- (0,0.2);
+    \fill (0,0) circle (1.2pt) node[below left] {$\vb{0}$};
+  \end{tikzpicture}
+  \caption{Projection onto a line. The closest point $\vb{p}$ is where the perpendicular from
+  $\vb{b}$ meets the line; the error $\vb{e}$ is orthogonal to $\vb{a}$, which is the equation
+  $\vb{a}\T(\vb{b}-\hat{x}\vb{a})=0$.}
+  \label{fig:u17-line}
+\end{figure}
+
+\begin{proposition}[The perpendicular foot is closest]\label{prop:u17-closest-line}
+For every number $t$,
+$\ \|\vb{b}-t\vb{a}\|^2=\|\vb{e}\|^2+(t-\hat{x})^2\|\vb{a}\|^2$. Hence $\vb{p}=\hat{x}\vb{a}$
+is the unique point of the line closest to $\vb{b}$.
+\end{proposition}
+
+\begin{proof}
+Write $\vb{b}-t\vb{a}=\vb{e}+(\hat{x}-t)\vb{a}$. The two pieces are orthogonal, so
+Pythagoras (Section~\ref{sec:u16}) adds their squared lengths. The second term is zero only for $t=\hat{x}$.
+\end{proof}
+
+The projection is a linear function of $\vb{b}$, so a matrix does it. Moving the parentheses
+in $\vb{p}=\vb{a}(\vb{a}\T\vb{b})/(\vb{a}\T\vb{a})$ gives $\vb{p}=P\vb{b}$ with:
+
+\begin{definition}[Projection matrix onto a line]\label{def:u17-pline}
+The matrix that projects onto the line through $\vb{a}\in\R^m$ is the $m\times m$ matrix
+\[
+  P=\frac{\vb{a}\vb{a}\T}{\vb{a}\T\vb{a}} .
+\]
+The numerator is a column times a row, a full matrix; the denominator is a number.
+\end{definition}
+
+\begin{proposition}\label{prop:u17-pline-props}
+The matrix $P=\vb{a}\vb{a}\T/\vb{a}\T\vb{a}$ has column space the line through $\vb{a}$, rank
+$1$, and satisfies $P\T=P$ and $P^2=P$.
+\end{proposition}
+
+\begin{proof}
+$P\vb{b}$ is always a multiple of $\vb{a}$, and $P\vb{a}=\vb{a}$, so $\Col{P}$ is the line
+through $\vb{a}$ and the rank is $1$. Transposing, $(\vb{a}\vb{a}\T)\T=\vb{a}\vb{a}\T$, so
+$P\T=P$. Finally
+$P^2=\vb{a}(\vb{a}\T\vb{a})\vb{a}\T/(\vb{a}\T\vb{a})^2=\vb{a}\vb{a}\T/\vb{a}\T\vb{a}=P$:
+projecting a second time leaves a point already on the line where it is.
+\end{proof}
+
+\begin{example}[Projecting onto the line through \texorpdfstring{$(1,2,2)$}{(1,2,2)}]\label{ex:u17-line}
+Let $\vb{a}=(1,2,2)$ and $\vb{b}=(1,1,1)$. Then $\vb{a}\T\vb{b}=5$ and $\vb{a}\T\vb{a}=9$, so
+\[
+  \hat{x}=\tfrac{5}{9},\qquad
+  \vb{p}=\tfrac{5}{9}(1,2,2)=\bigl(\tfrac59,\tfrac{10}9,\tfrac{10}9\bigr),\qquad
+  \vb{e}=\vb{b}-\vb{p}=\bigl(\tfrac49,-\tfrac19,-\tfrac19\bigr).
+\]
+Check: $\vb{a}\T\vb{e}=\frac{4-2-2}{9}=0$. The projection matrix is
+\[
+  P=\frac{1}{9}\begin{bmatrix}1\\2\\2\end{bmatrix}\begin{bmatrix}1&2&2\end{bmatrix}
+   =\frac{1}{9}\begin{bmatrix}1&2&2\\2&4&4\\2&4&4\end{bmatrix},
+\]
+symmetric and of rank one, and $P\vb{b}=\frac19(5,10,10)=\vb{p}$.
+\end{example}
+
+\subsection{Why project: the closest solvable problem}
+
+The equation $A\vb{x}=\vb{b}$ may have no solution: $A\vb{x}$ always lies in $\Col{A}$, while
+$\vb{b}$, typically a list of measurements with errors, does not. The natural repair is to
+replace $\vb{b}$ by the closest vector $\vb{p}$ that \emph{is} in the column space and solve
+$A\hat{\vb{x}}=\vb{p}$ instead. The hat on $\hat{\vb{x}}$ marks it as the best available
+coefficient vector rather than an exact solution. So we need to project onto a column space.
+
+\subsection{Projecting onto a subspace}
+
+Let the subspace be spanned by independent vectors $\vb{a}_1,\dots,\vb{a}_n$ in $\R^m$, and
+put them into the columns of the $m\times n$ matrix $A$, so the subspace is $\Col{A}$. The
+columns need not be perpendicular, only independent. The projection is a combination
+$\vb{p}=\hat{x}_1\vb{a}_1+\cdots+\hat{x}_n\vb{a}_n=A\hat{\vb{x}}$, and the error
+$\vb{e}=\vb{b}-A\hat{\vb{x}}$ must be perpendicular to the subspace, which means
+perpendicular to every column:
+\[
+  \vb{a}_1\T(\vb{b}-A\hat{\vb{x}})=0,\ \ \dots,\ \ \vb{a}_n\T(\vb{b}-A\hat{\vb{x}})=0
+  \qquad\Longleftrightarrow\qquad
+  A\T(\vb{b}-A\hat{\vb{x}})=\vb{0}.
+\]
+The $n$ dot products stack into one matrix equation because the rows of $A\T$ are the
+columns of $A$. With one column this is the line equation $\vb{a}\T(\vb{b}-\hat{x}\vb{a})=0$
+again. The equation also says $\vb{e}\in\Nul{A\T}$, which by Section~\ref{sec:u16} is
+precisely the orthogonal complement of $\Col{A}$: the algebra and the geometry agree.
+
+\begin{theorem}[Projection onto a column space]\label{thm:u17-projection}
+Let $A$ be $m\times n$ with independent columns and $\vb{b}\in\R^m$. The vector
+$\hat{\vb{x}}$ for which $\vb{e}=\vb{b}-A\hat{\vb{x}}$ is orthogonal to $\Col{A}$ is the unique
+solution of the \emph{normal equations}
+\[
+  A\T A\,\hat{\vb{x}}=A\T\vb{b},
+\]
+and
+\[
+  \hat{\vb{x}}=(A\T A)^{-1}A\T\vb{b},\qquad
+  \vb{p}=A\hat{\vb{x}}=A(A\T A)^{-1}A\T\vb{b},\qquad
+  P=A(A\T A)^{-1}A\T .
+\]
+\end{theorem}
+
+\begin{proof}
+The orthogonality condition is $A\T(\vb{b}-A\hat{\vb{x}})=\vb{0}$, which rearranges to the
+normal equations. Because the columns of $A$ are independent, $A\T A$ is invertible
+(by $\Nul{A\T A}=\Nul{A}$, Section~\ref{sec:u16}), so the solution exists, is unique, and
+equals $(A\T A)^{-1}A\T\vb{b}$. Multiplying by $A$ gives $\vb{p}$, and the matrix that
+multiplies $\vb{b}$ is $P$.
+\end{proof}
+
+When $n=1$ the matrix $A\T A$ is the number $\vb{a}\T\vb{a}$ and ``divide by it'' becomes
+``multiply by its inverse''; the formulas reduce to those for a line.
+
+\begin{proposition}[Projection matrices are symmetric and idempotent]\label{prop:u17-pprops}
+$P=A(A\T A)^{-1}A\T$ satisfies $P\T=P$ and $P^2=P$.
+\end{proposition}
+
+\begin{proof}
+$A\T A$ is symmetric, so its inverse is symmetric too, and
+$P\T=(A\T)\T\bigl((A\T A)^{-1}\bigr)\T A\T=A(A\T A)^{-1}A\T=P$. For the square, the middle
+factors cancel:
+\[
+  P^2=A(A\T A)^{-1}\underbrace{(A\T A)(A\T A)^{-1}}_{I}A\T=A(A\T A)^{-1}A\T=P.\qedhere
+\]
+\end{proof}
+
+\begin{theorem}[The projection is the closest point]\label{thm:u17-closest}
+For every $\vb{x}\in\R^n$,
+$\ \|\vb{b}-A\vb{x}\|^2=\|\vb{b}-\vb{p}\|^2+\|A(\hat{\vb{x}}-\vb{x})\|^2$. Hence
+$\vb{p}=A\hat{\vb{x}}$ is the unique point of $\Col{A}$ closest to $\vb{b}$.
+\end{theorem}
+
+\begin{proof}
+Split $\vb{b}-A\vb{x}=(\vb{b}-A\hat{\vb{x}})+A(\hat{\vb{x}}-\vb{x})=\vb{e}+A(\hat{\vb{x}}-\vb{x})$.
+The second piece lies in $\Col{A}$ and $\vb{e}$ is orthogonal to $\Col{A}$, so Pythagoras
+applies. The extra term vanishes only when $A\vb{x}=A\hat{\vb{x}}$, i.e.\ at $\vb{p}$.
+\end{proof}
+
+\begin{trap}
+It is tempting to simplify $A(A\T A)^{-1}A\T$ to $AA^{-1}(A\T)^{-1}A\T=I$. That is only
+legal when $A$ is square and invertible, and then the answer $P=I$ is correct: the column
+space is all of $\R^m$ and every $\vb{b}$ is its own projection. For the tall matrices of
+interest, $A$ has no inverse, $(A\T A)^{-1}$ cannot be split, and $P\neq I$.
+\end{trap}
+
+\begin{example}[Projecting \texorpdfstring{$(6,0,0)$}{(6,0,0)} onto a plane]\label{ex:u17-plane}
+Project $\vb{b}=(6,0,0)$ onto the plane spanned by $\vb{a}_1=(1,1,1)$ and $\vb{a}_2=(0,1,2)$
+(this is the data of the line fit in Section~\ref{sec:u18}). Here
+\[
+  A=\begin{bmatrix}1&0\\1&1\\1&2\end{bmatrix},\qquad
+  A\T A=\begin{bmatrix}3&3\\3&5\end{bmatrix},\qquad
+  A\T\vb{b}=\begin{bmatrix}6\\0\end{bmatrix}.
+\]
+The normal equations are $3\hat{x}_1+3\hat{x}_2=6$ and $3\hat{x}_1+5\hat{x}_2=0$. Subtracting,
+$2\hat{x}_2=-6$, so $\hat{x}_2=-3$ and then $\hat{x}_1=5$. Therefore
+\[
+  \vb{p}=5\begin{bmatrix}1\\1\\1\end{bmatrix}-3\begin{bmatrix}0\\1\\2\end{bmatrix}
+  =\begin{bmatrix}5\\2\\-1\end{bmatrix},\qquad
+  \vb{e}=\vb{b}-\vb{p}=\begin{bmatrix}1\\-2\\1\end{bmatrix}.
+\]
+The right angle checks out: $\vb{e}\T\vb{a}_1=1-2+1=0$ and $\vb{e}\T\vb{a}_2=0-2+2=0$. With
+$(A\T A)^{-1}=\frac16\left[\begin{smallmatrix}5&-3\\-3&3\end{smallmatrix}\right]$ the
+projection matrix is
+\[
+  P=A(A\T A)^{-1}A\T=\frac16\begin{bmatrix}5&2&-1\\2&2&2\\-1&2&5\end{bmatrix},
+  \qquad
+  I-P=\frac16\begin{bmatrix}1&-2&1\\-2&4&-2\\1&-2&1\end{bmatrix}.
+\]
+$P$ is symmetric, $P\vb{b}=\frac16(30,12,-6)=(5,2,-1)$, and $I-P$ is exactly
+$\vb{e}\vb{e}\T/\vb{e}\T\vb{e}$ with $\vb{e}=(1,-2,1)$: the projection onto the left
+nullspace, the line through $(1,-2,1)$ found in Section~\ref{sec:u16}.
+Figure~\ref{fig:u17-plane} shows the picture.
+\end{example}
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[>=Stealth,scale=1.0]
+    \filldraw[fill=blue!8,draw=blue!40] (0,0) -- (5.2,0) -- (6.6,2.0) -- (1.4,2.0) -- cycle;
+    \node[blue!60!black] at (5.4,0.3) {$\Col{A}$};
+    \coordinate (O) at (1.0,0.45);
+    \coordinate (P) at (3.7,1.15);
+    \coordinate (B) at (3.7,3.6);
+    \draw[->,thick,blue] (O) -- (2.7,0.55) node[below] {$\vb{a}_1$};
+    \draw[->,thick,blue] (O) -- (1.95,1.55) node[left] {$\vb{a}_2$};
+    \draw[->,very thick,red!75!black] (O) -- (B) node[above] {$\vb{b}=(6,0,0)$};
+    \draw[->,very thick,green!50!black] (O) -- (P) node[right=2pt] {$\vb{p}=(5,2,-1)$};
+    \draw[->,thick,dashed] (P) -- (B) node[midway,right] {$\vb{e}=(1,-2,1)$};
+    \draw (3.7,1.43) -- (3.43,1.36) -- (3.43,1.08);
+    \fill (O) circle (1.2pt) node[below left] {$\vb{0}$};
+  \end{tikzpicture}
+  \caption{Projection onto the plane spanned by $\vb{a}_1=(1,1,1)$ and $\vb{a}_2=(0,1,2)$
+  (schematic). The error $\vb{e}$ is perpendicular to the whole plane, so it lies in
+  $\Nul{A\T}$; $\vb{p}$ and $\vb{e}$ add back to $\vb{b}$.}
+  \label{fig:u17-plane}
+\end{figure}
+
+Different bases for the same subspace give the same $P$ (Exercise~\ref{ex:u17-basis}). This
+is often useful, as in the next example: the formula needs \emph{some} basis, and the
+complementary projection can be quicker.
+
+\begin{example}[Projection onto the plane \texorpdfstring{$x+y-z=0$}{x+y-z=0}]\label{ex:u17-normal}
+Two independent vectors in the plane are $(1,-1,0)$ and $(1,0,1)$. With them as columns,
+\[
+  A=\begin{bmatrix}1&1\\-1&0\\0&1\end{bmatrix},\qquad
+  A\T A=\begin{bmatrix}2&1\\1&2\end{bmatrix},\qquad
+  (A\T A)^{-1}=\frac13\begin{bmatrix}2&-1\\-1&2\end{bmatrix},
+\]
+and multiplying out,
+\[
+  P=A(A\T A)^{-1}A\T=\frac13\begin{bmatrix}2&-1&1\\-1&2&1\\1&1&2\end{bmatrix}.
+\]
+A quicker route: every $\vb{b}$ is its projection onto the plane plus its projection onto the
+normal line through $\vb{n}=(1,1,-1)$, so $I=P+P_{\vb{n}}$ and
+\[
+  P=I-\frac{\vb{n}\vb{n}\T}{\vb{n}\T\vb{n}}
+   =I-\frac13\begin{bmatrix}1&1&-1\\1&1&-1\\-1&-1&1\end{bmatrix}
+   =\frac13\begin{bmatrix}2&-1&1\\-1&2&1\\1&1&2\end{bmatrix},
+\]
+the same matrix. A good final check: $P\vb{n}=\vb{0}$, since the normal vector projects to
+the origin.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u17-drop}
+Let $A$ be the $4\times 4$ identity matrix with its last column removed, so $A$ is
+$4\times 3$. Project $\vb{b}=(1,2,3,4)$ onto $\Col{A}$. What shape is $P$, and what is it?
+\end{exercise}
+
+\begin{solution}
+$P$ is $4\times 4$: it takes vectors of $\R^4$ to vectors of $\R^4$. Here $A\T A=I_3$, so
+$P=AA\T$, which is the identity with its last diagonal entry replaced by $0$:
+\[
+  P=\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&1&0\\0&0&0&0\end{bmatrix},\qquad
+  \vb{p}=P\vb{b}=(1,2,3,0).
+\]
+Geometrically, $\Col{A}$ is the coordinate subspace of the first three axes, and projecting
+onto it just zeroes the fourth coordinate.
+\end{solution}
+
+\begin{exercise}\label{ex:u17-complement}
+If $P^2=P$, show that $(I-P)^2=I-P$. For the matrices of
+Exercise~\ref{ex:u17-drop}, $P$ projects onto $\Col{A}$; onto which subspace does $I-P$
+project?
+\end{exercise}
+
+\begin{solution}
+$(I-P)^2=I-2P+P^2=I-2P+P=I-P$. In Exercise~\ref{ex:u17-drop},
+$I-P=\operatorname{diag}(0,0,0,1)$ projects onto the fourth axis, which is the left nullspace
+$\Nul{A\T}$: the vectors orthogonal to the first three columns of $I$. In general $I-P$ sends
+$\vb{b}$ to $\vb{e}$, the component in $\Nul{A\T}$.
+\end{solution}
+
+\begin{exercise}\label{ex:u17-basis}
+Show that $P=A(A\T A)^{-1}A\T$ does not change when $A$ is replaced by $AM$ for an invertible
+$n\times n$ matrix $M$ (a different basis for the same column space).
+\end{exercise}
+
+\begin{solution}
+Using $(XY)^{-1}=Y^{-1}X^{-1}$ for the square invertible factors $M\T$, $A\T A$, $M$:
+\begin{align*}
+  AM\bigl((AM)\T AM\bigr)^{-1}(AM)\T
+  &=AM\bigl(M\T(A\T A)M\bigr)^{-1}M\T A\T\\
+  &=AM\,M^{-1}(A\T A)^{-1}(M\T)^{-1}M\T A\T
+  =A(A\T A)^{-1}A\T .
+\end{align*}
+So $P$ depends only on the subspace, as the geometry demands. This is why the two
+different bases in Example~\ref{ex:u17-normal} could not have given different answers.
+\end{solution}

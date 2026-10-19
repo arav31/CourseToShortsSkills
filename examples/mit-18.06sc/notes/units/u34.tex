@@ -1,0 +1,313 @@
+% unit: u34
+% sources: sources/098-linear-transformations-and-their-matrices.txt, sources/059-lecture-30-linear-transformations-and-their-matrices.txt, sources/221-mit18-06scf11-ses3-6sum-pdf-download-file.txt, sources/060-problem-solving-linear-transformations.txt, sources/222-mit18-06scf11-ses3-6prob-pdf-download-file.txt, sources/223-mit18-06scf11-ses3-6sol-pdf-download-file.txt
+\section{Linear transformations and their matrices}\label{sec:u34}
+
+Many linear algebra courses begin where this unit begins: with linear transformations,
+described without coordinates. A projection onto a line or a rotation of the plane makes sense
+before anyone writes down a matrix, and some people (physicists especially) prefer to think
+that way, about the whole space at once. But as soon as we want to compute, we choose a basis,
+coordinates appear, and every linear transformation becomes a matrix. Everything we have
+learned about matrices (nullspaces, determinants, eigenvalues) then applies. This unit
+explains that passage from transformation to matrix, and why the eigenvector basis gives the
+best matrix of all.
+
+\subsection{Linearity without coordinates}
+
+\begin{definition}[Linear transformation]\label{def:u34-linear}
+Let $V$ and $W$ be vector spaces. A \emph{transformation} (or map) $T\colon V\to W$ assigns an
+output $T(\vb{v})\in W$ to every input $\vb{v}\in V$. It is \emph{linear} if, for all vectors
+$\vb{v},\vb{w}$ and all scalars $c$,
+\[
+  T(\vb{v}+\vb{w})=T(\vb{v})+T(\vb{w})\qquad\text{and}\qquad T(c\vb{v})=c\,T(\vb{v}).
+\]
+Equivalently, $T(c\vb{v}+d\vb{w})=c\,T(\vb{v})+d\,T(\vb{w})$: $T$ respects the two operations on vectors,
+addition and scalar multiplication, and so respects every linear combination.
+\end{definition}
+
+\begin{proposition}[Zero goes to zero]\label{prop:u34-zero}
+Every linear transformation satisfies $T(\vb{0})=\vb{0}$.
+\end{proposition}
+\begin{proof}
+Take $c=0$ in $T(c\vb{v})=cT(\vb{v})$: $T(\vb{0})=T(0\vb{v})=0\,T(\vb{v})=\vb{0}$.
+\end{proof}
+
+\emph{Examples.}
+\begin{itemize}
+  \item \emph{Projection} $T\colon\R^2\to\R^2$ onto a fixed line through the origin. Doubling
+        $\vb{v}$ doubles its projection, reversing $\vb{v}$ reverses it, and the projection of a sum is the
+        sum of the projections.
+  \item \emph{Rotation} of the plane by $45^\circ$ about the origin. Rotating $\vb{v}+\vb{w}$ gives the
+        same result as rotating $\vb{v}$ and $\vb{w}$ and then adding: the whole parallelogram rotates.
+  \item \emph{Multiplication by a matrix}, $T(\vb{v})=A\vb{v}$. This is linear because
+        $A(\vb{v}+\vb{w})=A\vb{v}+A\vb{w}$ and $A(c\vb{v})=c\,A\vb{v}$. Any $2\times3$ matrix gives a linear
+        $T\colon\R^3\to\R^2$.
+  \item \emph{Differentiation}, $T(f)=f'$, on a space of functions: $(f+g)'=f'+g'$ and $(cf)'=cf'$.
+        This is why we can differentiate any combination of $\sin x$, $\cos x$, $e^x$, \dots{} once we
+        know the derivatives of a short list.
+\end{itemize}
+
+\emph{Non-examples.}
+\begin{itemize}
+  \item \emph{Shift the whole plane}, $T(\vb{v})=\vb{v}+\vb{v}_0$ with a fixed $\vb{v}_0\ne\vb{0}$. Then
+        $T(2\vb{v})=2\vb{v}+\vb{v}_0$ but $2T(\vb{v})=2\vb{v}+2\vb{v}_0$, and $T(\vb{0})=\vb{v}_0\ne\vb{0}$.
+  \item \emph{Length}, $T(\vb{v})=\|\vb{v}\|$ from $\R^3$ to $\R$. It does send $\vb{0}$ to $0$ and doubles
+        when $\vb{v}$ doubles, but $T(-2\vb{v})=2\|\vb{v}\|\ne-2\|\vb{v}\|$.
+\end{itemize}
+
+The advantage of the coordinate-free view is the big picture. Instead of following one vector,
+watch what $T$ does to a whole figure, such as the outline of a house (Figure~\ref{fig:u34-house}).
+The matrix $\left[\begin{smallmatrix}1&0\\0&-1\end{smallmatrix}\right]$ keeps each $x$-component and
+reverses each $y$-component, so it reflects the house across the $x$-axis and turns it upside
+down; the rotation turns it without distortion; the shift moves it, origin and all, which is how
+we see at once that it is not linear.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,scale=0.85,
+  house/.pic={
+    \draw[thick,fill=blue!10] (0,0) -- (1,0) -- (1,1) -- (0.5,1.55) -- (0,1) -- cycle;
+    \draw[thick,fill=orange!40] (0.38,0) -- (0.38,0.5) -- (0.62,0.5) -- (0.62,0);
+    \fill[red!70!black] (0.5,1.55) circle (1.6pt);
+  }]
+  \begin{scope}
+    \draw[->,gray] (-1.3,0) -- (1.6,0); \draw[->,gray] (0,-1.7) -- (0,1.9);
+    \pic at (0,0) {house};
+    \node[font=\small] at (0.15,-2.15) {input};
+  \end{scope}
+  \begin{scope}[xshift=3.9cm]
+    \draw[->,gray] (-1.3,0) -- (1.6,0); \draw[->,gray] (0,-1.7) -- (0,1.9);
+    \pic[rotate=45] at (0,0) {house};
+    \node[font=\small] at (0.15,-2.15) {rotation by $45^\circ$};
+  \end{scope}
+  \begin{scope}[xshift=7.8cm]
+    \draw[->,gray] (-1.3,0) -- (1.6,0); \draw[->,gray] (0,-1.7) -- (0,1.9);
+    \pic[yscale=-1] at (0,0) {house};
+    \node[font=\small] at (0.15,-2.15) {$\left[\begin{smallmatrix}1&0\\0&-1\end{smallmatrix}\right]$: reflection};
+  \end{scope}
+  \begin{scope}[xshift=11.7cm]
+    \draw[->,gray] (-1.3,0) -- (1.6,0); \draw[->,gray] (0,-1.7) -- (0,1.9);
+    \pic at (0.6,-1.2) {house};
+    \draw[->,thick,red!70!black] (0,0) -- (0.6,-1.2) node[pos=0.45,left,font=\scriptsize] {$\vb{v}_0$};
+    \node[font=\small] at (0.15,-2.15) {shift: not linear};
+  \end{scope}
+\end{tikzpicture}
+\caption{A linear transformation acts on the whole plane at once; following a house shows the
+effect. Rotation and the reflection matrix keep the origin fixed and carry straight lines to
+straight lines and parallelograms to parallelograms. The shift $T(\vb{v})=\vb{v}+\vb{v}_0$ moves the corner at
+the origin to $\vb{v}_0$, violating $T(\vb{0})=\vb{0}$.}
+\label{fig:u34-house}
+\end{figure}
+
+\subsection{A basis determines everything}
+
+How much must we be told about a linear $T$ to know $T(\vb{v})$ for every input? Knowing $T(\vb{v}_1)$
+gives $T(c\vb{v}_1)=cT(\vb{v}_1)$ on a whole line. Knowing $T(\vb{v}_1)$ and $T(\vb{v}_2)$ for independent
+$\vb{v}_1,\vb{v}_2$ gives $T(c\vb{v}_1+d\vb{v}_2)$ on a whole plane. (If $\vb{v}_2$ were $6\vb{v}_1$, then $T(\vb{v}_2)$
+would carry no new information.) A basis is enough.
+
+\begin{theorem}[Linear maps are determined by a basis]\label{thm:u34-basis}
+Let $\vb{v}_1,\dots,\vb{v}_n$ be a basis of $V$. If $T$ is linear, then for every $\vb{v}=c_1\vb{v}_1+\cdots+c_n\vb{v}_n$,
+\[
+  T(\vb{v})=c_1T(\vb{v}_1)+c_2T(\vb{v}_2)+\cdots+c_nT(\vb{v}_n).
+\]
+So $T$ is completely known once $T(\vb{v}_1),\dots,T(\vb{v}_n)$ are known.
+\end{theorem}
+\begin{proof}
+Because the $\vb{v}_i$ span $V$, every $\vb{v}$ is such a combination; linearity, applied repeatedly to
+the combination, gives the formula.
+\end{proof}
+
+\begin{definition}[Coordinates]\label{def:u34-coordinates}
+If $\vb{v}_1,\dots,\vb{v}_n$ is a basis of $V$ and $\vb{v}=c_1\vb{v}_1+\cdots+c_n\vb{v}_n$, the numbers
+$(c_1,\dots,c_n)$ are the \emph{coordinates} of $\vb{v}$ in this basis. They are unique: if also
+$\vb{v}=\sum d_i\vb{v}_i$, then $\sum(c_i-d_i)\vb{v}_i=\vb{0}$, and independence forces every $c_i=d_i$.
+\end{definition}
+
+Coordinates come from a basis. When someone writes $\vb{v}=(3,2,4)$ we silently assume the
+standard basis, $\vb{v}=3\vb{e}_1+2\vb{e}_2+4\vb{e}_3$, and then the coordinates are the components. But
+another basis, for example the eigenvectors of some matrix, gives the same vector different
+coordinates.
+
+\subsection{The matrix of a transformation}
+
+To turn $T\colon V\to W$ into a matrix we choose \emph{two} bases: an input basis $\vb{v}_1,\dots,\vb{v}_n$
+of $V$ and an output basis $\vb{w}_1,\dots,\vb{w}_m$ of $W$. The matrix will take the input coordinates
+to the output coordinates.
+
+\begin{definition}[Matrix of \texorpdfstring{$T$}{T} in chosen bases]\label{def:u34-matrix}
+Expand the output of each input basis vector in the output basis:
+\[
+  T(\vb{v}_j)=a_{1j}\vb{w}_1+a_{2j}\vb{w}_2+\cdots+a_{mj}\vb{w}_m\qquad(j=1,\dots,n).
+\]
+The $m\times n$ matrix $A=(a_{ij})$ is the \emph{matrix of $T$} in these bases: column $j$ holds the
+output coordinates of $T(\vb{v}_j)$.
+\end{definition}
+
+\begin{theorem}[The matrix does what \texorpdfstring{$T$}{T} does]\label{thm:u34-matrix}
+If $\vb{v}$ has input coordinates $\vb{c}=(c_1,\dots,c_n)$, then $T(\vb{v})$ has output coordinates $A\vb{c}$.
+\end{theorem}
+\begin{proof}
+By Theorem~\ref{thm:u34-basis} and the definition of the columns,
+\[
+  T(\vb{v})=\sum_{j}c_jT(\vb{v}_j)=\sum_{j}c_j\sum_{i}a_{ij}\vb{w}_i=\sum_{i}\Bigl(\sum_{j}a_{ij}c_j\Bigr)\vb{w}_i ,
+\]
+and $\sum_ja_{ij}c_j$ is component $i$ of $A\vb{c}$. As a sanity check, the input coordinates
+$(1,0,\dots,0)$ describe $\vb{v}_1$, and $A$ times them is column~1, the coordinates of $T(\vb{v}_1)$.
+\end{proof}
+
+\begin{example}[One projection, two matrices]\label{ex:u34-projection}
+Let $T$ project $\R^2$ onto the $45^\circ$ line, using the same basis for inputs and outputs.
+
+\emph{A good basis.} Take $\vb{v}_1=(1,1)/\sqrt2$ on the line and $\vb{v}_2=(-1,1)/\sqrt2$ perpendicular to
+it. The projection leaves $\vb{v}_1$ alone and kills $\vb{v}_2$: $T(\vb{v}_1)=1\vb{v}_1+0\vb{v}_2$ and
+$T(\vb{v}_2)=0\vb{v}_1+0\vb{v}_2$. So
+\[
+  A=\begin{bmatrix}1&0\\0&0\end{bmatrix},\qquad A\begin{bmatrix}c_1\\c_2\end{bmatrix}=\begin{bmatrix}c_1\\0\end{bmatrix}.
+\]
+These basis vectors are the eigenvectors of the projection (eigenvalues $1$ and $0$), and the
+matrix came out as the diagonal eigenvalue matrix $\Lambda$.
+
+\emph{The standard basis.} With $\vb{v}_1=\vb{w}_1=(1,0)$ and $\vb{v}_2=\vb{w}_2=(0,1)$: the projection of $(1,0)$
+onto the line is $(\tfrac12,\tfrac12)$, and so is the projection of $(0,1)$. So
+\[
+  P=\begin{bmatrix}\tfrac12&\tfrac12\\\tfrac12&\tfrac12\end{bmatrix}=\frac{\vb{a}\vb{a}\T}{\vb{a}\T\vb{a}}\quad\text{with }\vb{a}=(1,1),
+\]
+the projection matrix of Section~\ref{sec:u17}. It is symmetric with $P^2=P$, but those facts are
+obvious only in the eigenvector basis, where the matrix is diagonal. The course has mostly used
+the handiest basis; the best basis is the eigenvector basis.
+\end{example}
+
+\begin{example}[Differentiation as a matrix]\label{ex:u34-derivative}
+Let $T=\frac{d}{dx}$ take the quadratics $c_1+c_2x+c_3x^2$ (input basis $1,x,x^2$) to the linear
+polynomials (output basis $1,x$): $T(c_1+c_2x+c_3x^2)=c_2+2c_3x$. Column by column,
+$T(1)=0$, $T(x)=1$, $T(x^2)=2x$, so
+\[
+  A=\begin{bmatrix}0&1&0\\0&0&2\end{bmatrix},\qquad
+  A\begin{bmatrix}c_1\\c_2\\c_3\end{bmatrix}=\begin{bmatrix}c_2\\2c_3\end{bmatrix}.
+\]
+For instance $p(x)=5+3x-4x^2$ has coordinates $(5,3,-4)$, and $A(5,3,-4)=(3,-8)$, the coordinates
+of $p'(x)=3-8x$. The $2\times3$ shape reflects a three-dimensional input space and a
+two-dimensional output space; the nullspace of $A$, spanned by $(1,0,0)$, is the constant
+polynomials, whose derivative is zero.
+\end{example}
+
+\begin{example}[The transpose as a linear map]\label{ex:u34-transpose}
+On the four-dimensional space of $2\times2$ matrices let $T(X)=X\T$. It is linear:
+$(X+Y)\T=X\T+Y\T$ and $(cX)\T=cX\T$. Applying it twice gives back $X$, so $T^2=I$ and $T^{-1}=T$.
+\begin{itemize}
+  \item In the standard basis $\vb{v}_1=\left[\begin{smallmatrix}1&0\\0&0\end{smallmatrix}\right]$,
+        $\vb{v}_2=\left[\begin{smallmatrix}0&1\\0&0\end{smallmatrix}\right]$,
+        $\vb{v}_3=\left[\begin{smallmatrix}0&0\\1&0\end{smallmatrix}\right]$,
+        $\vb{v}_4=\left[\begin{smallmatrix}0&0\\0&1\end{smallmatrix}\right]$ we have
+        $T(\vb{v}_1)=\vb{v}_1$, $T(\vb{v}_2)=\vb{v}_3$, $T(\vb{v}_3)=\vb{v}_2$, $T(\vb{v}_4)=\vb{v}_4$, so the matrix is the
+        permutation
+        \[
+          M_T=\begin{bmatrix}1&0&0&0\\0&0&1&0\\0&1&0&0\\0&0&0&1\end{bmatrix}.
+        \]
+        Check: $\left[\begin{smallmatrix}1&2\\3&4\end{smallmatrix}\right]$ has coordinates $(1,2,3,4)$ and
+        $M_T(1,2,3,4)=(1,3,2,4)$, the coordinates of its transpose
+        $\left[\begin{smallmatrix}1&3\\2&4\end{smallmatrix}\right]$.
+  \item In the basis $\vb{w}_1=\left[\begin{smallmatrix}1&0\\0&0\end{smallmatrix}\right]$,
+        $\vb{w}_2=\left[\begin{smallmatrix}0&1\\1&0\end{smallmatrix}\right]$,
+        $\vb{w}_3=\left[\begin{smallmatrix}0&0\\0&1\end{smallmatrix}\right]$,
+        $\vb{w}_4=\left[\begin{smallmatrix}0&1\\-1&0\end{smallmatrix}\right]$, the first three are symmetric and the
+        last is antisymmetric: $T(\vb{w}_i)=\vb{w}_i$ for $i\le3$ and $T(\vb{w}_4)=-\vb{w}_4$. The matrix is
+        $\operatorname{diag}(1,1,1,-1)$. These $\vb{w}$'s are eigenvectors of $T$: the symmetric matrices
+        are its eigenspace for $\lambda=1$ and the antisymmetric ones for $\lambda=-1$.
+\end{itemize}
+\end{example}
+
+\begin{trap}
+A matrix of $T$ means nothing until both bases are named, and the same $T$ has many matrices
+(compare the two projection matrices above). Also, the coordinate vector of an output must be
+taken in the \emph{output} basis: for $\frac{d}{dx}$, the column for $x^2$ is $(0,2)$ because
+$2x=0\cdot1+2\cdot x$, not $(0,0,2)$ or $(2,0)$.
+\end{trap}
+
+\subsection{Products of transformations are products of matrices}
+
+If $T_1\colon U\to V$ and $T_2\colon V\to W$ are linear, so is the composition $T_2\circ T_1$
+($\vb{u}\mapsto T_2(T_1(\vb{u}))$). Matrix multiplication was defined to match.
+
+\begin{proposition}[Composition and inverses]\label{prop:u34-composition}
+Fix bases of $U$, $V$, $W$. If $T_1$ has matrix $A_1$ and $T_2$ has matrix $A_2$, then
+$T_2\circ T_1$ has matrix $A_2A_1$. If $T\colon V\to V$ is invertible with matrix $A$ (same basis in
+and out), then $T^{-1}$ has matrix $A^{-1}$.
+\end{proposition}
+\begin{proof}
+Let $\vb{u}$ have coordinates $\vb{c}$. By Theorem~\ref{thm:u34-matrix}, $T_1(\vb{u})$ has coordinates $A_1\vb{c}$,
+and then $T_2(T_1(\vb{u}))$ has coordinates $A_2(A_1\vb{c})=(A_2A_1)\vb{c}$; a matrix that does this for every
+$\vb{c}$ is the matrix of the composition (its columns come from $\vb{c}=\vb{e}_j$). For the inverse,
+$T^{-1}\circ T$ is the identity, whose matrix is $I$, so the matrix $B$ of $T^{-1}$ satisfies $BA=I$.
+\end{proof}
+
+\begin{example}[The second derivative]\label{ex:u34-second}
+Follow $\frac{d}{dx}$ from quadratics to linear polynomials (matrix $A_1$ above) by
+$\frac{d}{dx}$ from linear polynomials (basis $1,x$) to constants (basis $1$), whose matrix is
+$A_2=\begin{bmatrix}0&1\end{bmatrix}$. The product
+\[
+  A_2A_1=\begin{bmatrix}0&1\end{bmatrix}\begin{bmatrix}0&1&0\\0&0&2\end{bmatrix}=\begin{bmatrix}0&0&2\end{bmatrix}
+\]
+sends $(c_1,c_2,c_3)$ to $2c_3$, and indeed $\frac{d^2}{dx^2}(c_1+c_2x+c_3x^2)=2c_3$.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}[Doubling every distance]\label{exr:u34-polar}
+In polar coordinates let $T(r,\theta)=(2r,\theta)$: $T$ doubles the distance from the origin and keeps
+the direction.
+\begin{enumerate}[(a)]
+  \item Is $T$ linear?
+  \item Describe $T$ in Cartesian coordinates and check that it doubles lengths.
+  \item Find its matrix in the standard basis.
+\end{enumerate}
+\end{exercise}
+\begin{solution}
+\begin{enumerate}[(a)]
+  \item Yes. As a map of vectors, $T(\vb{v})=2\vb{v}$, so $T(\vb{v}_1+\vb{v}_2)=2\vb{v}_1+2\vb{v}_2=T(\vb{v}_1)+T(\vb{v}_2)$ and
+        $T(c\vb{v})=2c\vb{v}=cT(\vb{v})$.
+  \item $T(x,y)=(2x,2y)$, and $\|(2x,2y)\|=\sqrt{4x^2+4y^2}=2\sqrt{x^2+y^2}=2\|(x,y)\|$.
+  \item $T(1,0)=(2,0)$ and $T(0,1)=(0,2)$, so the matrix is
+        $\left[\begin{smallmatrix}2&0\\0&2\end{smallmatrix}\right]=2I$.
+\end{enumerate}
+\end{solution}
+
+\begin{exercise}[Fixing zero is not enough]\label{exr:u34-nonlinear}
+Find a transformation of $\R^2$ with $T(\vb{0})=\vb{0}$ that is not linear.
+\end{exercise}
+\begin{solution}
+One option acts differently on different parts of the plane: $T(x,y)=(|x|,|y|)$. Then
+$T\bigl((1,1)+(1,-1)\bigr)=T(2,0)=(2,0)$, but $T(1,1)+T(1,-1)=(1,1)+(1,1)=(2,2)$. Another uses a
+nonlinear formula: $T(x,y)=(x,y^2)$ gives $T(c(x,y))=(cx,c^2y^2)$, which differs from
+$cT(x,y)=(cx,cy^2)$ when $c\ne0,1$ and $y\ne0$. Both send $\vb{0}$ to $\vb{0}$, so $T(\vb{0})=\vb{0}$ is a
+necessary condition for linearity, not a sufficient one.
+\end{solution}
+
+\begin{exercise}[Rotations compose by adding angles]\label{exr:u34-rotation}
+Find the matrix $R_\theta$ of rotation by $\theta$ in the standard basis, and use
+Proposition~\ref{prop:u34-composition} to show $R_\theta R_\varphi=R_{\theta+\varphi}$. What is $R_\theta^{-1}$?
+\end{exercise}
+\begin{solution}
+Rotating $(1,0)$ gives $(\cos\theta,\sin\theta)$ and rotating $(0,1)$ gives $(-\sin\theta,\cos\theta)$, so
+\[
+  R_\theta=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}.
+\]
+Rotating by $\varphi$ and
+then by $\theta$ is rotation by $\theta+\varphi$, so the product of the matrices must be $R_{\theta+\varphi}$.
+Multiplying out confirms it: the $(1,1)$ entry is $\cos\theta\cos\varphi-\sin\theta\sin\varphi=\cos(\theta+\varphi)$ and
+the $(2,1)$ entry is $\sin\theta\cos\varphi+\cos\theta\sin\varphi=\sin(\theta+\varphi)$: the matrix product contains the
+addition formulas of trigonometry. The inverse rotation is $R_{-\theta}=R_\theta\T$.
+\end{solution}
+
+\begin{exercise}[Integration undoes differentiation, on one side]\label{exr:u34-integral}
+Let $S$ take linear polynomials $c_1+c_2x$ to quadratics by $S(p)=\int_0^xp(t)\,dt$, and let $D=\frac{d}{dx}$
+take quadratics to linear polynomials (bases $1,x$ and $1,x,x^2$). Find the matrices of $S$ and $D$, and
+compute $DS$ and $SD$. Interpret.
+\end{exercise}
+\begin{solution}
+$S(1)=x$ and $S(x)=\tfrac12x^2$, so $S$ has matrix $\left[\begin{smallmatrix}0&0\\1&0\\0&1/2\end{smallmatrix}\right]$; $D$
+has matrix $\left[\begin{smallmatrix}0&1&0\\0&0&2\end{smallmatrix}\right]$ (Example~\ref{ex:u34-derivative}).
+Then $DS=\left[\begin{smallmatrix}1&0\\0&1\end{smallmatrix}\right]=I$: differentiating an integral returns the
+original function. But $SD=\left[\begin{smallmatrix}0&0&0\\0&1&0\\0&0&1\end{smallmatrix}\right]\ne I$: integrating a
+derivative loses the constant term $c_1$. So $S$ is a right inverse of $D$ but not a left inverse,
+a theme of Section~\ref{sec:u36}.
+\end{solution}

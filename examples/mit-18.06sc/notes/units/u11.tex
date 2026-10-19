@@ -1,0 +1,310 @@
+% unit: u11
+% sources: sources/099-the-four-fundamental-subspaces.txt, sources/157-the-four-fundamental-subspaces.txt, sources/158-mit18-06scf11-ses1-10sum-pdf-download-file.txt, sources/159-computing-the-four-fundamental-subspaces.txt, sources/160-mit18-06scf11-ses1-10prob-pdf-download-file.txt, sources/161-mit18-06scf11-ses1-10sol-pdf-download-file.txt
+\section{The four fundamental subspaces}\label{sec:u11}
+
+So far each matrix has come with two subspaces, the column space and the nullspace. Transposing
+the matrix gives two more, and the four together are the heart of this approach to linear algebra.
+This section finds a basis and the dimension of each, all from one elimination $EA=R$, and proves the
+first great count: the row space and the column space have the same dimension $r$. That fact
+already corrects the slip of Section~\ref{sec:u10}, where $(3,3,8)$ was proposed as independent of
+$(1,1,2)$ and $(2,2,5)$: the matrix with those columns has two equal rows, so its row space is only
+two-dimensional, and therefore so is its column space.
+
+\subsection{Two subspaces in \texorpdfstring{\(\R^n\)}{Rn}, two in \texorpdfstring{\(\R^m\)}{Rm}}
+
+\begin{definition}[The four fundamental subspaces]\label{def:u11-four}
+Let $A$ be an $m\times n$ matrix.
+\begin{itemize}
+\item The \emph{column space} $\Col{A}\subseteq\R^m$: all combinations of the columns.
+\item The \emph{nullspace} $\Nul{A}\subseteq\R^n$: all solutions of $A\vb{x}=\vb{0}$.
+\item The \emph{row space} $\Col{A\T}\subseteq\R^n$: all combinations of the rows of $A$, written as
+column vectors, i.e.\ the column space of $A\T$.
+\item The \emph{left nullspace} $\Nul{A\T}\subseteq\R^m$: all solutions of $A\T\vb{y}=\vb{0}$.
+\end{itemize}
+\end{definition}
+
+Transposing $A\T\vb{y}=\vb{0}$ gives $\vb{y}\T A=\vb{0}\T$: a row vector multiplying $A$ from the
+\emph{left} gives the zero row. That explains the name. A vector $\vb{y}$ in the left nullspace lists
+the coefficients of a combination of the rows of $A$ that produces the zero row, just as a vector in
+$\Nul{A}$ lists a combination of the columns that produces the zero column. These are exactly the
+vectors that appeared in the solvability test of Theorem~\ref{thm:u09-solvable}.
+Figure~\ref{fig:u11-big} shows where the four spaces live.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \begin{scope}
+    \coordinate (On) at (0,0);
+    \filldraw[fill=blue!8,draw=blue!60!black] (On) -- ++(45:1.8) -- ++(135:1.8) -- ++(225:1.8) -- cycle;
+    \node at (0,1.27) {dim $r$};
+    \node[anchor=east,align=right] at (-1.35,1.6) {row space\\$\Col{A\T}$};
+    \filldraw[fill=gray!12,draw=gray!50!black] (On) -- ++(-45:1.55) -- ++(-135:1.55) -- ++(135:1.55) -- cycle;
+    \node[font=\footnotesize] at (0,-1.1) {dim $n-r$};
+    \node[anchor=east,align=right] at (-1.2,-1.4) {nullspace\\$\Nul{A}$};
+    \fill (On) circle (1.5pt);
+    \node at (0,-2.6) {$\R^n$};
+  \end{scope}
+  \begin{scope}[xshift=7.2cm]
+    \coordinate (Om) at (0,0);
+    \filldraw[fill=orange!12,draw=orange!70!black] (Om) -- ++(45:1.8) -- ++(135:1.8) -- ++(225:1.8) -- cycle;
+    \node at (0,1.27) {dim $r$};
+    \node[anchor=west,align=left] at (1.35,1.6) {column space\\$\Col{A}$};
+    \filldraw[fill=gray!12,draw=gray!50!black] (Om) -- ++(-45:1.35) -- ++(-135:1.35) -- ++(135:1.35) -- cycle;
+    \node[font=\footnotesize] at (0,-0.95) {dim $m-r$};
+    \node[anchor=west,align=left] at (1.05,-1.25) {left nullspace\\$\Nul{A\T}$};
+    \fill (Om) circle (1.5pt) node[right=2pt] {$\vb{0}$};
+    \node at (0,-2.6) {$\R^m$};
+  \end{scope}
+  \draw[->,thick] (0.75,1.75) to[bend left=12] node[above] {$\vb{x}\mapsto A\vb{x}$} (6.45,1.75);
+  \draw[->,thick] (1.15,-1.1) to[bend left=6] node[below,pos=0.45] {$A\vb{x}=\vb{0}$} (7.1,-0.05);
+\end{tikzpicture}
+\caption{The four fundamental subspaces of an $m\times n$ matrix of rank $r$. The row space and
+nullspace live in $\R^n$ and their dimensions add to $n$; the column space and left nullspace live
+in $\R^m$ and their dimensions add to $m$. $A$ sends every input into the column space and sends the
+nullspace to $\vb{0}$.}
+\label{fig:u11-big}
+\end{figure}
+
+For the column space and the nullspace the work is already done (Theorems~\ref{thm:u10-col}
+and~\ref{thm:u10-null}): the pivot columns of $A$ are a basis of $\Col{A}$, of dimension $r$, and
+the $n-r$ special solutions are a basis of $\Nul{A}$. One could treat $A\T$ the same way, but that
+means a second elimination. The point is that the elimination already done on $A$ suffices.
+
+\subsection{The row space}
+
+\begin{theorem}[Row space]\label{thm:u11-row}
+If $E$ is invertible and $EA=R$, then $A$ and $R$ have the same row space. In particular the $r$
+nonzero rows of $R=\operatorname{rref}(A)$ form a basis of $\Col{A\T}$, and $\dim\Col{A\T}=r$.
+\end{theorem}
+\begin{proof}
+Row $i$ of $R=EA$ is $\sum_k e_{ik}(\text{row }k\text{ of }A)$, a combination of the rows of $A$;
+so the row space of $R$ is contained in that of $A$. Since $A=E^{-1}R$, each row of $A$ is likewise a
+combination of the rows of $R$, giving the reverse inclusion. The zero rows of $R$ contribute
+nothing, so the $r$ nonzero rows span. They are independent: the $i$th nonzero row has a $1$ in the
+$i$th pivot column, where every other row of $R$ has a $0$, so in any combination equal to
+$\vb{0}$ the $i$th coefficient is $0$.
+\end{proof}
+
+\begin{corollary}[Row rank equals column rank]\label{cor:u11-rankT}
+For every matrix, $\dim\Col{A\T}=\dim\Col{A}$; that is, $\rank A\T=\rank A$.
+\end{corollary}
+\begin{proof}
+Both dimensions equal the number $r$ of pivots of $A$, by Theorems~\ref{thm:u11-row}
+and~\ref{thm:u10-col}. Applying Theorem~\ref{thm:u10-col} to $A\T$ shows that $\dim\Col{A\T}$ is
+also the rank of $A\T$.
+\end{proof}
+
+This is a statement with content: there is no evident reason why the number of independent rows of
+a $3\times 7$ matrix should equal its number of independent columns, yet it always does.
+
+\subsection{The left nullspace and the matrix \texorpdfstring{\(E\)}{E}}
+
+To find $\Nul{A\T}$ without transposing, we keep a record of the elimination. Attach the $m\times m$
+identity to $A$ and apply to $\begin{bmatrix}A&I\end{bmatrix}$ the row operations that turn $A$
+into $R$:
+\[
+\begin{bmatrix}A_{m\times n}&I_{m\times m}\end{bmatrix}\longrightarrow
+\begin{bmatrix}R_{m\times n}&E_{m\times m}\end{bmatrix}.
+\]
+The row operations amount to multiplying on the left by some invertible matrix, and that matrix
+turned $I$ into $E$, so it \emph{is} $E$: we get $EA=R$. When $A$ is square and invertible, $R=I$
+and this is Gauss--Jordan: $E=A^{-1}$. In general $E$ is not unique when $r<m$ (one may add
+multiples of the bottom rows to the others), but any such $E$ works below.
+
+\begin{theorem}[Left nullspace]\label{thm:u11-left}
+Let $EA=R$ with $E$ invertible and $R=\operatorname{rref}(A)$. The last $m-r$ rows of $E$ form a
+basis of $\Nul{A\T}$, and $\dim\Nul{A\T}=m-r$.
+\end{theorem}
+\begin{proof}
+$A\T$ is $n\times m$ with rank $r$ (Corollary~\ref{cor:u11-rankT}), so by
+Theorem~\ref{thm:u10-null} its nullspace has dimension $m-r$. The last $m-r$ rows of $R=EA$ are
+zero, so each of the last $m-r$ rows $\vb{y}\T$ of $E$ satisfies $\vb{y}\T A=\vb{0}\T$. These rows
+are independent because $E$ is invertible (Theorem~\ref{thm:u10-test} applied to $E\T$). So they
+are $m-r$ independent vectors in an $(m-r)$-dimensional space, and Proposition~\ref{prop:u10-right}(a)
+makes them a basis.
+\end{proof}
+
+\begin{theorem}[Dimensions of the four subspaces]\label{thm:u11-dims}
+For an $m\times n$ matrix of rank $r$:
+\[
+\dim\Col{A}=r,\qquad \dim\Nul{A}=n-r,\qquad \dim\Col{A\T}=r,\qquad \dim\Nul{A\T}=m-r.
+\]
+In $\R^n$: $r+(n-r)=n$. In $\R^m$: $r+(m-r)=m$.
+\end{theorem}
+\begin{proof}
+Theorems~\ref{thm:u10-col}, \ref{thm:u10-null}, \ref{thm:u11-row} and~\ref{thm:u11-left}.
+\end{proof}
+
+The count $r+(n-r)=n$ is the old count of pivot variables plus free variables; the count in $\R^m$
+is the same statement for $A\T$, which is just as good a matrix as $A$.
+
+\begin{example}[All four subspaces at once]\label{ex:u11-four}
+Take $A=\begin{bmatrix}1&2&3&1\\1&1&2&1\\1&2&3&1\end{bmatrix}$ from Example~\ref{ex:u10-CN},
+so $m=3$, $n=4$, $r=2$. Reduce $\begin{bmatrix}A&I\end{bmatrix}$: subtract row~1 from rows~2 and~3,
+multiply row~2 by $-1$, subtract $2\times$row~2 from row~1:
+\[
+\left[\begin{array}{cccc|ccc}1&2&3&1&1&0&0\\1&1&2&1&0&1&0\\1&2&3&1&0&0&1\end{array}\right]
+\longrightarrow
+\left[\begin{array}{cccc|ccc}1&0&1&1&-1&2&0\\0&1&1&0&1&-1&0\\0&0&0&0&-1&0&1\end{array}\right].
+\]
+Check $EA=R$ row by row: $-(1,2,3,1)+2(1,1,2,1)=(1,0,1,1)$, $(1,2,3,1)-(1,1,2,1)=(0,1,1,0)$,
+$-(1,2,3,1)+(1,2,3,1)=\vb{0}$. Now read off:
+\begin{itemize}
+\item $\Col{A}$ (dimension $2$): pivot columns of $A$, $(1,1,1)$ and $(2,1,2)$.
+\item $\Nul{A}$ (dimension $4-2=2$): special solutions $(-1,-1,1,0)$ and $(-1,0,0,1)$.
+\item $\Col{A\T}$ (dimension $2$): nonzero rows of $R$, $(1,0,1,1)$ and $(0,1,1,0)$.
+\item $\Nul{A\T}$ (dimension $3-2=1$): last row of $E$, $\vb{y}=(-1,0,1)$; indeed
+$-(\text{row }1)+(\text{row }3)$ is the zero row.
+\end{itemize}
+\end{example}
+
+\begin{trap}
+Elimination keeps the row space and the nullspace but changes the column space and the left
+nullspace. In Example~\ref{ex:u11-four}, $(1,1,1)$ is a column of $A$, so it lies in $\Col{A}$;
+but every column of $R$ has third component $0$, so $(1,1,1)\notin\Col{R}$. Take the
+\emph{rows of $R$} for the row space, but the \emph{columns of $A$} for the column space. Likewise
+$\Nul{R\T}$ is spanned by $(0,0,1)$, not by the correct $(-1,0,1)$.
+\end{trap}
+
+\subsection{What a matrix keeps and what it crushes}
+
+\begin{example}[The four subspaces of a rank-one matrix]\label{ex:u11-crush}
+Return to $A=\begin{bmatrix}1&2&2\\2&4&4\end{bmatrix}$ from Example~\ref{ex:u08-crush}, with
+$m=2$, $n=3$ and $r=1$.
+\begin{itemize}
+\item \emph{Inputs, $\R^3$.} The row space is the line through $(1,2,2)$ (dimension $r=1$). The
+nullspace is the plane spanned by $\vb{s}_1=(-2,1,0)$ and $\vb{s}_2=(-2,0,1)$ (dimension
+$n-r=2$). Both special solutions are perpendicular to $(1,2,2)$. Count: $1+2=3$.
+\item \emph{Outputs, $\R^2$.} Every column is a multiple of $(1,2)$, so the column space is the
+line through $(1,2)$ (dimension $1$). Row~2 minus $2\times$row~1 is zero, so $\vb{y}=(-2,1)$, or
+equally $(2,-1)$, spans the left nullspace (dimension $m-r=1$). Count: $1+1=2$.
+\end{itemize}
+Now take the input $\vb{x}=(-1,3,2)$. It splits as a row-space part plus a nullspace part,
+\[
+\vb{x}=\begin{bmatrix}-1\\3\\2\end{bmatrix}=\begin{bmatrix}1\\2\\2\end{bmatrix}+\begin{bmatrix}-2\\1\\0\end{bmatrix},
+\qquad
+A\vb{x}=\begin{bmatrix}-1+6+4\\-2+12+8\end{bmatrix}=\begin{bmatrix}9\\18\end{bmatrix}
+=A\begin{bmatrix}1\\2\\2\end{bmatrix}.
+\]
+The nullspace part was crushed to $\vb{0}$; only the row-space part reached the output, landing at
+$(9,18)$ on the column-space line. The information that $A$ destroys is not scattered at random:
+it is exactly the nullspace component, and that subspace is perpendicular to the rows.
+(Section~\ref{sec:u16} proves that the nullspace is always perpendicular to the row space, and the
+left nullspace to the column space; here $(1,2)\cdot(2,-1)=0$.) Figure~\ref{fig:u11-crush}
+draws both sides.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,font=\small]
+  % input space R^3 (schematic): nullspace plane as a floor, row space as the vertical line
+  \begin{scope}
+    \fill[gray!12] (-2.3,-0.9) -- (1.5,-0.9) -- (2.5,0.55) -- (-1.3,0.55) -- cycle;
+    \draw[gray!60!black] (-2.3,-0.9) -- (1.5,-0.9) -- (2.5,0.55) -- (-1.3,0.55) -- cycle;
+    \node[gray!40!black,anchor=north] at (-0.4,-0.95) {nullspace plane, dim 2};
+    \coordinate (O) at (0,-0.2);
+    \draw[blue!60!black,dashed] (0,-0.9) -- (0,2.75);
+    \node[blue!60!black,anchor=south] at (0,2.75) {row space, dim 1};
+    \draw[->,thick,gray!50!black] (O) -- (1.35,0.05) node[below right=-1pt] {$\vb{s}_1$};
+    \draw[->,thick,gray!50!black] (O) -- (-1.25,0.3) node[above left=-1pt] {$\vb{s}_2$};
+    \draw[->,very thick,blue!70!black] (O) -- (0,2.0) node[left] {$(1,2,2)$};
+    \draw[dashed] (0,2.0) -- (1.35,2.25) -- (1.35,0.05);
+    \draw[->,very thick,orange!80!black] (O) -- (1.35,2.25) node[right] {$\vb{x}=(-1,3,2)$};
+    \fill (O) circle (1.5pt);
+    \node at (0.2,-1.75) {inputs: $\R^3$, \;$1+2=3$};
+  \end{scope}
+  % map
+  \draw[->,thick] (3.3,1.0) -- node[above] {$A$} (4.7,1.0);
+  % output space R^2, true proportions (scale 0.13)
+  \begin{scope}[xshift=6.6cm,yshift=-0.3cm,scale=0.13]
+    \draw[->,gray] (-14,0) -- (16,0);
+    \draw[->,gray] (0,-9) -- (0,23);
+    \draw[orange!80!black,thick] (-4.5,-9) -- (11,22) node[right] {column space, dim 1};
+    \draw[gray!50!black,thick] (-15,7.5) -- (15,-7.5) node[below=1pt,pos=0.92] {left nullspace};
+    \draw (1.8,3.6) -- (3.6,2.7) -- (1.8,-0.9);
+    \fill[orange!80!black] (9,18) circle (9pt) node[right=3pt] {$A\vb{x}=(9,18)$};
+    \fill (0,0) circle (7pt);
+    \node[anchor=north east] at (-3,-1) {$A\vb{s}_1=\vb{0}$};
+    \node at (2,-15) {outputs: $\R^2$, \;$1+1=2$};
+  \end{scope}
+\end{tikzpicture}
+\caption{The matrix $A=\begin{bmatrix}1&2&2\\2&4&4\end{bmatrix}$. Left (schematic): the input
+$\vb{x}=(-1,3,2)$ is the row-space vector $(1,2,2)$ plus the nullspace vector $\vb{s}_1$.
+Right (to scale): $A$ crushes $\vb{s}_1$ to $\vb{0}$ and sends the row-space part to
+$(9,18)$ on the column-space line, which is perpendicular to the left nullspace line through
+$(2,-1)$.}
+\label{fig:u11-crush}
+\end{figure}
+
+\subsection{A new vector space: matrices}
+
+Nothing in the definition of a vector space requires the vectors to be columns of numbers. All we
+use is that vectors can be added and multiplied by scalars, following the usual rules.
+
+\begin{example}[The space of \texorpdfstring{\(3\times3\)}{3 by 3} matrices]\label{ex:u11-M}
+Let $M$ be the set of all $3\times3$ real matrices. Matrices can be added and multiplied by
+numbers, there is a zero matrix, and all eight vector-space rules hold; that we can also
+\emph{multiply} two matrices is irrelevant here. Three subspaces of $M$: all upper triangular
+matrices $U$; all symmetric matrices $S$; and their intersection $S\cap U$, which is the set $D$ of
+diagonal matrices (symmetric with zeros below the diagonal forces zeros above it). Each is closed
+under addition and scalar multiplication. A basis of $D$ is
+\[
+\begin{bmatrix}1&0&0\\0&0&0\\0&0&0\end{bmatrix},\quad
+\begin{bmatrix}0&0&0\\0&3&0\\0&0&0\end{bmatrix},\quad
+\begin{bmatrix}0&0&0\\0&0&0\\0&0&7\end{bmatrix}:
+\]
+they are independent (a combination with weights $a,b,c$ is $\operatorname{diag}(a,3b,7c)$, which
+is zero only when $a=b=c=0$), and every diagonal matrix $\operatorname{diag}(d_1,d_2,d_3)$ is the
+combination with weights $d_1,\,d_2/3,\,d_3/7$. So $\dim D=3$. Section~\ref{sec:u12} finds the
+dimensions of $M$, $S$ and $U$.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u11-ineq}
+$A$ is $m\times n$ of rank $r$, and some right-hand sides $\vb{b}$ give no solution of
+$A\vb{x}=\vb{b}$. (a) Which inequalities ($<$ or $\le$) must hold between $m$, $n$ and $r$?
+(b) How do you know that $A\T\vb{y}=\vb{0}$ has solutions other than $\vb{y}=\vb{0}$?
+\end{exercise}
+\begin{solution}
+(a) Always $r\le m$ and $r\le n$. Since some $\vb{b}$ is unreachable, $\Col{A}\ne\R^m$, so
+$r<m$ (Theorem~\ref{thm:u09-fullrank}(b)). Nothing more can be said about $r$ versus $n$.
+(b) $\dim\Nul{A\T}=m-r>0$, so the left nullspace contains nonzero vectors.
+\end{solution}
+
+\begin{exercise}\label{exr:u11-ATy}
+For which $\vb{d}$ is $A\T\vb{y}=\vb{d}$ solvable? When is the solution unique?
+\end{exercise}
+\begin{solution}
+$A\T\vb{y}$ is a combination of the columns of $A\T$, i.e.\ of the rows of $A$, so the system is
+solvable exactly when $\vb{d}$ is in the row space $\Col{A\T}$. Two solutions differ by a vector in
+$\Nul{A\T}$, so the solution is unique when the left nullspace is $\{\vb{0}\}$, i.e.\ when $r=m$.
+\end{solution}
+
+\begin{exercise}\label{exr:u11-LU}
+Let $B=LU$ with $L=\begin{bmatrix}1&0&0\\2&1&0\\-1&0&1\end{bmatrix}$ and
+$U=\begin{bmatrix}5&0&3\\0&1&1\\0&0&0\end{bmatrix}$. Find a basis and the dimension of each of the
+four subspaces of $B$, without multiplying out $B$.
+\end{exercise}
+\begin{solution}
+$U$ has two pivots, so $r=2$ and all four dimensions are $2$, $3-2=1$, $2$, $3-2=1$.
+\emph{Column space:} since $L$ is invertible, the columns of $B=LU$ satisfy the same relations as
+the columns of $U$, so columns~1 and~2 of $B$ are pivot columns. They are $L$ times $(5,0,0)$ and
+$(0,1,0)$, i.e.\ $5(1,2,-1)$ and $(0,1,0)$; a basis is $(1,2,-1),(0,1,0)$, the first two columns
+of $L$. \emph{Nullspace:} $\Nul{B}=\Nul{U}$; the free variable $x_3=1$ gives $x_2=-1$ and
+$5x_1+3=0$, so the basis is $(-\tfrac35,-1,1)$. \emph{Row space:} $L^{-1}B=U$ is a sequence of row
+operations, so the row space is spanned by the pivot rows of $U$: $(5,0,3)$ and $(0,1,1)$.
+\emph{Left nullspace:} $L^{-1}=\begin{bmatrix}1&0&0\\-2&1&0\\1&0&1\end{bmatrix}$ plays the role of
+$E$, and its last row $(1,0,1)$ is the basis: row~1 of $B$ is $(5,0,3)$, row~3 is $-(5,0,3)$, and
+they cancel.
+\end{solution}
+
+\begin{exercise}\label{exr:u11-construct}
+Find a $3\times3$ matrix whose column space contains $(1,1,0)$ and $(1,0,1)$ and whose nullspace
+contains $(1,1,1)$. What must its rank be?
+\end{exercise}
+\begin{solution}
+The column space contains two independent vectors, so $r\ge2$; the nullspace is at least a line,
+so $3-r\ge1$. Hence $r=2$. The condition $A(1,1,1)=\vb{0}$ says the three columns add to zero. Take
+the first two columns to be the given vectors and the third their negative sum:
+$A=\begin{bmatrix}1&1&-2\\1&0&-1\\0&1&-1\end{bmatrix}$. Its column space is the plane spanned by
+$(1,1,0)$ and $(1,0,1)$, and $A(1,1,1)=(0,0,0)$.
+\end{solution}

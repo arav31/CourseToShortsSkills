@@ -1,0 +1,309 @@
+% unit: u13
+% sources: sources/065-graphs-networks-incidence-matrices.txt, sources/167-graphs-networks-incidence-matrices.txt, sources/168-mit18-06scf11-ses1-12sum-pdf-download-file.txt, sources/169-graphs-and-networks.txt, sources/170-mit18-06scf11-ses1-12prob-pdf-download-file.txt, sources/171-mit18-06scf11-ses1-12sol-pdf-download-file.txt
+\section{Graphs, networks, incidence matrices}\label{sec:u13}
+
+The matrices in the previous sections were invented on the spot. Matrices in applications come from
+somewhere and have structure, and whoever works with them uses that structure. The most important
+example in applied mathematics is the matrix of a graph. Here every one of the four subspaces has a
+physical meaning (potentials, potential differences, currents, and Kirchhoff's current law), and
+the dimension count of Section~\ref{sec:u11} proves Euler's formula for graphs.
+
+\subsection{The incidence matrix of a directed graph}
+
+A graph has nodes and edges (Definition~\ref{def:u12-graph}). To measure currents we give each edge a
+direction, an arrow that says which way of flowing counts as positive; the choice of arrows is
+arbitrary.
+
+\begin{definition}[Incidence matrix]\label{def:u13-incidence}
+Let a directed graph have $n$ nodes and $m$ edges. Its \emph{incidence matrix} $A$ is $m\times n$,
+with one row per edge and one column per node. If edge $k$ goes from node $i$ to node $j$, row $k$
+has $-1$ in column $i$, $+1$ in column $j$, and zeros elsewhere.
+\end{definition}
+
+\begin{example}[Four nodes, five edges]\label{ex:u13-graph}
+The graph of the lecture (Figure~\ref{fig:u13-graph}, left) has $n=4$ nodes and $m=5$ edges:
+edge~1 from node~1 to~2, edge~2 from~2 to~3, edge~3 from~1 to~3, edge~4 from~1 to~4, and edge~5
+from~3 to~4. Its incidence matrix is
+\[
+A=\begin{bmatrix}-1&1&0&0\\0&-1&1&0\\-1&0&1&0\\-1&0&0&1\\0&0&-1&1\end{bmatrix}
+\begin{matrix}\text{edge }1\\\text{edge }2\\\text{edge }3\\\text{edge }4\\\text{edge }5\end{matrix}.
+\]
+Each row has exactly two nonzeros, so a large graph gives a large but very sparse matrix ($2m$
+nonzero entries out of $mn$). Edges $1,2,3$ form a loop, and the corresponding rows are dependent:
+row~1 $+$ row~2 $=(-1,0,1,0)=$ row~3. Loops will turn out to be exactly the source of dependent
+rows.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,font=\small,
+    nd/.style={circle,draw,fill=white,inner sep=1.5pt,minimum size=16pt},
+    el/.style={fill=white,inner sep=1pt,font=\footnotesize}]
+  \begin{scope}
+    \node[nd] (a) at (0,0) {1};
+    \node[nd] (b) at (2.2,1.6) {2};
+    \node[nd] (c) at (4.4,0) {3};
+    \node[nd] (d) at (2.2,-1.6) {4};
+    \draw[->,line width=1.6pt,blue!70!black] (a) -- node[el] {1} (b);
+    \draw[->,line width=1.6pt,blue!70!black] (b) -- node[el] {2} (c);
+    \draw[->,thick] (a) -- node[el] {3} (c);
+    \draw[->,line width=1.6pt,blue!70!black] (a) -- node[el] {4} (d);
+    \draw[->,thick] (c) -- node[el] {5} (d);
+    \draw[->,gray] (2.2,0.75) ++(250:0.32) arc[start angle=250,end angle=-30,radius=0.32];
+    \draw[->,gray] (2.2,-0.75) ++(30:0.32) arc[start angle=30,end angle=-250,radius=0.32];
+    \node at (2.2,-2.5) {edges $1,2,4$: a spanning tree};
+  \end{scope}
+  \begin{scope}[xshift=7cm]
+    \node[nd,label={[font=\footnotesize]left:$x_1=\tfrac58$}] (a) at (0,0) {1};
+    \node[nd,label={[font=\footnotesize]above:$x_2=\tfrac12$}] (b) at (2.2,1.6) {2};
+    \node[nd,label={[font=\footnotesize]right:$x_3=\tfrac38$}] (c) at (4.4,0) {3};
+    \node[nd,label={[font=\footnotesize]below:$x_4=0$}] (d) at (2.2,-1.6) {4};
+    \draw[->,thick] (a) -- node[el] {$\tfrac18$} (b);
+    \draw[->,thick] (b) -- node[el] {$\tfrac18$} (c);
+    \draw[->,thick] (a) -- node[el] {$\tfrac14$} (c);
+    \draw[->,thick] (a) -- node[el] {$\tfrac58$} (d);
+    \draw[->,thick] (c) -- node[el] {$\tfrac38$} (d);
+    \draw[->,very thick,orange!80!black] (-1.3,-0.9) -- (a) node[pos=0,below,font=\footnotesize] {$f_1=1$ in};
+    \draw[->,very thick,orange!80!black] (d) -- (3.6,-2.3) node[right,font=\footnotesize] {$1$ out};
+    \node at (2.2,-2.5) {};
+  \end{scope}
+\end{tikzpicture}
+\caption{Left: the directed graph of Example~\ref{ex:u13-graph}; the two circular arrows mark
+the independent loops (edges $1,2,3$ and edges $3,5,4$), and the thick edges $1,2,4$ form a tree.
+Right: with unit conductances, one unit of current entering node~1 and leaving node~4
+(Example~\ref{ex:u13-network}): node potentials and edge currents, all flowing along the arrows.}
+\label{fig:u13-graph}
+\end{figure}
+
+\subsection{Potentials and the nullspace}
+
+Multiply $A$ by a vector $\vb{x}=(x_1,x_2,x_3,x_4)$ of \emph{potentials} at the nodes:
+\[
+A\vb{x}=\begin{bmatrix}x_2-x_1\\x_3-x_2\\x_3-x_1\\x_4-x_1\\x_4-x_3\end{bmatrix}.
+\]
+Each component is a \emph{potential difference} across an edge (head minus tail). Potential
+differences are what make current flow.
+
+\begin{proposition}[Nullspace of an incidence matrix]\label{prop:u13-null}
+If the graph is connected (every two nodes are joined by a path), then $\Nul{A}$ is the line of
+constant vectors $c(1,1,\dots,1)$, and $\rank A=n-1$.
+\end{proposition}
+\begin{proof}
+A constant vector gives zero differences, so it lies in $\Nul{A}$. Conversely, $A\vb{x}=\vb{0}$
+says $x_i=x_j$ whenever an edge joins $i$ and $j$; following a path from node~1 to any node $k$
+gives $x_k=x_1$. So $\dim\Nul{A}=1$ and $r=n-1$.
+\end{proof}
+
+Physically, potentials are determined only up to an additive constant, like the constant of
+integration in calculus or the choice of zero on a temperature scale. One fixes it by
+\emph{grounding} a node, say $x_4=0$. That removes column~4, and the remaining three columns are
+independent. In the example $r=3$, and any three of the four columns are independent.
+
+Which vectors $\vb{e}$ of edge values are potential differences, i.e.\ lie in $\Col{A}$? Going around
+a loop, the differences telescope: on the loop of edges $1,2,3$,
+$(x_2-x_1)+(x_3-x_2)-(x_3-x_1)=0$. So every $\vb{e}=A\vb{x}$ satisfies $e_1+e_2-e_3=0$, and
+likewise $e_3+e_5-e_4=0$ on the other loop. This is \emph{Kirchhoff's voltage law}, and by
+Theorem~\ref{thm:u09-solvable} these loop conditions are also sufficient once we know that the loop
+vectors span the left nullspace, which we prove next.
+
+\subsection{Currents and Kirchhoff's current law}
+
+Now let $\vb{y}=(y_1,\dots,y_5)$ be \emph{currents} on the edges, positive when flowing along the
+arrow. Then
+\[
+A\T\vb{y}=\begin{bmatrix}-1&0&-1&-1&0\\1&-1&0&0&0\\0&1&1&0&-1\\0&0&0&1&1\end{bmatrix}
+\begin{bmatrix}y_1\\y_2\\y_3\\y_4\\y_5\end{bmatrix}
+=\begin{bmatrix}-y_1-y_3-y_4\\y_1-y_2\\y_2+y_3-y_5\\y_4+y_5\end{bmatrix}.
+\]
+Row $i$ of $A\T\vb{y}$ is (current into node $i$) minus (current out of node $i$). The equation
+\[
+A\T\vb{y}=\vb{0}\qquad\text{(Kirchhoff's current law)}
+\]
+says that at every node, in equals out: charge does not accumulate. It is a balance equation, a
+conservation law, perhaps the most fundamental equation of applied mathematics. Its solutions form
+the left nullspace, of dimension $m-r=5-3=2$.
+
+\begin{definition}[Loop vector]\label{def:u13-loop}
+For a loop in the graph traversed in a chosen direction, its \emph{loop vector} has entry $+1$ for
+each edge traversed along its arrow, $-1$ for each edge traversed against its arrow, and $0$ for
+edges not on the loop.
+\end{definition}
+
+\begin{theorem}[Loops span the left nullspace]\label{thm:u13-loops}
+Every loop vector satisfies $A\T\vb{y}=\vb{0}$, and every solution of $A\T\vb{y}=\vb{0}$ is a
+combination of loop vectors.
+\end{theorem}
+\begin{proof}
+A loop vector sends one unit of current around the loop. At each node on the loop, one unit
+arrives along one loop edge and one unit leaves along the next, so in minus out is $0$; nodes off
+the loop see no current.
+
+Conversely, let $\vb{y}\ne\vb{0}$ satisfy the current law. Pick an edge with $y_k\ne0$ and walk along
+it in the direction the current flows. At the node reached, current arrives, so by the balance
+some other edge carries current away; walk along it in its direction of flow. Continue. With
+finitely many nodes, the walk eventually revisits a node, closing a loop on which every edge carries
+nonzero current in the walking direction. Let $t>0$ be the smallest of these currents in absolute
+value and subtract $t$ times this loop's vector from $\vb{y}$. The result still satisfies the
+current law and has at least one more zero entry. Repeating, after finitely many steps nothing is
+left, so $\vb{y}$ was a sum of multiples of loop vectors.
+\end{proof}
+
+\begin{example}[Two independent loops]\label{ex:u13-loops}
+Send one unit around the upper triangle $1\to2\to3\to1$: edges $1$ and $2$ are traversed along
+their arrows and edge~$3$ against it, giving $\vb{y}=(1,1,-1,0,0)$. Check the four node equations:
+$-1+1-0=0$, $1-1=0$, $1-1-0=0$, $0+0=0$. The lower triangle $1\to3\to4\to1$ gives
+$(0,0,1,-1,1)$. These two are independent (look at entries $1$ and $5$), and $\dim\Nul{A\T}=2$,
+so they form a basis. The big outer loop $1\to2\to3\to4\to1$ gives $(1,1,0,-1,1)$, which is
+their sum: on edge~3 the two loop currents cancel. It is a loop, but not an independent one.
+\end{example}
+
+\subsection{Trees, the row space and Euler's formula}
+
+The row space $\Col{A\T}$ has dimension $r=3$. Which three rows (edges) are independent? Row
+reduction of $A\T$ finds pivots in columns $1,2,4$, the columns of $A\T$ that belong to edges $1,2$
+and~$4$. Column~3 of $A\T$ is column~1 plus column~2, which is the loop $1,2,3$ again. The pivot edges
+$1,2,4$ connect all four nodes and contain no loop (thick edges in Figure~\ref{fig:u13-graph}).
+A graph with no loops is a \emph{tree}. Independent rows correspond to edges without loops;
+dependencies among rows are exactly loops.
+
+\begin{theorem}[Euler's formula]\label{thm:u13-euler}
+For a connected graph with $n$ nodes, $m$ edges and $\ell=\dim\Nul{A\T}$ independent loops,
+\[
+n-m+\ell=1.
+\]
+\end{theorem}
+\begin{proof}
+By Theorem~\ref{thm:u11-dims}, $\ell=\dim\Nul{A\T}=m-r$, and $r=n-1$ by
+Proposition~\ref{prop:u13-null}. So $\ell=m-n+1$.
+\end{proof}
+
+Nodes are zero-dimensional, edges one-dimensional, and loops enclose two-dimensional regions; the
+alternating count is always $1$. For the example, $4-5+2=1$. For a graph with $5$ nodes and $7$
+edges drawn in the plane with $3$ independent loops, $5-7+3=1$. Linear algebra has proved a theorem
+of topology.
+
+\begin{trap}
+Euler's formula counts \emph{independent} loops. The graph of Figure~\ref{fig:u13-graph} has three
+visible loops (two triangles and the outer quadrilateral), and $4-5+3\neq1$; the outer loop is the
+sum of the other two. Also, Proposition~\ref{prop:u13-null} needs a connected graph: if the graph
+falls into separate pieces, $\Nul{A}$ is larger (Exercise~\ref{exr:u13-disconnected}).
+\end{trap}
+
+\subsection{\texorpdfstring{Ohm's law and \(A\T CA\vb{x}=\vb{f}\)}{Ohm's law and ATCAx = f}}
+
+The three steps of an electrical network chain together:
+\begin{center}
+\begin{tikzpicture}[>=Stealth,font=\small,node distance=2.6cm]
+  \node[align=center] (x) {$\vb{x}$\\potentials\\at nodes};
+  \node[align=center,right=of x] (e) {$\vb{e}$\\potential\\differences};
+  \node[align=center,right=of e] (y) {$\vb{y}$\\currents\\on edges};
+  \node[align=center,right=of y] (f) {$\vb{f}$\\current sources\\at nodes};
+  \draw[->,thick] (x) -- node[above] {$\vb{e}=A\vb{x}$} (e);
+  \draw[->,thick] (e) -- node[above] {$\vb{y}=-C\vb{e}$} node[below,font=\footnotesize] {Ohm} (y);
+  \draw[->,thick] (y) -- node[above] {$A\T\vb{y}=-\vb{f}$} node[below,font=\footnotesize] {Kirchhoff} (f);
+\end{tikzpicture}
+\end{center}
+Ohm's law says that the current on an edge is its conductance (one over its resistance) times the
+potential drop; $C$ is the diagonal matrix of conductances. Current flows from high to low
+potential, hence the minus sign in $\vb{y}=-C\vb{e}$. If a current $f_i$ is fed into node $i$ from
+outside, the balance at that node becomes (in) $-$ (out) $+f_i=0$, i.e.\ $A\T\vb{y}=-\vb{f}$.
+Combining the three equations, the signs cancel:
+\[
+A\T CA\,\vb{x}=\vb{f}.
+\]
+(The lecture writes the chain as $\vb{e}=A\vb{x}$, $\vb{y}=C\vb{e}$, $A\T\vb{y}=\vb{f}$, absorbing
+the signs into the conventions; the resulting equation is the same.) This is the basic equation of
+equilibrium for networks, and the matrix $A\T CA$ is symmetric:
+$(A\T CA)\T=A\T C\T A=A\T CA$.
+
+\begin{proposition}[The matrix \texorpdfstring{\(A\T A\)}{ATA} of a graph]\label{prop:u13-laplacian}
+For an incidence matrix $A$, the diagonal entry $(A\T A)_{ii}$ is the \emph{degree} of node $i$
+(the number of edges touching it), the off-diagonal entry $(A\T A)_{ij}$ is $-1$ if an edge joins
+$i$ and $j$ and $0$ otherwise, and $\tr(A\T A)=2m$.
+\end{proposition}
+\begin{proof}
+$(A\T A)_{ij}$ is the dot product of columns $i$ and $j$ of $A$. Column $i$ has an entry $\pm1$ in
+each row whose edge touches node $i$, so its squared length is the degree. Two different columns
+share a nonzero row only for an edge joining $i$ and $j$, where the entries are $-1$ and $+1$. The
+trace is the sum of the degrees, and each edge contributes to two degrees.
+\end{proof}
+
+\begin{example}[Solving a network]\label{ex:u13-network}
+Take all conductances equal to $1$ ($C=I$) in the graph of Example~\ref{ex:u13-graph}, feed one unit
+of current into node~1 and take it out at node~4: $\vb{f}=(1,0,0,-1)$. The degrees are $3,2,3,2$, so
+\[
+A\T A=\begin{bmatrix}3&-1&-1&-1\\-1&2&-1&0\\-1&-1&3&-1\\-1&0&-1&2\end{bmatrix}.
+\]
+It is singular (its rows add to zero, reflecting $\Nul{A}$), so ground node~4: set $x_4=0$ and
+drop the fourth equation. The remaining equations $3x_1-x_2-x_3=1$, $-x_1+2x_2-x_3=0$,
+$-x_1-x_2+3x_3=0$ give, by elimination, $\vb{x}=(\tfrac58,\tfrac12,\tfrac38,0)$. Check the first:
+$\tfrac{15}{8}-\tfrac48-\tfrac38=1$. The potential differences and currents are
+\[
+\vb{e}=A\vb{x}=\bigl(-\tfrac18,-\tfrac18,-\tfrac14,-\tfrac58,-\tfrac38\bigr),\qquad
+\vb{y}=-\vb{e}=\bigl(\tfrac18,\tfrac18,\tfrac14,\tfrac58,\tfrac38\bigr).
+\]
+All currents are positive, so all flow along the arrows (Figure~\ref{fig:u13-graph}, right). Node~1
+sends out $\tfrac18+\tfrac14+\tfrac58=1$, node~2 passes $\tfrac18$ through, node~3 receives
+$\tfrac18+\tfrac14$ and sends $\tfrac38$, and node~4 collects $\tfrac58+\tfrac38=1$. The direct edge
+$1\to4$ carries the most current, because every other route to node~4 crosses two edges.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u13-square}
+A square graph has nodes $1,2,3,4$ and edges $1\to2$, $2\to3$, $4\to3$, $1\to4$ (in that order).
+Write its $4\times4$ incidence matrix $A$. Which vectors are in $\Nul{A}$? Why is $(1,0,0,0)$ not in
+the row space of $A$?
+\end{exercise}
+\begin{solution}
+\[
+A=\begin{bmatrix}-1&1&0&0\\0&-1&1&0\\0&0&1&-1\\-1&0&0&1\end{bmatrix},\qquad
+A\vb{x}=\begin{bmatrix}x_2-x_1\\x_3-x_2\\x_3-x_4\\x_4-x_1\end{bmatrix}.
+\]
+$A\vb{x}=\vb{0}$ forces $x_1=x_2=x_3=x_4$, so $\Nul{A}$ is all $(a,a,a,a)$. Every row of $A$ has
+entries adding to $0$ (one $-1$ and one $+1$), so every combination of rows has entries adding to
+$0$; the entries of $(1,0,0,0)$ add to $1$, so it is not in the row space.
+\end{solution}
+
+\begin{exercise}\label{exr:u13-ATCA}
+For the square graph of Exercise~\ref{exr:u13-square} let the conductances be
+$C=\operatorname{diag}(1,2,2,1)$. Find $A\T CA$. For the current source $\vb{f}=(1,0,-1,0)$ (one
+unit into node~1, out of node~3), solve $A\T CA\vb{x}=\vb{f}$ with node~3 grounded, and find the
+currents $\vb{y}=-CA\vb{x}$.
+\end{exercise}
+\begin{solution}
+Multiplying out (or using Proposition~\ref{prop:u13-laplacian} with each edge weighted by its
+conductance),
+\[
+A\T CA=\begin{bmatrix}2&-1&0&-1\\-1&3&-2&0\\0&-2&4&-2\\-1&0&-2&3\end{bmatrix}.
+\]
+With $x_3=0$, the equations from nodes $1,2,4$ are $2x_1-x_2-x_4=1$, $-x_1+3x_2=0$,
+$-x_1+3x_4=0$. So $x_2=x_4=x_1/3$ and $2x_1-\tfrac23x_1=1$, giving $x_1=\tfrac34$ and
+$\vb{x}=(\tfrac34,\tfrac14,0,\tfrac14)$. Then $A\vb{x}=(-\tfrac12,-\tfrac14,-\tfrac14,-\tfrac12)$ and
+$\vb{y}=-CA\vb{x}=(\tfrac12,\tfrac12,\tfrac12,\tfrac12)$: half the current takes the route
+$1\to2\to3$ and half takes $1\to4\to3$, as symmetry demands (each route has conductances $1$ and $2$
+in series). Check at node~1: $\tfrac12+\tfrac12=1$ leaves.
+\end{solution}
+
+\begin{exercise}\label{exr:u13-five}
+A graph has $5$ nodes and $6$ edges: $1\to2$, $2\to3$, $1\to3$, $2\to4$, $4\to5$, $5\to3$. Without
+row reduction, find $\Nul{A}$, a basis of $\Nul{A\T}$, and $\tr(A\T A)$.
+\end{exercise}
+\begin{solution}
+The graph is connected, so $\Nul{A}$ is the line through $(1,1,1,1,1)$ and $r=4$; then
+$\dim\Nul{A\T}=6-4=2$. Loop vectors: the triangle $1\to2\to3\to1$ gives $(1,1,-1,0,0,0)$, and the
+square $2\to4\to5\to3\to2$ gives $(0,-1,0,1,1,1)$ (edge~2 is traversed against its arrow). They are
+independent, so they form a basis; the outer loop $1\to2\to4\to5\to3\to1$ gives their sum
+$(1,0,-1,1,1,1)$. The degrees are $2,3,3,2,2$, so $\tr(A\T A)=12=2m$.
+\end{solution}
+
+\begin{exercise}\label{exr:u13-disconnected}
+A graph consists of two separate triangles: nodes $1,2,3$ with edges $1\to2$, $2\to3$, $1\to3$, and
+nodes $4,5,6$ with edges $4\to5$, $5\to6$, $4\to6$. Find $\dim\Nul{A}$, the rank, and
+$\dim\Nul{A\T}$. What becomes of Euler's formula?
+\end{exercise}
+\begin{solution}
+$A\vb{x}=\vb{0}$ forces equal potentials within each triangle but not across, so $\Nul{A}$ has basis
+$(1,1,1,0,0,0)$ and $(0,0,0,1,1,1)$: dimension $2$, rank $6-2=4$. Then
+$\dim\Nul{A\T}=m-r=6-4=2$, one loop per triangle. Now $n-m+\ell=6-6+2=2$: in general the alternating
+count equals the number of connected pieces, and Euler's formula is the case of one piece.
+\end{solution}

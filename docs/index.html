@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course → Shorts</title>
+<meta name="description" content="Agent Skills that turn a course link into complete LaTeX study notes and narrated 3Blue1Brown-style explainer shorts.">
+<style>
+  :root {
+    --bg: #0e1118; --panel: #151a24; --line: #263042; --ink: #eceff4; --muted: #9aa4b2;
+    --blue: #58c4dd; --yellow: #f4d35e; --green: #83c167; --red: #fc6255;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial, sans-serif; }
+  a { color: var(--blue); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 64px 0 32px; }
+  .eyebrow { color: var(--yellow); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
+  h1 { font-size: clamp(36px, 6vw, 60px); line-height: 1.05; margin: 8px 0 16px; }
+  h1 .arrow { color: var(--green); }
+  .lede { font-size: clamp(17px, 2.2vw, 21px); color: var(--muted); max-width: 760px; margin: 0; }
+  .lede b { color: var(--ink); font-weight: 600; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .btn { display: inline-block; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line);
+         color: var(--ink); text-decoration: none; font-weight: 600; background: var(--panel); }
+  .btn.primary { background: var(--blue); color: #08131a; border-color: var(--blue); }
+  section { padding: 40px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 28px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 24px; max-width: 760px; }
+  .shorts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+  .short { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .short video { display: block; width: 100%; aspect-ratio: 9 / 16; background: #000; }
+  .short .meta { padding: 10px 12px 14px; }
+  .short h3 { font-size: 15px; margin: 0 0 4px; }
+  .short p { font-size: 13px; color: var(--muted); margin: 0; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; color: var(--bg); background: var(--green);
+         border-radius: 4px; padding: 1px 6px; margin-bottom: 6px; }
+  .tag.alt { background: var(--yellow); }
+  .notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+  .notes img { width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: block; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 0 0 24px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 26px; color: var(--green); }
+  .stat span { color: var(--muted); font-size: 13px; }
+  .skills { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .skill { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .skill code { color: var(--yellow); font-size: 14px; }
+  .skill p { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+        overflow-x: auto; font-size: 14px; line-height: 1.5; margin: 0 0 14px; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  h4 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
+  footer { color: var(--muted); font-size: 13px; padding: 32px 0 48px; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Agent Skills for Claude Code and Codex</div>
+    <h1>Course <span class="arrow">→</span> Shorts</h1>
+    <p class="lede">Paste a course link. Your agent reads the whole course, writes <b>complete LaTeX study notes</b>,
+      and makes a series of <b>narrated, 3Blue1Brown-style explainer shorts</b> for Reels, Shorts and TikTok,
+      then looks at every frame and page before calling anything done.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/arav31/CourseToShortsSkills">View on GitHub</a>
+      <a class="btn" href="media/linear-algebra-notes.pdf">Read the example notes (PDF)</a>
+      <a class="btn" href="#install">Install</a>
+    </div>
+  </header>
+
+  <section>
+    <h2>One course, start to finish: MIT 18.06 Linear Algebra</h2>
+    <p class="sub">Made from <a href="https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/">MIT OpenCourseWare 18.06SC</a>
+      with one request: <em>“turn this course into complete notes and five shorts that show its arc.”</em>
+      Every short was storyboarded, coded, narrated, rendered, reviewed frame by frame and approved by agents following these skills.</p>
+    <div class="shorts">
+      <div class="short">
+        <video src="media/01-rows-columns.mp4" poster="media/01-rows-columns.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Sessions 1.1–1.2</span><h3>Two pictures of one system</h3><p>Rows meet at a point; columns combine to reach b. Same answer, two views.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/02-four-subspaces.mp4" poster="media/02-four-subspaces.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Sessions 1.7–1.11</span><h3>What a matrix crushes</h3><p>A rank-1 matrix keeps a line and flattens a plane: the four subspaces in 3D.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/03-least-squares.mp4" poster="media/03-least-squares.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Sessions 2.1–2.3</span><h3>Best fit: a right angle</h3><p>The best-fit line's error is perpendicular to the columns, so AᵀAx̂ = Aᵀb.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/04-eigenvectors.mp4" poster="media/04-eigenvectors.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Sessions 2.8–2.11</span><h3>Follow the eigenvectors</h3><p>Split a population along two eigenlines and A¹⁰⁰ becomes easy.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/05-svd.mp4" poster="media/05-svd.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Session 3.5</span><h3>Circle in, ellipse out</h3><p>Every matrix sends some perpendicular pair to a perpendicular pair: the SVD.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/bayes.mp4" poster="media/bayes.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag alt">Standalone</span><h3>Why a positive test means ~9%</h3><p>1000 dots, 10 sick: the false positives swamp the true ones. (A standalone short.)</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The notes</h2>
+    <p class="sub">Forty-one sections that follow the course session by session: numbered definitions and theorems with proofs,
+      worked examples whose numbers were checked by computer, figures that teach, and exercises with full solutions.
+      Errors found in the course's own materials are corrected and flagged.</p>
+    <div class="stats">
+      <div class="stat"><b>221</b><span>pages</span></div>
+      <div class="stat"><b>155</b><span>theorems &amp; proofs</span></div>
+      <div class="stat"><b>152</b><span>worked examples</span></div>
+      <div class="stat"><b>76</b><span>figures</span></div>
+      <div class="stat"><b>172</b><span>solved exercises</span></div>
+    </div>
+    <div class="notes">
+      <a href="media/linear-algebra-notes.pdf"><img src="media/notes-title.png" alt="Title page of the notes" loading="lazy"></a>
+      <a href="media/linear-algebra-notes.pdf"><img src="media/notes-p11.png" alt="First section: the geometry of linear equations" loading="lazy"></a>
+      <a href="media/linear-algebra-notes.pdf"><img src="media/notes-p98.png" alt="Least squares: data picture figure" loading="lazy"></a>
+      <a href="media/linear-algebra-notes.pdf"><img src="media/notes-p180.png" alt="Linear transformations: a house under four maps" loading="lazy"></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Five skills</h2>
+    <p class="sub">The agent does the teaching (choosing ideas, worked examples, proofs, storyboards, Manim code, and judging the result).
+      Small scripts do everything mechanical and checkable.</p>
+    <div class="skills">
+      <div class="skill"><code>course-to-shorts</code><p>The runbook: environment doctor, stage order, parallel subagents, and a publish gate that rejects stale work.</p></div>
+      <div class="skill"><code>course-plan</code><p>Crawls the course (pages, PDFs, transcripts, navigation order), writes the outline and a shorts plan with verified examples.</p></div>
+      <div class="skill"><code>course-notes</code><p>LaTeX template, real TeX builds, lint for placeholders and code-style maths, page previews, parallel per-unit builds.</p></div>
+      <div class="skill"><code>course-video</code><p>shortkit for 9:16 Manim, real LaTeX in video, narration-timed beats, word-synced captions, live layout checks, contact sheets.</p></div>
+      <div class="skill"><code>course-reels</code><p>Captions, part numbers and an ordered Instagram Reels queue; publishes through the Graph API only when you ask.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+    <div class="cols">
+      <div><h4>Claude Code</h4>
+<pre>/plugin marketplace add arav31/CourseToShortsSkills
+/plugin install course-to-shorts@course-to-shorts</pre></div>
+      <div><h4>Codex</h4>
+<pre>codex plugin marketplace add arav31/CourseToShortsSkills
+codex plugin add course-to-shorts@course-to-shorts</pre></div>
+    </div>
+    <h4>Then ask</h4>
+<pre>Turn https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/ into study notes and five explainer shorts.</pre>
+    <p class="sub">Needs FFmpeg, a TeX engine (<code>brew install tectonic</code>) and cairo/pango; the agent sets up the Python side.</p>
+  </section>
+
+  <footer>
+    Example content is derived from MIT OpenCourseWare 18.06SC (Gilbert Strang), licensed
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>; the notes and videos are shared under the same licence.
+    Voices: Microsoft Edge neural TTS. Animations: <a href="https://www.manim.community/">Manim Community</a>.
+  </footer>
+</div>
+</body>
+</html>

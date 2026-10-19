@@ -68,7 +68,7 @@ import beatlib as _beatlib  # noqa: E402
 # Render settings
 # --------------------------------------------------------------------------
 
-SHORTKIT_VERSION = "2.2"
+SHORTKIT_VERSION = "2.3"
 QUALITY = _os.environ.get("SHORTKIT_QUALITY", "preview")
 _PRESETS = {"preview": (540, 960, 15), "final": (1080, 1920, 30)}
 _PX_W, _PX_H, _FPS = _PRESETS.get(QUALITY, _PRESETS["preview"])
@@ -536,10 +536,16 @@ def _fmt(v) -> str:
 # --------------------------------------------------------------------------
 
 
+PLATE_Z = 4
+
+
 def plate(mob: Mobject, buff: float = 0.12, opacity: float = 0.88, color: str = BG) -> VGroup:
     """Put a rounded backplate behind text so lines and arrows never cut through it."""
     rect = SurroundingRectangle(mob, buff=buff, corner_radius=0.08, stroke_width=0,
                                 fill_color=color, fill_opacity=opacity)
+    # Fixed layers: plate above the diagram, text above its plate, whatever order transforms leave behind.
+    rect.set_z_index(PLATE_Z)
+    mob.set_z_index(PLATE_Z + 1)
     group = VGroup(rect, mob)
     marked = [m for m in mob.get_family() if getattr(m, "_sk_label", None)]
     size = getattr(mob, "_sk_font_size", marked[0]._sk_font_size if marked else Size.LABEL)
@@ -549,10 +555,13 @@ def plate(mob: Mobject, buff: float = 0.12, opacity: float = 0.88, color: str = 
     return group
 
 
-def label(s: str, size: float = Size.LABEL, color: str = INK, math: bool = False,
+def label(s: str, size: float = Size.LABEL, color: str | None = None, math: bool = False,
           backplate: bool = True) -> Mobject:
-    """A short label (words, or LaTeX when math=True), on a backplate by default."""
-    mob = tex(s, size=size, color=color) if math else text(s, size=size, color=color)
+    """A short label (words, or LaTeX when math=True), on a backplate by default.
+
+    With math=True and no color, the LaTeX keeps its own \\cB/\\cG... colours (white otherwise).
+    """
+    mob = tex(s, size=size, color=color) if math else text(s, size=size, color=color or INK)
     return plate(mob) if backplate else mob
 
 

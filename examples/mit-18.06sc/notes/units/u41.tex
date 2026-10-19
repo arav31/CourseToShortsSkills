@@ -1,0 +1,121 @@
+% unit: u41
+% sources: sources/012-final-18-06-lecture-2023.txt, sources/013-final-18-06-lecture-2023.txt
+\section{Final 18.06 lecture (2023)}\label{sec:u41}
+
+On 15 May 2023 Gilbert Strang gave his last 18.06 lecture, at 88, after 61 years on the MIT faculty (more, the department head noted, than anyone in the department's history). Colleagues and former students spoke about what his teaching had done: Alan Edelman about textbooks in which simple examples lead to deep understanding, Pavel Grinfeld about a 3 by 3 matrix being enough to give scientific insight, Michel Goemans about lectures seen by millions on OpenCourseWare. In between, Strang reviewed the course for the final exam with two examples on the board. They are worth working through slowly, because between them they contain the arc of these notes: elimination (Section~\ref{sec:u03}), the matrix form $A\vb{x}=\vb{b}$ and $A=LU$ (Section~\ref{sec:u05}), special solutions and rank (Section~\ref{sec:u08}), and the theorem he called the first wonderful fact of the subject, that row rank equals column rank (Section~\ref{sec:u11}).
+
+\subsection{Three equations, three unknowns: elimination}
+
+The idea that opens the course is very old (Strang traced it to China some thousands of years ago): subtract multiples of equations from other equations to produce zeros, until the system is triangular, then solve from the bottom up.
+
+\begin{example}[Strang's last elimination]\label{ex:u41-elim}
+Solve
+\[
+\begin{aligned}
+2x+3y+4z&=19\\
+4x+11y+14z&=55\\
+2x+8y+17z&=50
+\end{aligned}
+\qquad\text{i.e.}\qquad
+\begin{bmatrix}2&3&4\\4&11&14\\2&8&17\end{bmatrix}\begin{bmatrix}x\\y\\z\end{bmatrix}=\begin{bmatrix}19\\55\\50\end{bmatrix}.
+\]
+\emph{Column 1.} The first pivot is $2$. Subtract $2\times$ equation 1 from equation 2 ($\ell_{21}=2$): $5y+6z=17$. Subtract $1\times$ equation 1 from equation 3 ($\ell_{31}=1$): $5y+13z=31$.
+
+\emph{Column 2.} The second pivot is $5$. Subtract $1\times$ the new equation 2 from the new equation 3 ($\ell_{32}=1$): $7z=14$.
+
+\emph{Back substitution.} $z=2$; then $5y+12=17$ gives $y=1$; then $2x+3+8=19$ gives $x=4$. So $(x,y,z)=(4,1,2)$, and indeed $4\cdot4+11+28=55$ and $8+8+34=50$.
+
+In matrix language, elimination turned $A$ into the upper triangular $U$ and $\vb{b}$ into $\vb{c}$, and the multipliers fill $L$:
+\[
+U=\begin{bmatrix}2&3&4\\0&5&6\\0&0&7\end{bmatrix},\quad \vb{c}=\begin{bmatrix}19\\17\\14\end{bmatrix},\quad
+L=\begin{bmatrix}1&0&0\\2&1&0\\1&1&1\end{bmatrix},\quad
+LU=\begin{bmatrix}2&3&4\\4&11&14\\2&8&17\end{bmatrix}=A.
+\]
+\end{example}
+
+Three equations and three unknowns with three nonzero pivots: one solution, as expected. The second board example drops that comfort.
+
+\subsection{Three equations, four unknowns: rank and special solutions}
+
+\begin{example}[A $3\times4$ matrix of rank 2]\label{ex:u41-rank}
+Solve $A\vb{x}=\vb{0}$ for
+\[
+A=\begin{bmatrix}1&2&11&17\\3&7&37&57\\4&9&48&74\end{bmatrix}.
+\]
+$\vb{x}=\vb{0}$ is always a solution; the question is what else. With four unknowns and only three equations we expect at least one free variable, but the numbers decide how many.
+
+\emph{Spot the dependence.} Row 1 $+$ row 2 $=(4,9,48,74)=$ row 3. Subtracting rows 1 and 2 from row 3 leaves a row of zeros: the third equation was a combination of the other two and says nothing new. So there are really two equations in four unknowns, and we expect $4-2=2$ independent solutions.
+
+\emph{Eliminate, downward and then upward.} Row 2 $-\,3\times$row 1 $=(0,1,4,6)$. Then row 1 $-\,2\times$(new row 2) $=(1,0,3,5)$:
+\[
+R=\begin{bmatrix}1&0&3&5\\0&1&4&6\\0&0&0&0\end{bmatrix},\qquad
+\begin{aligned}x_1+3x_3+5x_4&=0\\ x_2+4x_3+6x_4&=0.\end{aligned}
+\]
+\emph{Special solutions.} The pivot variables are $x_1,x_2$ and the free variables $x_3,x_4$. Setting $(x_3,x_4)=(1,0)$ gives $x_1=-3$, $x_2=-4$; setting $(x_3,x_4)=(0,1)$ gives $x_1=-5$, $x_2=-6$:
+\[
+\vb{s}_1=(-3,-4,1,0),\qquad \vb{s}_2=(-5,-6,0,1).
+\]
+They are independent (look at the last two entries), and every solution is a combination $c_1\vb{s}_1+c_2\vb{s}_2$, a plane through the origin in $\R^{4}$. Check one entry: row 2 of $A$ times $\vb{s}_1$ is $-9-28+37+0=0$.
+\end{example}
+
+\begin{trap}
+No row of $A$ is a multiple of another, yet the rows are dependent. Dependence means some \emph{combination} gives zero (here row 1 $+$ row 2 $-$ row 3), not that one row is a multiple of one other row. The rank is the number of pivots after elimination, not the number of rows that ``look different''.
+\end{trap}
+
+\subsection{Row rank equals column rank}
+
+The matrix $A$ has two independent rows. Look at its columns instead: from $R$, column 3 $=3\,$(column 1) $+\,4\,$(column 2) and column 4 $=5\,$(column 1) $+\,6\,$(column 2); for $A$ itself, $3(1,3,4)+4(2,7,9)=(11,37,48)$ and $5(1,3,4)+6(2,7,9)=(17,57,74)$. Columns 1 and 2 are independent, so there are also exactly two independent columns. That the two counts agree is not obvious (the rows live in $\R^{4}$, the columns in $\R^{3}$), and it is true for every matrix.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[font=\small,>=Stealth,box/.style={draw,rounded corners,align=center,minimum width=5.0cm,inner sep=4pt}]
+  \node[box,fill=blue!10] (row) at (0,1.4) {row space $\Col{A\T}$, dim $2$\\ $(1,0,3,5),\ (0,1,4,6)$};
+  \node[box,fill=orange!12] (nul) at (0,-0.3) {nullspace $\Nul{A}$, dim $2$\\ $(-3,-4,1,0),\ (-5,-6,0,1)$};
+  \node[box,fill=blue!10] (col) at (8,1.4) {column space $\Col{A}$, dim $2$\\ $(1,3,4),\ (2,7,9)$};
+  \node[box,fill=orange!12] (lnul) at (8,-0.3) {left nullspace $\Nul{A\T}$, dim $1$\\ $(1,1,-1)$};
+  \node at (0,2.55) {in $\R^{4}$: $2+2=4$};
+  \node at (8,2.55) {in $\R^{3}$: $2+1=3$};
+  \draw[->,thick,blue!70!black] (row.east) -- node[above] {$A$, one-to-one} (col.west);
+  \node (zero) at (4,-0.3) {$\vb{0}$};
+  \draw[->,thick,orange!80!black] (nul.east) -- (zero.west);
+\end{tikzpicture}
+\caption{The four subspaces of the board matrix $A$ of Example~\ref{ex:u41-rank}, with a basis for each. Row rank and column rank are both $2$; the left nullspace vector $(1,1,-1)$ records the dependence row 1 $+$ row 2 $-$ row 3 $=\vb{0}$.}\label{fig:u41-four}
+\end{figure}
+
+\begin{theorem}[Row rank equals column rank]\label{thm:u41-rowcol}
+For every $m\times n$ matrix $A$, the maximum number of independent rows equals the maximum number of independent columns. Both equal the number $r$ of pivots.
+\end{theorem}
+\begin{proof}
+Let $R$ be the reduced row echelon form of $A$, with $r$ pivots.
+
+\emph{Rows.} Each row operation replaces a row by a combination of rows and can be undone, so $A$ and $R$ have the same row space. The $r$ nonzero rows of $R$ are independent: each has a $1$ in its pivot column, where every other row of $R$ has a $0$, so a combination of them can vanish only if every coefficient is $0$. Hence $\dim\Col{A\T}=r$.
+
+\emph{Columns.} Row operations do not change the solutions of $A\vb{x}=\vb{0}$, so $A\vb{x}=\vb{0}$ exactly when $R\vb{x}=\vb{0}$: a combination of columns of $A$ vanishes exactly when the same combination of columns of $R$ does. So any set of columns is independent in $A$ if and only if it is independent in $R$. In $R$ the $r$ pivot columns are distinct standard basis vectors of $\R^{m}$, hence independent, and every free column is a combination of them (its entries sit in the pivot rows). So the pivot columns of $A$ form a basis of $\Col{A}$, and $\dim\Col{A}=r$.
+\end{proof}
+
+Figure~\ref{fig:u41-four} puts the board example into the picture that organizes the whole course. The two equal dimensions on top are Theorem~\ref{thm:u41-rowcol}; the two at the bottom, $n-r$ and $m-r$, are what is left over; and the matrix is invertible from the top left box to the top right box (Theorem~\ref{thm:u36-rowcol}). Strang closed the mathematics there, on the fact that the number of independent rows always matches the number of independent columns.
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u41-lu}
+Use the factors $L$ and $U$ of Example~\ref{ex:u41-elim} to solve $A\vb{x}=(9,29,27)$ without repeating elimination.
+\end{exercise}
+\begin{solution}
+Forward substitution in $L\vb{c}=\vb{b}$: $c_1=9$, $c_2=29-2\cdot9=11$, $c_3=27-9-11=7$. Back substitution in $U\vb{x}=\vb{c}$: $7z=7$ gives $z=1$; $5y+6=11$ gives $y=1$; $2x+3+4=9$ gives $x=1$. So $\vb{x}=(1,1,1)$; check: the row sums of $A$ are $9$, $29$, $27$.
+\end{solution}
+
+\begin{exercise}\label{exr:u41-solvable}
+For the $3\times4$ matrix $A$ of Example~\ref{ex:u41-rank}, for which $\vb{b}=(b_1,b_2,b_3)$ is $A\vb{x}=\vb{b}$ solvable? Find the complete solution when $\vb{b}=(1,4,5)$.
+\end{exercise}
+\begin{solution}
+The same row operations act on $\vb{b}$: row 3 $-$ row 1 $-$ row 2 turns the third equation into $0=b_3-b_1-b_2$. So $A\vb{x}=\vb{b}$ is solvable exactly when $b_3=b_1+b_2$, i.e.\ when $\vb{b}$ is orthogonal to the left nullspace vector $(1,1,-1)$. For $\vb{b}=(1,4,5)$ this holds. Row 2 $-\,3\times$row 1 gives $x_2+4x_3+6x_4=4-3=1$, and row 1 $-\,2\times$(new row 2) gives $x_1+3x_3+5x_4=1-2=-1$. With the free variables set to zero, $\vb{x}_p=(-1,1,0,0)$; check $A\vb{x}_p=-(1,3,4)+(2,7,9)=(1,4,5)$. The complete solution is
+\[
+\vb{x}=(-1,1,0,0)+c_1(-3,-4,1,0)+c_2(-5,-6,0,1).
+\]
+\end{solution}
+
+\begin{exercise}\label{exr:u41-transpose}
+Without further elimination, find the rank of $A\T$ and the dimension of the nullspace of $A\T$ for the $3\times4$ matrix $A$, and explain the answers using Theorem~\ref{thm:u41-rowcol}.
+\end{exercise}
+\begin{solution}
+The rows of $A\T$ are the columns of $A$, so the row rank of $A\T$ is the column rank of $A$, which is $2$; by the theorem the rank of $A\T$ is $2$. $A\T$ is $4\times3$, so its nullspace has dimension $3-2=1$, spanned by $(1,1,-1)$: $A\T(1,1,-1)=$ row 1 $+$ row 2 $-$ row 3 of $A$, written as a column, which is $\vb{0}$.
+\end{solution}

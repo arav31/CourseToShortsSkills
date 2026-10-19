@@ -1,0 +1,293 @@
+% unit: u20
+% sources: sources/079-properties-of-determinants.txt, sources/035-lecture-18-properties-of-determinants.txt, sources/185-mit18-06scf11-ses2-5sum-pdf-download-file.txt, sources/036-problem-solving-properties-of-determinants.txt, sources/186-mit18-06scf11-ses2-5prob-pdf-download-file.txt, sources/187-mit18-06scf11-ses2-5sol-pdf-download-file.txt
+\section{Properties of determinants}\label{sec:u20}
+
+Up to now most of our matrices were rectangular. The second half of the course concentrates on
+\emph{square} matrices, and its two big tools are the determinant and the eigenvalues; the
+determinant comes first because eigenvalues will be found from it. The determinant of a
+square matrix $A$, written $\det A$ or $|A|$, is a single number that packs in a remarkable
+amount of information, above all: $A$ is invertible exactly when $\det A\neq 0$. Rather than
+start from a formula (that comes in Section~\ref{sec:u21}), we start from three properties.
+Everything else, including the familiar $ad-bc$ and an efficient way to compute, follows from
+them.
+
+\subsection{Three properties define the determinant}
+
+\begin{definition}[The determinant]\label{def:u20-det}
+The determinant is the function assigning a number $\det A$ to each $n\times n$ matrix such
+that:
+\begin{enumerate}[1.]
+  \item $\det I=1$.
+  \item Exchanging two rows reverses the sign of the determinant.
+  \item The determinant is linear in each row separately (the other rows held fixed):
+    \begin{enumerate}[(a)]
+      \item multiplying one row by $t$ multiplies the determinant by $t$;
+      \item if one row is a sum $\vb{r}+\vb{r}'$, the determinant is the sum of the two
+        determinants with that row replaced by $\vb{r}$ and by $\vb{r}'$.
+    \end{enumerate}
+\end{enumerate}
+\end{definition}
+
+For $2\times 2$ matrices, with vertical bars denoting determinants:
+\[
+  \text{(3a)}\ \ \begin{vmatrix}ta&tb\\c&d\end{vmatrix}=t\begin{vmatrix}a&b\\c&d\end{vmatrix},
+  \qquad
+  \text{(3b)}\ \ \begin{vmatrix}a+a'&b+b'\\c&d\end{vmatrix}
+  =\begin{vmatrix}a&b\\c&d\end{vmatrix}+\begin{vmatrix}a'&b'\\c&d\end{vmatrix}.
+\]
+Properties 1 and 2 already give every permutation matrix: $\det P=+1$ if $P$ comes from $I$
+by an even number of row exchanges and $-1$ if by an odd number. For instance
+$\left|\begin{smallmatrix}1&0\\0&1\end{smallmatrix}\right|=1$ and
+$\left|\begin{smallmatrix}0&1\\1&0\end{smallmatrix}\right|=-1$. Hidden here is a fact that we
+take on trust until Section~\ref{sec:u21}: a permutation can never be reached both by an even
+and by an odd number of exchanges. Without it, property 2 could force $\det P=-\det P$, and
+the three properties would contradict each other.
+
+\begin{trap}
+Property 3 is linearity in \emph{one row at a time}. It does \emph{not} say
+$\det(A+B)=\det A+\det B$, which is false: for
+$A=\left[\begin{smallmatrix}1&2\\3&4\end{smallmatrix}\right]$ and
+$B=\left[\begin{smallmatrix}2&0\\1&1\end{smallmatrix}\right]$, $\det A=-2$ and $\det B=2$,
+but $\det(A+B)=\left|\begin{smallmatrix}3&2\\4&5\end{smallmatrix}\right|=7$. Nor does it say
+$\det(2A)=2\det A$: the factor $2$ comes out of \emph{every} row, so
+$\det(2A)=2^n\det A$ for an $n\times n$ matrix, just as doubling the sides of a box in
+$\R^3$ multiplies its volume by $2^3=8$.
+\end{trap}
+
+\subsection{Seven consequences}
+
+Each of the following is derived from properties 1--3 alone. The proofs are short, and they
+are the reason the properties are worth learning: they explain why elimination computes
+determinants.
+
+\begin{proposition}[Property 4: equal rows]\label{prop:u20-equal}
+If two rows of $A$ are equal, then $\det A=0$.
+\end{proposition}
+
+\begin{proof}
+Exchanging the two equal rows leaves $A$ unchanged, so the determinant is unchanged; by
+property 2 it also changes sign. So $\det A=-\det A$, and $\det A=0$.
+\end{proof}
+
+\begin{proposition}[Property 5: elimination does not change the determinant]\label{prop:u20-elim}
+Subtracting $\ell$ times row $i$ from row $k$ ($i\neq k$) leaves $\det A$ unchanged.
+\end{proposition}
+
+\begin{proof}
+By linearity in row $k$ (3b, then 3a), the new determinant is $\det A$ minus $\ell$ times the
+determinant of the matrix whose row $k$ is a copy of row $i$. That matrix has two equal rows,
+so its determinant is $0$ by property 4. In the $2\times 2$ case:
+\[
+  \begin{vmatrix}a&b\\c-\ell a&d-\ell b\end{vmatrix}
+  =\begin{vmatrix}a&b\\c&d\end{vmatrix}-\ell\begin{vmatrix}a&b\\a&b\end{vmatrix}
+  =\begin{vmatrix}a&b\\c&d\end{vmatrix}.\qedhere
+\]
+\end{proof}
+
+\begin{proposition}[Property 6: zero row]\label{prop:u20-zero}
+If $A$ has a row of zeros, then $\det A=0$.
+\end{proposition}
+
+\begin{proof}
+Multiply the zero row by $t=0$: the matrix does not change, and by 3a the determinant is
+multiplied by $0$.
+\end{proof}
+
+\begin{proposition}[Property 7: triangular matrices]\label{prop:u20-triangular}
+If $U$ is triangular with diagonal entries $d_1,\dots,d_n$, then $\det U=d_1d_2\cdots d_n$.
+\end{proposition}
+
+\begin{proof}
+Suppose $U$ is upper triangular (the lower case is the same). If all $d_i\neq 0$, use each
+diagonal entry, from the bottom up, to eliminate the entries above it; by property 5 this does
+not change the determinant and it leaves the diagonal matrix $D=\operatorname{diag}(d_1,\dots,d_n)$.
+Factor $d_i$ out of row $i$ for each $i$ (property 3a) to get $d_1\cdots d_n\det I$, and
+$\det I=1$. If some $d_i=0$, elimination produces a full row of zeros instead (take the
+lowest zero on the diagonal: the rows below it can clear everything in its row), and property 6
+gives $\det U=0=d_1\cdots d_n$.
+\end{proof}
+
+\begin{theorem}[Property 8: the invertibility test]\label{thm:u20-singular}
+$\det A=0$ exactly when $A$ is singular. If elimination with $k$ row exchanges reduces $A$
+to $U$ with pivots $d_1,\dots,d_n$, then
+\[
+  \det A=(-1)^k\,d_1d_2\cdots d_n .
+\]
+\end{theorem}
+
+\begin{proof}
+Elimination uses only subtractions of multiples of rows (no change, property 5) and row
+exchanges (a sign change each, property 2), so $\det A=(-1)^k\det U$. If $A$ is singular,
+elimination produces a zero row and $\det U=0$ (property 6). If $A$ is invertible, there are
+$n$ nonzero pivots and $\det U=d_1\cdots d_n\neq 0$ (property 7).
+\end{proof}
+
+This ``product of the pivots'' is how software computes determinants: an $n\times n$
+elimination costs about $n^3/3$ operations, while the formulas of Section~\ref{sec:u21} have
+$n!$ terms. The proof also shows that properties 1--3 leave no freedom: any function
+satisfying them must equal $(-1)^k d_1\cdots d_n$ on every matrix. We use this uniqueness
+below.
+
+\begin{example}[\texorpdfstring{$ad-bc$}{ad - bc} from the pivots]\label{ex:u20-2by2}
+If $a\neq 0$, subtract $c/a$ times row~1 from row~2:
+\[
+  \begin{vmatrix}a&b\\c&d\end{vmatrix}=\begin{vmatrix}a&b\\0&d-\frac{c}{a}b\end{vmatrix}
+  =a\Bigl(d-\frac{cb}{a}\Bigr)=ad-bc .
+\]
+If $a=0$, exchange the rows first:
+$\left|\begin{smallmatrix}0&b\\c&d\end{smallmatrix}\right|=-\left|\begin{smallmatrix}c&d\\0&b\end{smallmatrix}\right|=-cb$,
+again $ad-bc$. (If also $c=0$, the first column is zero, $A$ is singular, and both sides are
+$0$.) For instance $\left|\begin{smallmatrix}0&2\\3&4\end{smallmatrix}\right|=-(3\cdot 2)=-6$.
+\end{example}
+
+\begin{example}[A \texorpdfstring{$3\times 3$}{3 by 3} determinant by elimination]\label{ex:u20-3by3}
+\[
+  A=\begin{bmatrix}2&1&1\\4&-6&0\\-2&7&2\end{bmatrix}
+  \longrightarrow
+  \begin{bmatrix}2&1&1\\0&-8&-2\\0&8&3\end{bmatrix}
+  \longrightarrow
+  \begin{bmatrix}2&1&1\\0&-8&-2\\0&0&1\end{bmatrix}=U .
+\]
+The steps subtract $2$ (row~1) from row~2, add row~1 to row~3, then add row~2 to row~3; none
+changes the determinant and there were no exchanges. So
+$\det A=2\cdot(-8)\cdot 1=-16$.
+\end{example}
+
+Figure~\ref{fig:u20-shear} shows what property 5 means geometrically for $2\times 2$
+matrices, where $|\det A|$ is the area of the parallelogram spanned by the rows (proved in
+Section~\ref{sec:u22}).
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[>=Stealth,scale=1.2]
+    \draw[->,gray] (-0.3,0) -- (4.6,0) node[right] {$x$};
+    \draw[->,gray] (0,-0.3) -- (0,3.4) node[above] {$y$};
+    \filldraw[fill=blue!10,draw=blue!60] (0,0) -- (3,1) -- (4,3) -- (1,2) -- cycle;
+    \filldraw[fill=orange!15,draw=orange!80!black,fill opacity=0.6] (0,0) -- (3,1) -- (3,8/3) -- (0,5/3) -- cycle;
+    \draw[dashed,gray] (-0.75,1.4167) -- (4.6,3.2);
+    \draw[->,very thick,blue] (0,0) -- (3,1) node[below right] {$\vb{r}_1=(3,1)$};
+    \draw[->,very thick,blue!70!black] (0,0) -- (1,2) node[pos=0.62,right] {$\vb{r}_2=(1,2)$};
+    \draw[->,very thick,orange!85!black] (0,0) -- (0,5/3) node[pos=0.45,left] {$\vb{r}_2-\frac13\vb{r}_1=(0,\frac53)$};
+  \end{tikzpicture}
+  \caption{Subtracting a multiple of row~1 from row~2 slides $\vb{r}_2$ along the dashed line
+  parallel to $\vb{r}_1$. Base and height are unchanged, so the area stays
+  $\left|\begin{smallmatrix}3&1\\1&2\end{smallmatrix}\right|=6-1=5$; the new matrix
+  $\left[\begin{smallmatrix}3&1\\0&5/3\end{smallmatrix}\right]$ is triangular, and its pivots
+  give $3\cdot\frac53=5$.}
+  \label{fig:u20-shear}
+\end{figure}
+
+\begin{theorem}[Property 9: the product rule]\label{thm:u20-product}
+For $n\times n$ matrices, $\det(AB)=(\det A)(\det B)$. In particular
+$\det A^{-1}=1/\det A$ when $A$ is invertible, and $\det A^2=(\det A)^2$.
+\end{theorem}
+
+\begin{proof}
+If $\det B=0$, then $B$ is singular: some $\vb{x}\neq\vb{0}$ has $B\vb{x}=\vb{0}$, so
+$AB\vb{x}=\vb{0}$, $AB$ is singular, and both sides are $0$. If $\det B\neq 0$, consider the
+function $D(A)=\det(AB)/\det B$ of the matrix $A$. It satisfies the three defining
+properties: $D(I)=1$; exchanging two rows of $A$ exchanges the same two rows of $AB$, so $D$
+changes sign; and row $i$ of $AB$ is (row $i$ of $A$) times $B$, which depends linearly on row
+$i$ of $A$, so $D$ is linear in each row. By uniqueness (the remark after
+Theorem~\ref{thm:u20-singular}), $D(A)=\det A$, which is the product rule. Applying it to
+$A^{-1}A=I$ gives $\det A^{-1}\det A=1$.
+\end{proof}
+
+For diagonal matrices the rule is plain: $A=\operatorname{diag}(2,3)$ has $\det A=6$ and
+$A^{-1}=\operatorname{diag}(\frac12,\frac13)$ has determinant $\frac16$.
+
+\begin{theorem}[Property 10: transpose]\label{thm:u20-transpose}
+$\det A\T=\det A$.
+\end{theorem}
+
+\begin{proof}
+If $A$ is singular, so is $A\T$ (same rank), and both determinants are $0$. Otherwise
+elimination gives $PA=LU$ with $P$ a permutation, $L$ lower triangular with ones on the
+diagonal and $U$ upper triangular. Since $P\T P=I$, $A=P\T LU$ and $A\T=U\T L\T P$. By the
+product rule and property 7,
+\[
+  \det A=\det P\T\cdot 1\cdot\det U,\qquad \det A\T=\det U\T\cdot 1\cdot\det P ,
+\]
+with $\det U\T=\det U$ (same diagonal). Finally $\det P\T\det P=\det(P\T P)=1$ and
+$\det P=\pm1$, so $\det P\T=\det P$.
+\end{proof}
+
+Property 10 turns every statement about rows into one about columns: a zero column gives
+$\det A=0$, exchanging two columns reverses the sign, and the determinant is linear in each
+column separately.
+
+\begin{example}[Four quick determinants]\label{ex:u20-recitation}
+Each of these needs only one or two of the properties.
+\begin{enumerate}[(a)]
+  \item Subtracting row~1 from row~2 and row~2 from row~3 (property 5) produces two rows
+    equal to $(1,1,1)$, so by property 4
+    \[
+      \begin{vmatrix}101&201&301\\102&202&302\\103&203&303\end{vmatrix}
+      =\begin{vmatrix}101&201&301\\1&1&1\\1&1&1\end{vmatrix}=0 .
+    \]
+  \item The rank-one matrix
+    $C=\begin{bmatrix}1\\2\\3\end{bmatrix}\begin{bmatrix}1&-4&5\end{bmatrix}$ has rows that
+    are $1,2,3$ times the same row, so $C$ is singular and $\det C=0$ (property 8).
+  \item The skew-symmetric matrix
+    $D=\left[\begin{smallmatrix}0&1&3\\-1&0&4\\-3&-4&0\end{smallmatrix}\right]$ has
+    $D\T=-D$. Then $\det D=\det D\T=\det(-D)=(-1)^3\det D$, so $\det D=0$.
+  \item $\det\left[\begin{smallmatrix}0&1\\-1&0\end{smallmatrix}\right]=1$: for even $n$ the
+    argument in (c) gives only $\det D=\det D$, and skew-symmetric matrices can be invertible.
+\end{enumerate}
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u20-rowsums}
+If the entries in every row of a square matrix $A$ add to zero, solve $A\vb{x}=\vb{0}$ to
+prove $\det A=0$. If those entries add to one, show that $\det(A-I)=0$. Does this mean
+$\det A=1$?
+\end{exercise}
+
+\begin{solution}
+If every row sums to zero, then $\vb{x}=(1,1,\dots,1)$ satisfies $A\vb{x}=\vb{0}$, because each
+component of $A\vb{x}$ is a row sum. A nonzero nullspace means $A$ is singular, so
+$\det A=0$. If every row sums to one, every row of $A-I$ sums to zero, so $\det(A-I)=0$. This
+does not force $\det A=1$: the rows of $A=\left[\begin{smallmatrix}0&1\\1&0\end{smallmatrix}\right]$
+sum to one, but $\det A=-1$.
+\end{solution}
+
+\begin{exercise}[Vandermonde determinant]\label{ex:u20-vandermonde}
+Use row operations and the properties to show
+\[
+  \det\begin{bmatrix}1&a&a^2\\1&b&b^2\\1&c&c^2\end{bmatrix}=(b-a)(c-a)(c-b).
+\]
+\end{exercise}
+
+\begin{solution}
+Subtract row~1 from rows~2 and~3 (no change), then factor $b-a$ out of row~2 and $c-a$ out of
+row~3 (property 3a), using $b^2-a^2=(b-a)(b+a)$:
+\[
+  \begin{vmatrix}1&a&a^2\\0&b-a&b^2-a^2\\0&c-a&c^2-a^2\end{vmatrix}
+  =(b-a)(c-a)\begin{vmatrix}1&a&a^2\\0&1&b+a\\0&1&c+a\end{vmatrix}
+  =(b-a)(c-a)\begin{vmatrix}1&a&a^2\\0&1&b+a\\0&0&c-b\end{vmatrix},
+\]
+where the last step subtracts row~2 from row~3. The matrix is now triangular with diagonal
+$1,1,c-b$, so the determinant is $(b-a)(c-a)(c-b)$. It is zero exactly when two of $a,b,c$
+coincide, i.e.\ when two rows are equal.
+\end{solution}
+
+\begin{exercise}\label{ex:u20-scaling}
+A $3\times 3$ matrix $A$ has $\det A=5$. Find $\det(2A)$, $\det(-A)$, $\det(A^2)$,
+$\det(A^{-1})$ and $\det(A\T)$.
+\end{exercise}
+
+\begin{solution}
+$\det(2A)=2^3\cdot 5=40$; $\det(-A)=(-1)^3\cdot 5=-5$; $\det(A^2)=5^2=25$;
+$\det(A^{-1})=\frac15$; $\det(A\T)=5$.
+\end{solution}
+
+\begin{exercise}\label{ex:u20-skew}
+Show that every skew-symmetric matrix ($D\T=-D$) of odd size $n$ has $\det D=0$.
+\end{exercise}
+
+\begin{solution}
+$\det D=\det D\T=\det(-D)=(-1)^n\det D=-\det D$ for odd $n$, using property 10 and
+property 3a applied to each of the $n$ rows. Hence $\det D=0$. Example~\ref{ex:u20-recitation}(d)
+shows that the conclusion fails for even $n$.
+\end{solution}

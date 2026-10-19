@@ -1,0 +1,392 @@
+% unit: u04
+% sources: sources/080-multiplication-and-inverse-matrices.txt, sources/127-multiplication-and-inverse-matrices.txt, sources/128-mit18-06scf11-ses1-3sum-pdf-download-file.txt, sources/129-inverse-matrices.txt, sources/130-mit18-06scf11-ses1-3prob-pdf-download-file.txt, sources/131-mit18-06scf11-ses1-3sol-pdf-download-file.txt
+\section{Multiplication and inverse matrices}\label{sec:u04}
+
+We have been multiplying matrices since Section~\ref{sec:u03}, where elimination steps were
+matrices acting on the left. This section sets down the rule for the product $AB$ and then
+looks at the same product in four more ways: by columns, by rows, as a sum of
+column-times-row pieces, and by blocks. All five give the same answer, and each is the right
+one in some argument later on. The second half answers the most important question about a
+square matrix: does it have an inverse? A singular matrix sends some nonzero vector to zero,
+which no inverse can undo; for an invertible matrix, Gauss--Jordan elimination computes
+$A^{-1}$.
+
+\subsection{The rule: row times column}
+
+\begin{definition}[Matrix product]\label{def:u04-product}
+Let $A$ be $m\times n$ and $B$ be $n\times p$. The product $C=AB$ is the $m\times p$ matrix
+with entries
+\[
+  c_{ij}=\sum_{k=1}^{n}a_{ik}b_{kj}=a_{i1}b_{1j}+a_{i2}b_{2j}+\cdots+a_{in}b_{nj},
+\]
+the dot product of row $i$ of $A$ with column $j$ of $B$. The product is defined only when
+the number of columns of $A$ equals the number of rows of $B$.
+\end{definition}
+
+For instance, the entry $c_{34}$ comes from row~3 of $A$ and column~4 of $B$:
+$c_{34}=a_{31}b_{14}+a_{32}b_{24}+\cdots+a_{3n}b_{n4}$. The shapes follow the pattern
+$(m\times n)(n\times p)=(m\times p)$: the inner numbers must match and disappear, the outer
+numbers give the shape. When $B$ is a single column ($p=1$), this is the row form of
+$A\vb{x}$ from Proposition~\ref{prop:u01-rows}.
+
+\subsection{Columns, rows, and columns times rows}
+
+The entry rule hides what the product does to whole vectors. The next three views each look at
+whole columns or rows.
+
+\begin{proposition}[Three more views of $AB$]\label{prop:u04-views}
+Let $A$ be $m\times n$ with columns $\vb{a}_1,\dots,\vb{a}_n$ and let $B$ be $n\times p$ with
+columns $\vb{b}_1,\dots,\vb{b}_p$ and rows $\vb{r}_1\T,\dots,\vb{r}_n\T$.
+\begin{enumerate}[(a)]
+  \item \emph{Columns:} column $j$ of $AB$ is $A\vb{b}_j$. Every column of $AB$ is a
+    combination of the columns of $A$.
+  \item \emph{Rows:} row $i$ of $AB$ is (row $i$ of $A$) times $B$. Every row of $AB$ is a
+    combination of the rows of $B$.
+  \item \emph{Columns times rows:} $AB=\vb{a}_1\vb{r}_1\T+\vb{a}_2\vb{r}_2\T+\cdots+\vb{a}_n\vb{r}_n\T$,
+    a sum of $n$ matrices, each an $m\times1$ column times a $1\times p$ row.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+(a) The entries of $A\vb{b}_j$ are $\sum_k a_{ik}b_{kj}$ for $i=1,\dots,m$
+(Proposition~\ref{prop:u01-rows}), which is column $j$ of $AB$. By
+Definition~\ref{def:u01-Ax}, $A\vb{b}_j=b_{1j}\vb{a}_1+\cdots+b_{nj}\vb{a}_n$.
+(b) Entry $j$ of (row $i$ of $A$)$\,B$ is $\sum_k a_{ik}b_{kj}=c_{ij}$, and by
+Proposition~\ref{prop:u03-rowtimes} that row is $a_{i1}\vb{r}_1\T+\cdots+a_{in}\vb{r}_n\T$.
+(c) The column-times-row product $\vb{a}_k\vb{r}_k\T$ is the $m\times p$ matrix with $(i,j)$
+entry $a_{ik}b_{kj}$. Summing over $k$ gives $\sum_k a_{ik}b_{kj}=c_{ij}$.
+\end{proof}
+
+\begin{example}[One product, four ways]\label{ex:u04-four-ways}
+Let $A=\begin{bmatrix} 1 & 2\\ 3 & 4\end{bmatrix}$ ($2\times2$) and
+$B=\begin{bmatrix} 1 & 0 & 2\\ 1 & 1 & 0\end{bmatrix}$ ($2\times3$), so $AB$ is $2\times3$.
+\begin{itemize}
+  \item \emph{Entries.} $c_{23}=(3,4)\cdot(2,0)=6$; similarly for the other five entries.
+  \item \emph{Columns.} $A(1,1)=(1+2,\,3+4)=(3,7)$, $A(0,1)=(2,4)$, $A(2,0)=(2,6)$.
+  \item \emph{Rows.} $(1,2)B=1\,(1,0,2)+2\,(1,1,0)=(3,2,2)$ and
+    $(3,4)B=3\,(1,0,2)+4\,(1,1,0)=(7,4,6)$.
+  \item \emph{Columns times rows.}
+    \[
+      \begin{bmatrix} 1\\ 3\end{bmatrix}\begin{bmatrix} 1 & 0 & 2\end{bmatrix}
+      +\begin{bmatrix} 2\\ 4\end{bmatrix}\begin{bmatrix} 1 & 1 & 0\end{bmatrix}
+      =\begin{bmatrix} 1 & 0 & 2\\ 3 & 0 & 6\end{bmatrix}
+      +\begin{bmatrix} 2 & 2 & 0\\ 4 & 4 & 0\end{bmatrix}.
+    \]
+\end{itemize}
+Every view gives $AB=\begin{bmatrix} 3 & 2 & 2\\ 7 & 4 & 6\end{bmatrix}$. The
+same twelve multiplications are being done each time; only the grouping changes.
+\end{example}
+
+A single column times a single row is a very special matrix:
+\[
+  \begin{bmatrix} 2\\ 3\\ 4\end{bmatrix}\begin{bmatrix} 1 & 6\end{bmatrix}
+  =\begin{bmatrix} 2 & 12\\ 3 & 18\\ 4 & 24\end{bmatrix}.
+\]
+Its columns are multiples of $(2,3,4)$ and its rows are multiples of $(1,6)$, as views (a)
+and (b) predict. Plotted as points, the rows $(2,12)$, $(3,18)$, $(4,24)$ all lie on the line
+through $(1,6)$, and both columns lie on the line through $(2,3,4)$. In later language
+(Section~\ref{sec:u11}), its row space and column space are both lines: it is a matrix of
+rank one. View (c) says that every product $AB$ is a sum of such rank-one pieces. For
+instance, if $A$ has columns $(2,3,4)$ and $(7,8,9)$ and $B$ has rows $(1,6)$ and $(0,0)$,
+the second piece is zero and $AB$ is the matrix above.
+
+\subsection{Block multiplication}
+
+Matrices can be cut into blocks, and if the cuts match, blocks multiply like numbers
+(keeping their order). With $A$ and $B$ cut into $2\times2$ arrays of blocks,
+\[
+  \begin{bmatrix} A_1 & A_2\\ A_3 & A_4\end{bmatrix}
+  \begin{bmatrix} B_1 & B_2\\ B_3 & B_4\end{bmatrix}
+  =\begin{bmatrix} A_1B_1+A_2B_3 & A_1B_2+A_2B_4\\ A_3B_1+A_4B_3 & A_3B_2+A_4B_4\end{bmatrix},
+\]
+provided the columns of $A$ are cut the same way as the rows of $B$, so that every product
+$A_iB_j$ is defined.
+
+\begin{proposition}[Block multiplication]\label{prop:u04-blocks}
+If the column partition of $A$ matches the row partition of $B$, then block $(I,J)$ of $AB$
+is $\sum_K A_{IK}B_{KJ}$, a sum of block products.
+\end{proposition}
+
+\begin{proof}
+Take an entry $c_{ij}$ inside block $(I,J)$. Its sum $\sum_k a_{ik}b_{kj}$ runs over all
+column indices $k$ of $A$. Split this sum according to the column blocks $K$: the part with
+$k$ in block $K$ is exactly the $(i,j)$ entry of $A_{IK}B_{KJ}$. Adding over $K$ gives the
+claim.
+\end{proof}
+
+\begin{example}[Blocks behave like numbers]\label{ex:u04-blocks}
+Let $C=\begin{bmatrix} 1 & 2\\ 3 & 4\end{bmatrix}$ and let $I$, $0$ be the $2\times2$ identity
+and zero matrices. By block multiplication,
+\[
+  \begin{bmatrix} I & 0\\ C & I\end{bmatrix}\begin{bmatrix} I & 0\\ -C & I\end{bmatrix}
+  =\begin{bmatrix} I\cdot I+0\cdot(-C) & I\cdot0+0\cdot I\\ C\cdot I+I\cdot(-C) & C\cdot 0+I\cdot I\end{bmatrix}
+  =\begin{bmatrix} I & 0\\ 0 & I\end{bmatrix}.
+\]
+So the $4\times4$ matrix $\begin{bmatrix} I & 0\\ C & I\end{bmatrix}$, which adds combinations
+of rows~1--2 to rows~3--4, is undone by subtracting the same combinations, exactly like the
+elimination matrices of Proposition~\ref{prop:u03-Einv}.
+\end{example}
+
+Matrix multiplication obeys the associative law (Proposition~\ref{prop:u03-assoc}) and the
+distributive laws $A(B+C)=AB+AC$, $(A+B)C=AC+BC$ (Exercise~\ref{ex:u04-distributive}), but
+in general $AB\neq BA$.
+
+\subsection{Inverse matrices}
+
+\begin{definition}[Inverse, invertible, singular]\label{def:u04-inverse}
+A square $n\times n$ matrix $A$ is \emph{invertible} (or \emph{nonsingular}) if there is an
+$n\times n$ matrix $A^{-1}$ with
+\[
+  A^{-1}A=I\qquad\text{and}\qquad AA^{-1}=I .
+\]
+A square matrix with no inverse is \emph{singular}.
+\end{definition}
+
+An inverse, when it exists, is unique: if $BA=I$ and $AC=I$, then
+$B=B(AC)=(BA)C=C$. For square matrices it is enough to find a one-sided inverse
+(Corollary~\ref{cor:u04-onesided} below). (A rectangular matrix can have an inverse on one side only, as
+Section~\ref{sec:u36} explains.)
+
+Whether $A$ is invertible is the first question to ask about a square matrix. The clearest
+way to see that a matrix is \emph{not} invertible is to find a vector it sends to zero.
+
+\begin{theorem}[A nonzero solution of $A\vb{x}=\vb{0}$ rules out an inverse]\label{thm:u04-singular}
+If $A$ is square and $A\vb{x}=\vb{0}$ for some $\vb{x}\neq\vb{0}$, then $A$ is singular.
+\end{theorem}
+
+\begin{proof}
+Suppose $A^{-1}$ existed. Multiplying $A\vb{x}=\vb{0}$ on the left by $A^{-1}$ gives
+$\vb{x}=A^{-1}A\vb{x}=A^{-1}\vb{0}=\vb{0}$, contradicting $\vb{x}\neq\vb{0}$.
+\end{proof}
+
+\begin{example}[A singular matrix, three ways]\label{ex:u04-singular}
+Take $A=\begin{bmatrix} 1 & 3\\ 2 & 6\end{bmatrix}$.
+\emph{Null vector:} $\vb{x}=(3,-1)$ gives $A\vb{x}=3(1,2)-1(3,6)=(0,0)$, so $A$ is singular
+by Theorem~\ref{thm:u04-singular}.
+\emph{Columns:} column~2 is $3$ times column~1, so both columns lie on the line through
+$(1,2)$. By Proposition~\ref{prop:u04-views}(a), every column of any product $AB$ lies on that
+line too, so $AB$ can never have the column $(1,0)$ of $I$.
+\emph{Elimination:} subtracting $2$ times row~1 from row~2 leaves $(0,0)$, so there is no
+second pivot. (For readers who know determinants: $1\cdot6-3\cdot2=0$.)
+\end{example}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.55,>=Stealth]
+  \draw[->] (-1,0) -- (4.2,0);
+  \draw[->] (0,-0.8) -- (0,7.4);
+  \draw[dashed,gray] (-0.4,-0.8) -- (3.7,7.4);
+  \draw[->,very thick,orange!85!black] (0,0) -- (3,6) node[right] {$(3,6)$};
+  \draw[->,very thick,blue] (0,0) -- (1,2) node[right] {$(1,2)$};
+  \fill[red!75!black] (1,0) circle (3pt) node[below right] {$(1,0)$};
+  \node[font=\small,align=center] at (1.6,-2.6) {$\begin{bmatrix} 1&3\\ 2&6\end{bmatrix}$: columns on one line,\\ $(1,0)$ out of reach};
+\end{tikzpicture}
+\qquad\qquad
+\begin{tikzpicture}[scale=0.3,>=Stealth]
+  \draw[->] (-1.5,0) -- (8.5,0);
+  \draw[->] (0,-1.5) -- (0,15);
+  \draw[->,thick,dashed,blue] (0,0) -- (7,14) node[right] {$7(1,2)$};
+  \draw[->,thick,dashed,orange!85!black] (7,14) -- (1,0);
+  \node[orange!85!black,right] at (4.3,6.5) {$-2(3,7)$};
+  \draw[->,very thick,orange!85!black] (0,0) -- (3,7);
+  \draw[->,very thick,blue] (0,0) -- (1,2);
+  \fill[red!75!black] (1,0) circle (6pt) node[below right] {$(1,0)$};
+  \node[font=\small,align=center] at (3.5,-4.2) {$\begin{bmatrix} 1&3\\ 2&7\end{bmatrix}$: independent columns,\\ $7(1,2)-2(3,7)=(1,0)$};
+\end{tikzpicture}
+\caption{Left: the columns of the singular matrix lie on one line (dashed), so every
+combination stays on it and the column $(1,0)$ of $I$ cannot be produced. Right: the columns
+$(1,2)$ and $(3,7)$ of the invertible matrix (solid, near the origin) point in different
+directions, so their combinations fill the plane. Seven copies of the first column followed
+by $-2$ copies of the second (dashed) land on $(1,0)$; the weights $7,-2$ form the first column
+of $A^{-1}$. They are large because the two columns are nearly parallel.}
+\label{fig:u04-columns}
+\end{figure}
+
+\subsection{Gauss--Jordan elimination computes \texorpdfstring{\(A^{-1}\)}{the inverse}}
+
+Now change the $6$ to a $7$: $A=\begin{bmatrix} 1 & 3\\ 2 & 7\end{bmatrix}$. Its columns point
+in different directions (Figure~\ref{fig:u04-columns}), and we look for
+$A^{-1}=\begin{bmatrix} a & c\\ b & d\end{bmatrix}$ with $AA^{-1}=I$. By the column view,
+this is two systems with the same matrix:
+\[
+  A\begin{bmatrix} a\\ b\end{bmatrix}=\begin{bmatrix} 1\\ 0\end{bmatrix},\qquad
+  A\begin{bmatrix} c\\ d\end{bmatrix}=\begin{bmatrix} 0\\ 1\end{bmatrix}.
+\]
+In general, column $j$ of $A^{-1}$ solves $A\vb{x}=\vb{e}_j$, where $\vb{e}_j$ is column $j$
+of $I$. Finding $A^{-1}$ means solving $n$ systems at once. Gauss's elimination would solve
+them one at a time; Jordan's idea is to carry all $n$ right-hand sides along as extra columns
+and keep eliminating \emph{upwards} until the left half is $I$.
+
+\begin{example}[Gauss--Jordan on a $2\times2$ matrix]\label{ex:u04-gj2}
+\[
+  \left[\begin{array}{rr|rr} 1 & 3 & 1 & 0\\ 2 & 7 & 0 & 1\end{array}\right]
+  \xrightarrow{\ \text{row}_2-2\,\text{row}_1\ }
+  \left[\begin{array}{rr|rr} 1 & 3 & 1 & 0\\ 0 & 1 & -2 & 1\end{array}\right]
+  \xrightarrow{\ \text{row}_1-3\,\text{row}_2\ }
+  \left[\begin{array}{rr|rr} 1 & 0 & 7 & -3\\ 0 & 1 & -2 & 1\end{array}\right].
+\]
+The first step is ordinary elimination (Gauss stops at the upper triangular form). The second
+clears the entry \emph{above} the pivot (Jordan continues). The right half is
+$A^{-1}=\begin{bmatrix} 7 & -3\\ -2 & 1\end{bmatrix}$. Check:
+$A^{-1}A=\begin{bmatrix} 7-6 & 21-21\\ -2+2 & -6+7\end{bmatrix}=I$.
+\end{example}
+
+\begin{theorem}[Why Gauss--Jordan works]\label{thm:u04-gj}
+Suppose a sequence of row operations (elimination steps, row exchanges, and division of rows
+by nonzero pivots) turns $[\,A\;\;I\,]$ into $[\,I\;\;E\,]$. Then $E=A^{-1}$: both $EA=I$
+and $AE=I$.
+\end{theorem}
+
+\begin{proof}
+Each row operation is multiplication on the left by an invertible matrix (an elimination
+matrix, a permutation, or a diagonal matrix with one nonzero entry changed), so the whole
+sequence is multiplication by their product, call it $M$. By block multiplication
+$M[\,A\;\;I\,]=[\,MA\;\;M\,]$, and this equals $[\,I\;\;E\,]$. So $M=E$ and $EA=I$.
+Moreover $M$ is invertible, its inverse being the product of the inverse steps in reverse
+order. Hence $A=M^{-1}(MA)=M^{-1}$, and $AE=M^{-1}M=I$.
+\end{proof}
+
+\begin{example}[A $3\times3$ inverse]\label{ex:u04-gj3}
+Invert $K=\begin{bmatrix} 2 & -1 & 0\\ -1 & 2 & -1\\ 0 & -1 & 2\end{bmatrix}$. Forward
+elimination (multipliers $-\tfrac12$, then $-\tfrac23$):
+{\renewcommand{\arraystretch}{1.3}
+\[
+  \left[\begin{array}{rrr|rrr} 2&-1&0&1&0&0\\ -1&2&-1&0&1&0\\ 0&-1&2&0&0&1\end{array}\right]
+  \to
+  \left[\begin{array}{rrr|rrr} 2&-1&0&1&0&0\\ 0&\tfrac32&-1&\tfrac12&1&0\\ 0&0&\tfrac43&\tfrac13&\tfrac23&1\end{array}\right].
+\]}%
+Upward elimination: add $\tfrac34$ of row~3 to row~2, then $\tfrac23$ of the new row~2 to
+row~1; finally divide by the pivots $2,\tfrac32,\tfrac43$:
+{\renewcommand{\arraystretch}{1.3}
+\[
+  \to
+  \left[\begin{array}{rrr|rrr} 2&0&0&\tfrac32&1&\tfrac12\\ 0&\tfrac32&0&\tfrac34&\tfrac32&\tfrac34\\ 0&0&\tfrac43&\tfrac13&\tfrac23&1\end{array}\right]
+  \to
+  \left[\begin{array}{rrr|rrr} 1&0&0&\tfrac34&\tfrac12&\tfrac14\\ 0&1&0&\tfrac12&1&\tfrac12\\ 0&0&1&\tfrac14&\tfrac12&\tfrac34\end{array}\right].
+\]}%
+So $K^{-1}=\frac14\begin{bmatrix} 3&2&1\\ 2&4&2\\ 1&2&3\end{bmatrix}$. Notice that $K$ is
+symmetric and so is $K^{-1}$, and that $K^{-1}$ has no zero entries although $K$ has two.
+\end{example}
+
+Putting the pieces together gives the basic test for invertibility of a square matrix.
+
+\begin{theorem}[Invertibility test]\label{thm:u04-test}
+For an $n\times n$ matrix $A$ the following are equivalent:
+\begin{enumerate}[(a)]
+  \item $A$ is invertible;
+  \item $A\vb{x}=\vb{0}$ has only the solution $\vb{x}=\vb{0}$;
+  \item elimination, with row exchanges allowed, produces $n$ nonzero pivots.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(a)$\Rightarrow$(b) is Theorem~\ref{thm:u04-singular}. (c)$\Rightarrow$(a): with $n$ pivots,
+continue upward and divide by the pivots; this is Gauss--Jordan, and
+Theorem~\ref{thm:u04-gj} produces $A^{-1}$. (b)$\Rightarrow$(c): suppose elimination stops at
+column $k$ because the entries of the current matrix $M$ in column $k$, from row $k$ down, are
+all zero. The first $k-1$ columns of $M$ have pivots in rows $1,\dots,k-1$ and zeros below,
+so column $k$ of $M$ is a combination of them: back substitution in the top
+$(k-1)\times(k-1)$ triangle (Proposition~\ref{prop:u03-back}) gives weights
+$y_1,\dots,y_{k-1}$. Then $\vb{x}=(-y_1,\dots,-y_{k-1},1,0,\dots,0)\neq\vb{0}$ satisfies
+$M\vb{x}=\vb{0}$. Since $M$ is $A$ multiplied on the left by invertible step matrices, also
+$A\vb{x}=\vb{0}$, contradicting (b).
+\end{proof}
+
+\begin{corollary}[One side is enough]\label{cor:u04-onesided}
+If $A$ and $B$ are $n\times n$ and $BA=I$, then $A$ is invertible, $B=A^{-1}$, and $AB=I$.
+\end{corollary}
+
+\begin{proof}
+If $A\vb{x}=\vb{0}$ then $\vb{x}=BA\vb{x}=B\vb{0}=\vb{0}$, so (b) of
+Theorem~\ref{thm:u04-test} holds and $A^{-1}$ exists. Then
+$B=B(AA^{-1})=(BA)A^{-1}=A^{-1}$, and $AB=AA^{-1}=I$. (If instead $AB=I$, apply this to the
+pair $B,A$.)
+\end{proof}
+
+\begin{trap}
+The entry $c_{ij}$ of $AB$ is \emph{not} $a_{ij}b_{ij}$; it uses a whole row of $A$ and a whole
+column of $B$. And the right half of $[\,A\;\;I\,]$ becomes $A^{-1}$ only if the left half
+really reaches $I$; stopping at the triangular form $U$ leaves a matrix that is not the
+inverse. Finally, a matrix with no zero entries can still be singular, as
+$\begin{bmatrix} 1&3\\ 2&6\end{bmatrix}$ shows.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u04-distributive}
+With $A=\begin{bmatrix} 1&2\\ 3&4\end{bmatrix}$, $B=\begin{bmatrix} 1&0\\ 0&0\end{bmatrix}$
+and $C=\begin{bmatrix} 0&0\\ 5&6\end{bmatrix}$, compute $AB+AC$ and $A(B+C)$. Then prove
+$A(B+C)=AB+AC$ in general.
+\end{exercise}
+\begin{solution}
+$AB=\begin{bmatrix} 1&0\\ 3&0\end{bmatrix}$ (column~1 of $A$ in column~1) and
+$AC=\begin{bmatrix} 10&12\\ 20&24\end{bmatrix}$ (rows of $AC$ are $2(5,6)$ and $4(5,6)$), so
+$AB+AC=\begin{bmatrix} 11&12\\ 23&24\end{bmatrix}$. Also
+$B+C=\begin{bmatrix} 1&0\\ 5&6\end{bmatrix}$ and
+$A(B+C)=\begin{bmatrix} 1+10&0+12\\ 3+20&0+24\end{bmatrix}=\begin{bmatrix} 11&12\\ 23&24\end{bmatrix}$,
+the same. In general, the $(i,j)$ entry of $A(B+C)$ is
+$\sum_k a_{ik}(b_{kj}+c_{kj})=\sum_k a_{ik}b_{kj}+\sum_k a_{ik}c_{kj}$, which is the $(i,j)$
+entry of $AB+AC$.
+\end{solution}
+
+\begin{exercise}\label{ex:u04-Uinv}
+Use Gauss--Jordan elimination on $[\,U\;\;I\,]$ to find the inverse of the upper triangular
+matrix $U=\begin{bmatrix} 1&a&b\\ 0&1&c\\ 0&0&1\end{bmatrix}$.
+\end{exercise}
+\begin{solution}
+$U$ is already triangular with pivots $1,1,1$, so only upward steps are needed. Subtract $a$
+times row~2 from row~1 and $c$ times row~3 from row~2:
+\[
+  \left[\begin{array}{ccc|ccc} 1&a&b&1&0&0\\ 0&1&c&0&1&0\\ 0&0&1&0&0&1\end{array}\right]
+  \to
+  \left[\begin{array}{ccc|ccc} 1&0&b-ac&1&-a&0\\ 0&1&0&0&1&-c\\ 0&0&1&0&0&1\end{array}\right].
+\]
+Then subtract $b-ac$ times row~3 from row~1:
+\[
+  \to
+  \left[\begin{array}{ccc|ccc} 1&0&0&1&-a&ac-b\\ 0&1&0&0&1&-c\\ 0&0&1&0&0&1\end{array}\right],
+  \qquad
+  U^{-1}=\begin{bmatrix} 1&-a&ac-b\\ 0&1&-c\\ 0&0&1\end{bmatrix}.
+\]
+Check the $(1,3)$ entry of $UU^{-1}$: $1\cdot(ac-b)+a\cdot(-c)+b\cdot1=0$. The inverse of an
+upper triangular matrix is upper triangular.
+\end{solution}
+
+\begin{exercise}\label{ex:u04-ab}
+For which numbers $a$ and $b$ is $A=\begin{bmatrix} a&b&b\\ a&a&b\\ a&a&a\end{bmatrix}$
+invertible? Find $A^{-1}$ when it exists.
+\end{exercise}
+\begin{solution}
+Quick tests first: if $a=0$ the first column is zero, and if $a=b$ all rows are equal; either
+way $A$ is singular. Gauss--Jordan: subtract row~1 from rows~2 and~3, then the new row~2 from
+row~3:
+\[
+  \left[\begin{array}{ccc|ccc} a&b&b&1&0&0\\ a&a&b&0&1&0\\ a&a&a&0&0&1\end{array}\right]
+  \to
+  \left[\begin{array}{ccc|ccc} a&b&b&1&0&0\\ 0&a-b&0&-1&1&0\\ 0&0&a-b&0&-1&1\end{array}\right].
+\]
+The pivots are $a$, $a-b$, $a-b$, so $A$ is invertible exactly when $a\neq0$ and $a\neq b$.
+Then divide rows~2 and~3 by $a-b$, divide row~1 by $a$, and subtract $\tfrac ba$ times rows~2
+and~3 from row~1. The right half becomes
+\[
+  A^{-1}=\frac{1}{a-b}\begin{bmatrix} 1&0&-b/a\\ -1&1&0\\ 0&-1&1\end{bmatrix}.
+\]
+For example, the $(1,1)$ entry is $\frac1a+\frac ba\cdot\frac{1}{a-b}=\frac{(a-b)+b}{a(a-b)}=\frac{1}{a-b}$.
+Check row~3 of $A$ times column~1 of $A^{-1}$: $\frac{a\cdot1+a\cdot(-1)+a\cdot0}{a-b}=0$.
+\end{solution}
+
+\begin{exercise}\label{ex:u04-rank1}
+Write $\begin{bmatrix} 1&2\\ 3&4\end{bmatrix}\begin{bmatrix} 5&6\\ 7&8\end{bmatrix}$ as a sum of
+two column-times-row matrices, and check the result against the entry rule.
+\end{exercise}
+\begin{solution}
+By Proposition~\ref{prop:u04-views}(c),
+\[
+  \begin{bmatrix} 1\\ 3\end{bmatrix}\begin{bmatrix} 5&6\end{bmatrix}
+  +\begin{bmatrix} 2\\ 4\end{bmatrix}\begin{bmatrix} 7&8\end{bmatrix}
+  =\begin{bmatrix} 5&6\\ 15&18\end{bmatrix}+\begin{bmatrix} 14&16\\ 28&32\end{bmatrix}
+  =\begin{bmatrix} 19&22\\ 43&50\end{bmatrix}.
+\]
+Entry rule: $c_{11}=1\cdot5+2\cdot7=19$, $c_{12}=1\cdot6+2\cdot8=22$,
+$c_{21}=3\cdot5+4\cdot7=43$, $c_{22}=3\cdot6+4\cdot8=50$.
+\end{solution}

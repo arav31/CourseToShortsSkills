@@ -56,7 +56,7 @@ $PY "$SKILL_DIR/scripts/audit.py" frames <short_dir>/preview.mp4 --at 12.5 13 13
 Fix the scene and re-render until there are no errors and the sheets pass the quality bar.
 Typical fixes: move a label off a line, split a crowded beat, enlarge the main object,
 replace a decorative motion with the actual operation, rewrite a line so voice and picture match.
-Unchanged narration is not re-synthesized, so iterating is cheap (~1 min per render).
+Unchanged narration is not re-synthesized, so iterating is cheap (10–60 s per preview render).
 
 Voice options: `--voice edge-tts` (default; natural, needs network), `--voice piper` (offline),
 `--voice say` (macOS), `--voice openai` (needs `OPENAI_API_KEY`), `--voice none` (silent;

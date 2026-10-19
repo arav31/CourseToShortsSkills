@@ -1,0 +1,127 @@
+1
+00:00:00,100 --> 00:00:02,288
+Two x minus y is zero,
+
+2
+00:00:02,288 --> 00:00:04,800
+and minus x plus two y is three.
+
+3
+00:00:04,800 --> 00:00:06,175
+What does solving this look like?
+
+4
+00:00:06,767 --> 00:00:08,105
+The usual picture reads
+
+5
+00:00:08,105 --> 00:00:09,205
+it row by row:
+
+6
+00:00:09,592 --> 00:00:11,342
+each equation is a line.
+
+7
+00:00:11,933 --> 00:00:12,671
+The solution is where
+
+8
+00:00:12,671 --> 00:00:14,983
+the lines cross: x is one,
+
+9
+00:00:15,358 --> 00:00:16,246
+y is two.
+
+10
+00:00:16,833 --> 00:00:17,683
+Now read the same
+
+11
+00:00:17,683 --> 00:00:19,758
+system down its columns: two,
+
+12
+00:00:20,108 --> 00:00:21,621
+minus one goes with x,
+
+13
+00:00:21,621 --> 00:00:24,133
+and minus one, two goes with y.
+
+14
+00:00:24,720 --> 00:00:26,595
+Each column is an arrow.
+
+15
+00:00:26,595 --> 00:00:28,958
+The right side, zero, three,
+
+16
+00:00:28,958 --> 00:00:30,246
+is a target point, b.
+
+17
+00:00:30,833 --> 00:00:32,970
+Which mix of the arrows reaches b?
+
+18
+00:00:32,970 --> 00:00:35,233
+Try one copy of the first arrow,
+
+19
+00:00:35,233 --> 00:00:36,958
+and two copies of the second.
+
+20
+00:00:37,567 --> 00:00:39,367
+Chain them tip to tail.
+
+21
+00:00:39,367 --> 00:00:41,692
+Two minus two is zero,
+
+22
+00:00:41,692 --> 00:00:44,417
+minus one plus four is three:
+
+23
+00:00:44,417 --> 00:00:45,367
+exactly b.
+
+24
+00:00:45,967 --> 00:00:48,229
+And that recipe, one and two,
+
+25
+00:00:48,229 --> 00:00:49,242
+is the very point
+
+26
+00:00:49,242 --> 00:00:50,517
+where the lines crossed.
+
+27
+00:00:51,100 --> 00:00:52,938
+So solving A times x equals
+
+28
+00:00:52,938 --> 00:00:54,462
+b means finding the mix of
+
+29
+00:00:54,462 --> 00:00:56,525
+A's columns that lands on b.
+
+30
+00:00:56,525 --> 00:00:58,150
+Unlike crossing lines,
+
+31
+00:00:58,150 --> 00:00:59,175
+that still works with
+
+32
+00:00:59,175 --> 00:01:00,650
+a thousand unknowns.

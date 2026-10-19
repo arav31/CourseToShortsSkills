@@ -1,0 +1,365 @@
+% unit: u22
+% sources: sources/086-cramer-s-rule-inverse-matrix-and-volume.txt, sources/039-lecture-20-cramer-s-rule-inverse-matrix-and-volume.txt, sources/191-mit18-06scf11-ses2-7sum-pdf-download-file.txt, sources/040-problem-solving-determinants-and-volume.txt, sources/192-mit18-06scf11-ses2-7prob-pdf-download-file.txt, sources/193-mit18-06scf11-ses2-7sol-pdf-download-file.txt
+\section{Cramer's rule, inverse matrix and volume}\label{sec:u22}
+
+The last two sections built the determinant from three properties and found two formulas
+for it: the big formula with $n!$ terms and the cofactor expansion
+(Section~\ref{sec:u21}). This section puts the determinant to work. The cofactor expansion
+turns into an explicit formula for $A^{-1}$; applied to $\vb{b}$ that formula becomes
+Cramer's rule for the solution of $A\vb{x}=\vb{b}$; and the absolute value $|\det A|$ turns
+out to be a volume. Elimination remains the way to compute. What these formulas give
+instead is \emph{algebra}: the answer written in terms of the entries, which shows how it
+depends on them.
+
+\subsection{The cofactor matrix gives \texorpdfstring{\(A^{-1}\)}{the inverse}}
+
+Start from the $2\times 2$ inverse we already know:
+\[
+  \begin{bmatrix} a & b\\ c & d\end{bmatrix}^{-1}
+  =\frac{1}{ad-bc}\begin{bmatrix} d & -b\\ -c & a\end{bmatrix}.
+\]
+We divide by the determinant, which is exactly what fails when $A$ is singular. The entries
+of the matrix on the right are cofactors: $d$ is the cofactor of $a$ (strike out row~1 and
+column~1), and $-b$ is the cofactor of $c$ (strike out row~2 and column~1, and attach the
+sign $(-1)^{2+1}$). Notice that the cofactor of $c$, which sits in position $(2,1)$, appears
+in position $(1,2)$. The cofactors are transposed.
+
+\begin{definition}[Cofactor matrix]\label{def:u22-cofactor}
+Let $A$ be $n\times n$ and let $M_{ij}$ be the $(n-1)\times(n-1)$ matrix left when row $i$
+and column $j$ of $A$ are removed. The cofactor of $a_{ij}$ is
+$C_{ij}=(-1)^{i+j}\det M_{ij}$, and the \emph{cofactor matrix} is $C=(C_{ij})$. Its
+transpose $C\T$ is sometimes called the adjugate of $A$.
+\end{definition}
+
+Each cofactor is a sum of products of $n-1$ entries, while $\det A$ is a sum of products of
+$n$ entries. So a formula $A^{-1}=C\T/\det A$ has the right ``degree'': entries of $A^{-1}$
+behave like $1/(\text{entry of }A)$. For a general $3\times 3$ matrix with rows
+$(a,b,c)$, $(d,e,f)$, $(g,h,i)$, the $(1,1)$ entry of $A^{-1}$ should be
+$(ei-fh)/\det A$. The theorem says this pattern holds for every entry and every $n$.
+
+\begin{theorem}[Inverse from cofactors]\label{thm:u22-inverse}
+For every square matrix $A$,
+\[
+  A\,C\T=(\det A)\,I .
+\]
+Consequently, if $\det A\neq 0$ then $A^{-1}=\dfrac{1}{\det A}\,C\T$, that is,
+$(A^{-1})_{ij}=C_{ji}/\det A$.
+\end{theorem}
+
+\begin{proof}
+The $(i,k)$ entry of $A\,C\T$ is row $i$ of $A$ times column $k$ of $C\T$, which is row $k$
+of $C$:
+\[
+  (A\,C\T)_{ik}=\sum_{j=1}^{n} a_{ij}\,C_{kj}.
+\]
+\emph{Diagonal entries} ($k=i$). The sum $\sum_j a_{ij}C_{ij}$ is the cofactor expansion of
+$\det A$ along row $i$ (Section~\ref{sec:u21}). So every diagonal entry equals $\det A$.
+
+\emph{Off-diagonal entries} ($k\neq i$). Let $A^{*}$ be the matrix $A$ with row $k$
+replaced by a copy of row $i$. Then $A^{*}$ has two equal rows, so $\det A^{*}=0$. Expand
+$\det A^{*}$ along its row $k$. The entries of that row are $a_{i1},\dots,a_{in}$, and the
+cofactors of row $k$ of $A^{*}$ are the same as those of $A$, because they are computed after
+deleting row $k$, the only row where $A$ and $A^{*}$ differ. Hence
+\[
+  0=\det A^{*}=\sum_{j} a_{ij}\,C_{kj}=(A\,C\T)_{ik}.
+\]
+So $A\,C\T$ has $\det A$ on its diagonal and zeros elsewhere. If $\det A\neq 0$, dividing
+by $\det A$ gives $A\,(C\T/\det A)=I$, and a one-sided inverse of a square matrix is its
+inverse.
+\end{proof}
+
+In the $2\times 2$ case the off-diagonal computation is visible: row~1 of $A$ is $(a,b)$,
+the cofactors of row~2 are $(-b,a)$, and $a(-b)+b(a)=0$ is the determinant of the matrix
+with two equal rows $\left[\begin{smallmatrix} a&b\\ a&b\end{smallmatrix}\right]$.
+
+\begin{example}[A $3\times 3$ inverse by cofactors]\label{ex:u22-cofactors}
+Let
+\[
+  A=\begin{bmatrix} 1&1&4\\ 1&2&2\\ 1&2&5\end{bmatrix}.
+\]
+The nine cofactors, each a signed $2\times 2$ determinant, are
+\begin{align*}
+C_{11}&=+(2\cdot5-2\cdot2)=6, & C_{12}&=-(1\cdot5-2\cdot1)=-3, & C_{13}&=+(1\cdot2-2\cdot1)=0,\\
+C_{21}&=-(1\cdot5-4\cdot2)=3, & C_{22}&=+(1\cdot5-4\cdot1)=1, & C_{23}&=-(1\cdot2-1\cdot1)=-1,\\
+C_{31}&=+(1\cdot2-4\cdot2)=-6, & C_{32}&=-(1\cdot2-4\cdot1)=2, & C_{33}&=+(1\cdot2-1\cdot1)=1.
+\end{align*}
+Multiplying $A$ by $C\T$,
+\[
+  A\,C\T=\begin{bmatrix} 1&1&4\\ 1&2&2\\ 1&2&5\end{bmatrix}
+  \begin{bmatrix} 6&3&-6\\ -3&1&2\\ 0&-1&1\end{bmatrix}
+  =\begin{bmatrix} 3&0&0\\ 0&3&0\\ 0&0&3\end{bmatrix}=3I,
+\]
+so $\det A=3$ and
+\[
+  A^{-1}=\frac13\begin{bmatrix} 6&3&-6\\ -3&1&2\\ 0&-1&1\end{bmatrix}
+  =\begin{bmatrix} 2&1&-2\\ -1&\tfrac13&\tfrac23\\ 0&-\tfrac13&\tfrac13\end{bmatrix}.
+\]
+One more question the formula answers instantly: if the entry $a_{13}=4$ is changed to
+$100$, the determinant does not change, because $\det A=a_{11}C_{11}+a_{12}C_{12}+a_{13}C_{13}$
+and $C_{13}=0$. (The inverse does change: the cofactors in rows~2 and~3 involve $a_{13}$.)
+\end{example}
+
+\subsection{Cramer's rule}
+
+If $A$ is invertible, the solution of $A\vb{x}=\vb{b}$ is
+$\vb{x}=A^{-1}\vb{b}=C\T\vb{b}/\det A$. Cramer noticed that each component of $C\T\vb{b}$ is
+itself a determinant.
+
+\begin{theorem}[Cramer's rule]\label{thm:u22-cramer}
+Let $A$ be $n\times n$ with $\det A\neq 0$, and let $B_j$ be the matrix $A$ with its column
+$j$ replaced by $\vb{b}$. Then the solution of $A\vb{x}=\vb{b}$ is
+\[
+  x_j=\frac{\det B_j}{\det A},\qquad j=1,\dots,n.
+\]
+\end{theorem}
+
+\begin{proof}
+By Theorem~\ref{thm:u22-inverse}, $x_j=(C\T\vb{b})_j/\det A$ and
+$(C\T\vb{b})_j=\sum_{i} C_{ij}\,b_i$. Now expand $\det B_j$ down its column $j$, which holds
+$b_1,\dots,b_n$. The cofactor of position $(i,j)$ in $B_j$ is computed after deleting
+column $j$, so it ignores $\vb{b}$ and equals the cofactor $C_{ij}$ of $A$. Therefore
+$\det B_j=\sum_i b_i\,C_{ij}=(C\T\vb{b})_j$.
+\end{proof}
+
+\begin{example}[Cramer's rule on a $3\times 3$ system]\label{ex:u22-cramer}
+Solve $A\vb{x}=\vb{b}$ with $A$ from Example~\ref{ex:u22-cofactors} and
+$\vb{b}=(5,2,5)$. We know $\det A=3$. Replacing one column at a time,
+\[
+  \det B_1=\begin{vmatrix} 5&1&4\\ 2&2&2\\ 5&2&5\end{vmatrix}=6,\qquad
+  \det B_2=\begin{vmatrix} 1&5&4\\ 1&2&2\\ 1&5&5\end{vmatrix}=-3,\qquad
+  \det B_3=\begin{vmatrix} 1&1&5\\ 1&2&2\\ 1&2&5\end{vmatrix}=3 .
+\]
+For instance, expanding $\det B_1$ along row~1 gives
+$5(10-4)-1(10-10)+4(4-10)=30-0-24=6$. Hence
+$\vb{x}=(6/3,\,-3/3,\,3/3)=(2,-1,1)$. Check: $A(2,-1,1)=(2-1+4,\;2-2+2,\;2-2+5)=(5,2,5)$.
+The same answer comes from $\vb{x}=C\T\vb{b}/3$:
+$C\T\vb{b}=(30+6-30,\;-15+2+10,\;0-2+5)=(6,-3,3)$.
+\end{example}
+
+\begin{remark}[Formula versus algorithm]
+Cramer's rule needs $n+1$ determinants of size $n$. Computed by elimination each costs about
+$n^{3}/3$ operations, so the rule costs about $n^{4}/3$, against $n^{3}/3$ for solving the
+system once by elimination; computed by the big formula it is hopeless. Software never uses
+it. Its value is theoretical: it shows that each $x_j$ is a ratio of polynomials in the
+entries of $A$ and $\vb{b}$, so the solution depends smoothly on the data wherever
+$\det A\neq 0$, and it shows exactly how $\det A$ appears in every denominator.
+\end{remark}
+
+\begin{trap}
+The inverse is $C\T/\det A$, not $C/\det A$. The cofactors of \emph{row}~$i$ of $A$ fill
+\emph{column}~$i$ of $A^{-1}$. A quick test: for
+$\left[\begin{smallmatrix} a&b\\ c&d\end{smallmatrix}\right]$ the $(1,2)$ entry of the
+inverse must be $-b/(ad-bc)$, which is the cofactor of $c$, not of $b$. Also remember the
+checkerboard signs $(-1)^{i+j}$; forgetting them is the other common error.
+\end{trap}
+
+\subsection{The determinant is a volume}
+
+Take the rows of an $n\times n$ matrix $A$ as $n$ edges leaving the origin and complete
+them to a box: the parallelogram ($n=2$), the parallelepiped ($n=3$), or its analogue in
+$\R^{n}$, consisting of all points $t_1\vb{r}_1+\dots+t_n\vb{r}_n$ with $0\le t_i\le 1$.
+The claim of this subsection is that the volume of that box is $|\det A|$.
+
+We use only these geometric facts about volume. (V1) A rectangular box whose edges point
+along the coordinate axes, with lengths $\ell_1,\dots,\ell_n$, has volume
+$\ell_1\cdots\ell_n$. (V2) Listing the edges in another order gives the same box. (V3)
+Volume is base times height: the box sits on the base spanned by $n-1$ of its edges, and its
+height is the distance of the last edge's tip from that base. (V4) If the edges are dependent,
+the box lies in a hyperplane and has volume $0$.
+
+\begin{theorem}[Determinant and volume]\label{thm:u22-volume}
+The box whose edges are the rows of $A$ has volume $|\det A|$. The same holds for the box
+built on the columns, since $\det A\T=\det A$.
+\end{theorem}
+
+\begin{proof}
+If $A$ is singular its rows are dependent, so the volume is $0=|\det A|$ by (V4).
+Suppose $A$ is invertible. Elimination with row exchanges, followed by elimination upward,
+reduces $A$ to a diagonal matrix $D=\operatorname{diag}(d_1,\dots,d_n)$ with nonzero
+entries, using two kinds of steps (no row is ever rescaled).
+
+\emph{Subtract $c$ times row $j$ from row $i$.} The determinant is unchanged (property~5 in
+Section~\ref{sec:u20}). The box is sheared but its volume is unchanged: take as base the
+face spanned by the other $n-1$ rows, which do not move. Row $i$ changes by a multiple of
+row $j$, which lies in that base, so the tip of row $i$ moves parallel to the base and the
+height stays the same. By (V3) the volume is unchanged.
+
+\emph{Exchange two rows.} The determinant changes sign, so $|\det A|$ is unchanged, and by
+(V2) the box is the same.
+
+So both $|\det A|$ and the volume are unchanged at every step, and at the end both equal
+$|d_1d_2\cdots d_n|$: the determinant of the diagonal matrix $D$ is the product of its
+diagonal entries, and the box of $D$ is a rectangular box with edge lengths
+$|d_1|,\dots,|d_n|$ along the axes (V1).
+\end{proof}
+
+The lecture argues differently but equivalently: the volume of the box satisfies the three
+defining properties of $|\det|$. The unit cube ($A=I$) has volume $1$; exchanging two edges
+does not change the box; stretching one edge by $t$ multiplies the volume by $|t|$; and
+splitting one edge as a sum splits the volume (when the two pieces lie on the same side of the
+base). The shear step in the proof is the geometric heart of the linearity property. The sign
+of $\det A$ also means something: it records whether the edges form a right-handed or a
+left-handed system, and exchanging two edges reverses the handedness.
+
+A good test case is an orthogonal matrix $Q$. Its rows are perpendicular unit vectors, so its
+box is a unit cube turned in space, with volume $1$. The determinant agrees: from
+$Q\T Q=I$ and the product rule, $(\det Q\T)(\det Q)=(\det Q)^{2}=1$, so $\det Q=\pm 1$.
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=1.25,>=Stealth]
+  % original parallelogram on r1=(3,1), r2=(1,2)
+  \fill[blue!12] (0,0) -- (3,1) -- (4,3) -- (1,2) -- cycle;
+  \fill[blue!30] (0,0) -- (3,1) -- (1,2) -- cycle;
+  \draw[thick,blue!70!black] (0,0) -- (3,1) -- (4,3) -- (1,2) -- cycle;
+  % sheared parallelogram on r1 and r2 + r1/2 = (2.5,2.5)
+  \draw[thick,dashed,orange!80!black] (0,0) -- (3,1) -- (5.5,3.5) -- (2.5,2.5) -- cycle;
+  % line through the tip of r2, parallel to r1
+  \draw[gray,densely dotted] (-0.2,1.6) -- (6.1,3.7);
+  \fill (0,0) circle (1.2pt) node[below left] {$O$};
+  \draw[->,very thick] (0,0) -- (3,1) node[below right] {$\vb{r}_1=(a,b)=(3,1)$};
+  \draw[->,very thick] (0,0) -- (1,2) node[left] {$\vb{r}_2=(c,d)=(1,2)$};
+  \draw[->,very thick,orange!80!black] (0,0) -- (2.5,2.5) node[above left] {$\vb{r}_2+\tfrac12\vb{r}_1$};
+  \node[blue!60!black] at (1.35,1.0) {\small triangle};
+  \node[blue!60!black] at (3.0,2.0) {\small area $5$};
+\end{tikzpicture}
+\caption{The parallelogram with edges $\vb{r}_1=(3,1)$ and $\vb{r}_2=(1,2)$ has area
+$|ad-bc|=|3\cdot 2-1\cdot 1|=5$, and the shaded triangle is half of it. Adding
+$\tfrac12\vb{r}_1$ to $\vb{r}_2$ (a row operation) moves the tip along the dotted line
+parallel to $\vb{r}_1$: the dashed parallelogram has the same base and height, hence the
+same area, just as the determinant is unchanged.}
+\label{fig:u22-area}
+\end{figure}
+
+\subsection{Areas and volumes from coordinates}
+
+Theorem~\ref{thm:u22-volume} is a formula that needs no lengths, angles or heights, only
+coordinates. In the plane, the parallelogram with edges $(a,b)$ and $(c,d)$ has area
+$|ad-bc|$, and the triangle with vertices $(0,0)$, $(a,b)$, $(c,d)$ has half that area
+(Figure~\ref{fig:u22-area}). For a triangle placed anywhere:
+
+\begin{proposition}[Area of a triangle]\label{prop:u22-triangle}
+The triangle with vertices $(x_1,y_1)$, $(x_2,y_2)$, $(x_3,y_3)$ has area
+\[
+  \frac12\left|\det\begin{bmatrix} x_1&y_1&1\\ x_2&y_2&1\\ x_3&y_3&1\end{bmatrix}\right| .
+\]
+\end{proposition}
+
+\begin{proof}
+Subtract row~1 from rows~2 and~3; the determinant does not change. The last column becomes
+$(1,0,0)$, and expanding along it leaves
+\[
+  \det\begin{bmatrix} x_2-x_1 & y_2-y_1\\ x_3-x_1 & y_3-y_1\end{bmatrix}.
+\]
+The row operations translated the triangle so that its first vertex is at the origin; its
+other vertices are now the two edge vectors, and half the parallelogram area is the triangle
+area.
+\end{proof}
+
+For example, the triangle with vertices $(1,1)$, $(4,2)$, $(2,5)$ has edges $(3,1)$ and
+$(1,4)$ from the first vertex, so its area is $\tfrac12|3\cdot4-1\cdot1|=\tfrac{11}{2}$. A
+zero determinant means the three points are collinear.
+
+\begin{example}[Volume of a tetrahedron]\label{ex:u22-tetra}
+A tetrahedron $T$ has one vertex at the origin $O$ and the others at
+$A_1=(2,2,-1)$, $A_2=(1,3,0)$ and $A_3=(-1,1,4)$. Find its volume. Then keep $A_1$ and
+$A_2$, move the apex to $A_3'=(-201,-199,104)$, and find the new volume.
+
+\emph{Relate $T$ to a box.} Let $P$ be the parallelepiped on the edges $OA_1$, $OA_2$,
+$OA_3$. Take the triangle $OA_1A_2$ as the base of $T$ and the parallelogram on $OA_1$,
+$OA_2$ as the base of $P$; the parallelogram has twice the area of the triangle, and both
+solids have the same height $h$ (the distance from $A_3$ to that plane). So
+\[
+  \operatorname{vol}(T)=\tfrac13(\text{area of triangle})\,h
+  =\tfrac16(\text{area of parallelogram})\,h=\tfrac16\operatorname{vol}(P).
+\]
+\emph{Compute.} By Theorem~\ref{thm:u22-volume},
+\[
+  \operatorname{vol}(P)=\left|\det\begin{bmatrix} 2&2&-1\\ 1&3&0\\ -1&1&4\end{bmatrix}\right|
+  =\bigl|2(12-0)-2(4-0)+(-1)(1+3)\bigr|=|24-8-4|=12,
+\]
+so $\operatorname{vol}(T)=12/6=2$.
+
+\emph{Move the apex.} Notice that $A_3'=A_3-100A_1$: indeed
+$(-1,1,4)-100(2,2,-1)=(-201,-199,104)$. In the matrix this is the row operation ``subtract
+$100$ times row~1 from row~3'', which leaves the determinant at $12$. So the long, needle-like
+tetrahedron still has volume $2$. Geometrically, the apex moved parallel to the edge $OA_1$,
+which lies in the base plane, so the height did not change.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}[Spherical coordinates]\label{exr:u22-spherical}
+Spherical coordinates $(\rho,\phi,\theta)$ are defined by
+\[
+  x=\rho\sin\phi\cos\theta,\qquad y=\rho\sin\phi\sin\theta,\qquad z=\rho\cos\phi .
+\]
+Find the $3\times3$ matrix of partial derivatives of $(x,y,z)$ with respect to
+$(\rho,\phi,\theta)$ and show that its determinant is $J=\rho^{2}\sin\phi$. Explain why
+$\rho^{2}\sin\phi\,d\rho\,d\phi\,d\theta$ is the volume of a small coordinate box.
+\end{exercise}
+\begin{solution}
+The rows are the partial derivatives of $x$, $y$, $z$:
+\[
+  J=\det\begin{bmatrix}
+  \sin\phi\cos\theta & \rho\cos\phi\cos\theta & -\rho\sin\phi\sin\theta\\
+  \sin\phi\sin\theta & \rho\cos\phi\sin\theta & \rho\sin\phi\cos\theta\\
+  \cos\phi & -\rho\sin\phi & 0
+  \end{bmatrix}.
+\]
+Expand along the bottom row (cofactor signs $+,-,+$; the last entry is $0$):
+\begin{align*}
+J&=\cos\phi\,\bigl(\rho^{2}\cos\phi\sin\phi\cos^{2}\theta+\rho^{2}\cos\phi\sin\phi\sin^{2}\theta\bigr)
+ +\rho\sin\phi\,\bigl(\rho\sin^{2}\phi\cos^{2}\theta+\rho\sin^{2}\phi\sin^{2}\theta\bigr)\\
+&=\rho^{2}\cos^{2}\phi\sin\phi+\rho^{2}\sin^{3}\phi
+ =\rho^{2}\sin\phi\,(\cos^{2}\phi+\sin^{2}\phi)=\rho^{2}\sin\phi .
+\end{align*}
+Small changes $d\rho$, $d\phi$, $d\theta$ move the point by the three columns of this matrix
+times $d\rho$, $d\phi$, $d\theta$. These three small vectors are the edges of the tiny
+coordinate box, so by Theorem~\ref{thm:u22-volume} its volume is
+$|J|\,d\rho\,d\phi\,d\theta=\rho^{2}\sin\phi\,d\rho\,d\phi\,d\theta$ (here $0\le\phi\le\pi$, so
+$\sin\phi\ge0$).
+\end{solution}
+
+\begin{exercise}[Integer inverses]\label{exr:u22-integer}
+Suppose $A$ has integer entries. Show that $A^{-1}$ has integer entries if $\det A=\pm1$,
+and that conversely, if both $A$ and $A^{-1}$ have integer entries, then $\det A=\pm1$.
+Find the inverse of $\left[\begin{smallmatrix} 2&3\\ 1&2\end{smallmatrix}\right]$.
+\end{exercise}
+\begin{solution}
+Every cofactor is a sum of products of integers, so $C\T$ has integer entries; if
+$\det A=\pm1$ then $A^{-1}=\pm C\T$ is an integer matrix. Conversely, $\det A$ and
+$\det A^{-1}$ are integers (sums of products of integers) and their product is
+$\det(AA^{-1})=\det I=1$, so both are $\pm1$. For the example, $\det A=4-3=1$ and
+$A^{-1}=C\T=\left[\begin{smallmatrix} 2&-3\\ -1&2\end{smallmatrix}\right]$; indeed
+$\left[\begin{smallmatrix} 2&3\\ 1&2\end{smallmatrix}\right]
+\left[\begin{smallmatrix} 2&-3\\ -1&2\end{smallmatrix}\right]=I$.
+\end{solution}
+
+\begin{exercise}[Determinant of the cofactor matrix]\label{exr:u22-detC}
+Show that $\det C=(\det A)^{n-1}$ for an invertible $n\times n$ matrix $A$, and check it on
+Example~\ref{ex:u22-cofactors}.
+\end{exercise}
+\begin{solution}
+Take determinants in $A\,C\T=(\det A)I$. The right side is a diagonal matrix with $n$ entries
+equal to $\det A$, so its determinant is $(\det A)^{n}$. The left side gives
+$\det A\cdot\det C\T=\det A\cdot\det C$. Dividing by $\det A\neq0$ gives
+$\det C=(\det A)^{n-1}$. In Example~\ref{ex:u22-cofactors}, $n=3$ and $\det A=3$, so
+$\det C$ should be $9$. Directly, expanding
+$C=\left[\begin{smallmatrix} 6&-3&0\\ 3&1&-1\\ -6&2&1\end{smallmatrix}\right]$ along row~1:
+$6(1+2)+3(3-6)+0=18-9=9$.
+\end{solution}
+
+\begin{exercise}[Cramer's rule and collinear points]\label{exr:u22-small}
+(a) Solve $2x+y=3$, $x+3y=5$ by Cramer's rule.
+(b) Use Proposition~\ref{prop:u22-triangle} to decide whether $(1,2)$, $(3,5)$, $(7,11)$
+lie on one line.
+\end{exercise}
+\begin{solution}
+(a) $\det A=2\cdot3-1\cdot1=5$, $\det B_1=\left|\begin{smallmatrix} 3&1\\ 5&3\end{smallmatrix}\right|=9-5=4$,
+$\det B_2=\left|\begin{smallmatrix} 2&3\\ 1&5\end{smallmatrix}\right|=10-3=7$. So
+$x=4/5$, $y=7/5$. Check: $8/5+7/5=3$ and $4/5+21/5=5$.
+
+(b) Subtracting the first row as in the proof of Proposition~\ref{prop:u22-triangle} leaves
+$\det\left[\begin{smallmatrix} 2&3\\ 6&9\end{smallmatrix}\right]=18-18=0$. The triangle
+has area $0$, so the points are collinear: the edge $(6,9)$ is $3$ times the edge $(2,3)$.
+\end{solution}

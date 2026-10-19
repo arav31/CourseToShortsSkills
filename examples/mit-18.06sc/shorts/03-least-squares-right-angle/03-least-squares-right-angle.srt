@@ -1,0 +1,167 @@
+1
+00:00:00,138 --> 00:00:01,238
+Three points refuse to
+
+2
+00:00:01,238 --> 00:00:02,725
+sit on one line.
+
+3
+00:00:02,725 --> 00:00:04,162
+Which line fits best,
+
+4
+00:00:04,162 --> 00:00:04,562
+and why does a
+
+5
+00:00:04,562 --> 00:00:05,812
+right angle decide it?
+
+6
+00:00:06,413 --> 00:00:07,512
+Through the first point,
+
+7
+00:00:07,512 --> 00:00:10,137
+the line needs C equals six.
+
+8
+00:00:10,137 --> 00:00:11,037
+Then point two wants
+
+9
+00:00:11,037 --> 00:00:12,800
+D equals minus six,
+
+10
+00:00:12,800 --> 00:00:14,712
+and point three wants minus three.
+
+11
+00:00:15,333 --> 00:00:16,471
+So let it miss.
+
+12
+00:00:16,471 --> 00:00:18,958
+Least squares tilts and slides the
+
+13
+00:00:18,958 --> 00:00:21,496
+line until the squared vertical misses
+
+14
+00:00:21,496 --> 00:00:23,120
+are as small as possible.
+
+15
+00:00:23,700 --> 00:00:26,000
+It settles on five minus three t,
+
+16
+00:00:26,350 --> 00:00:28,900
+missing by one, minus two and one.
+
+17
+00:00:28,900 --> 00:00:30,400
+Squared, they add to six.
+
+18
+00:00:30,987 --> 00:00:32,763
+Now stack the three heights
+
+19
+00:00:32,763 --> 00:00:34,850
+into one arrow b,
+
+20
+00:00:34,850 --> 00:00:36,375
+in three dimensions.
+
+21
+00:00:36,375 --> 00:00:38,038
+The heights of every possible
+
+22
+00:00:38,038 --> 00:00:39,687
+line fill a plane,
+
+23
+00:00:39,687 --> 00:00:41,513
+spanned by the columns of A.
+
+24
+00:00:42,433 --> 00:00:43,608
+Straight below b sits
+
+25
+00:00:43,608 --> 00:00:47,083
+the closest point, p: five, two,
+
+26
+00:00:47,083 --> 00:00:47,620
+minus one,
+
+27
+00:00:47,620 --> 00:00:49,308
+the best line's heights.
+
+28
+00:00:49,308 --> 00:00:50,921
+The drop is the error e.
+
+29
+00:00:51,520 --> 00:00:52,783
+So e is perpendicular
+
+30
+00:00:52,783 --> 00:00:54,308
+to both columns:
+
+31
+00:00:54,308 --> 00:00:57,033
+one minus two plus one is zero,
+
+32
+00:00:57,033 --> 00:00:58,295
+and zero minus two
+
+33
+00:00:58,295 --> 00:00:59,958
+plus two is zero.
+
+34
+00:01:00,567 --> 00:01:03,230
+So A transpose e is zero.
+
+35
+00:01:03,230 --> 00:01:05,829
+Write e as b minus A x hat,
+
+36
+00:01:05,829 --> 00:01:07,767
+and out come the normal equations:
+
+37
+00:01:08,129 --> 00:01:09,405
+A transpose A x hat
+
+38
+00:01:09,405 --> 00:01:10,929
+equals A transpose b.
+
+39
+00:01:11,513 --> 00:01:13,200
+Here they give C equals five
+
+40
+00:01:13,200 --> 00:01:15,400
+and D equals minus three:
+
+41
+00:01:15,812 --> 00:01:17,300
+the same best line,
+
+42
+00:01:17,300 --> 00:01:18,563
+found by a right angle.

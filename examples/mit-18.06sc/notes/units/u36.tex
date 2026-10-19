@@ -1,0 +1,289 @@
+% unit: u36
+% sources: sources/088-left-and-right-inverses-pseudoinverse.txt, sources/063-lecture-33-left-and-right-inverses-pseudoinverse.txt, sources/227-mit18-06scf11-ses3-8sum-pdf-download-file.txt, sources/064-problem-solving-pseudoinverses.txt, sources/228-mit18-06scf11-ses3-8prob-pdf-download-file.txt, sources/229-mit18-06scf11-ses3-8sol-pdf-download-file.txt
+\section{Left and right inverses; pseudoinverse}\label{sec:u36}
+
+We would like to ``divide by $A$'' and write $\vb{x}=A^{-1}\vb{b}$. Chapter-two matrices are square and of full rank, so $A^{-1}$ exists. Every other matrix has a nonzero nullspace, a nonzero left nullspace, or both, and those nullspaces are exactly what block an inverse. This unit sorts all $m\times n$ matrices of rank $r$ into four cases, finds the best available inverse in each, and ends with the pseudoinverse $A^{+}$, which exists for every matrix and is built from the SVD of Section~\ref{sec:u33}. Nothing here is new machinery: it is the four subspaces of Section~\ref{sec:u11}, the projections of Section~\ref{sec:u17} and the SVD, seen together.
+
+\subsection{Four cases, sorted by rank}
+
+\begin{definition}[Two-sided, left and right inverses]\label{def:u36-inverses}
+Let $A$ be $m\times n$. A matrix $B$ (necessarily $n\times m$) is a \emph{left inverse} of $A$ if $BA=I_n$, and a \emph{right inverse} if $AB=I_m$. It is a \emph{two-sided inverse}, written $A^{-1}$, if it is both.
+\end{definition}
+
+The rank $r$ never exceeds $m$ or $n$, so there are four possibilities. Table~\ref{tab:u36-cases} records what each one means for the nullspaces and for the number of solutions of $A\vb{x}=\vb{b}$.
+
+\begin{table}[ht]\centering\small
+\caption{The four rank cases for an $m\times n$ matrix of rank $r$.}\label{tab:u36-cases}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Case & Nullspaces & Solutions of $A\vb{x}=\vb{b}$ & Inverse available \\
+\midrule
+$r=m=n$ & $\Nul{A}=\{\vb{0}\}$, $\Nul{A\T}=\{\vb{0}\}$ & exactly one & two-sided $A^{-1}$ \\
+$r=n<m$ & $\Nul{A}=\{\vb{0}\}$ & zero or one & left: $(A\T A)^{-1}A\T$ \\
+$r=m<n$ & $\Nul{A\T}=\{\vb{0}\}$ & infinitely many ($n-m$ free) & right: $A\T(AA\T)^{-1}$ \\
+$r<m$, $r<n$ & both nonzero & zero or infinitely many & pseudoinverse $A^{+}$ only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{proposition}[Rectangular matrices have no two-sided inverse]\label{prop:u36-no-two-sided}
+If $A$ is $m\times n$ with $m\neq n$, then $A$ has no two-sided inverse.
+\end{proposition}
+\begin{proof}
+Suppose $n>m$. Then $r\le m<n$, so $A$ has $n-r>0$ free variables and some $\vb{x}\neq\vb{0}$ has $A\vb{x}=\vb{0}$. A left inverse $B$ would give $\vb{x}=BA\vb{x}=B\vb{0}=\vb{0}$, a contradiction. If $m>n$, apply the same argument to $A\T$: a two-sided inverse $B$ of $A$ would make $B\T$ a two-sided inverse of $A\T$, and $A\T$ has more columns than rows.
+\end{proof}
+
+\subsection{Full column rank: a left inverse}
+
+When $r=n$ the columns are independent and $\Nul{A}=\{\vb{0}\}$. The key fact, already central to least squares in Section~\ref{sec:u18}, is that $A\T A$ inherits this.
+
+\begin{lemma}[$A\T A$ is invertible exactly when the columns are independent]\label{lem:u36-ata}
+For any $m\times n$ matrix $A$, $\Nul{A\T A}=\Nul{A}$. In particular the $n\times n$ symmetric matrix $A\T A$ is invertible if and only if $r=n$.
+\end{lemma}
+\begin{proof}
+If $A\vb{x}=\vb{0}$ then $A\T A\vb{x}=\vb{0}$. Conversely, if $A\T A\vb{x}=\vb{0}$, multiply on the left by $\vb{x}\T$: $0=\vb{x}\T A\T A\vb{x}=(A\vb{x})\T(A\vb{x})=\|A\vb{x}\|^{2}$, so $A\vb{x}=\vb{0}$. A square matrix is invertible exactly when its nullspace is $\{\vb{0}\}$, which here means $\Nul{A}=\{\vb{0}\}$, that is $r=n$.
+\end{proof}
+
+\begin{theorem}[Left inverse]\label{thm:u36-left}
+If $A$ has full column rank $r=n$, then $A^{-1}_{\text{left}}=(A\T A)^{-1}A\T$ is a left inverse of $A$, and
+\[
+A\,A^{-1}_{\text{left}}=A(A\T A)^{-1}A\T=P_{\Col{A}}
+\]
+is the $m\times m$ projection matrix onto the column space. It equals $I_m$ only when $m=n$.
+\end{theorem}
+\begin{proof}
+By Lemma~\ref{lem:u36-ata} the inverse $(A\T A)^{-1}$ exists, and $\bigl[(A\T A)^{-1}A\T\bigr]A=(A\T A)^{-1}(A\T A)=I_n$. The product in the other order is the projection formula $P=A(A\T A)^{-1}A\T$ of Section~\ref{sec:u17}. A projection onto the $n$-dimensional subspace $\Col{A}$ has rank $n$, so it is $I_m$ only if $n=m$.
+\end{proof}
+
+There are other left inverses when $m>n$ (add to $A^{-1}_{\text{left}}$ any matrix whose rows lie in $\Nul{A\T}$), but $(A\T A)^{-1}A\T$ is the favourite: applied to $\vb{b}$ it gives the least-squares solution $\hat{\vb{x}}=(A\T A)^{-1}A\T\vb{b}$. The product $AA^{-1}_{\text{left}}$ ``tries to be the identity'': it is the identity on $\Col{A}$ and zero on $\Nul{A\T}$.
+
+\subsection{Full row rank: a right inverse}
+
+When $r=m$ the rows are independent, $\Nul{A\T}=\{\vb{0}\}$, and $A\vb{x}=\vb{b}$ is solvable for every $\vb{b}$, with $n-m$ free variables. Now $AA\T$ is the invertible $m\times m$ matrix (apply Lemma~\ref{lem:u36-ata} to $A\T$), and everything above flips.
+
+\begin{theorem}[Right inverse]\label{thm:u36-right}
+If $A$ has full row rank $r=m$, then $A^{-1}_{\text{right}}=A\T(AA\T)^{-1}$ satisfies $AA^{-1}_{\text{right}}=I_m$, and
+\[
+A^{-1}_{\text{right}}A=A\T(AA\T)^{-1}A=P_{\Col{A\T}}
+\]
+is the $n\times n$ projection onto the row space.
+\end{theorem}
+\begin{proof}
+The first product is
+\[
+A\bigl[A\T(AA\T)^{-1}\bigr]=(AA\T)(AA\T)^{-1}=I_m .
+\]
+Writing $M=A\T$, the other product is $M(M\T M)^{-1}M\T$, the projection onto $\Col{M}=\Col{A\T}$.
+\end{proof}
+
+\begin{example}[A right inverse, and the projection it leaves behind]\label{ex:u36-right}
+Take $A=\begin{bmatrix}1&0&1\\0&1&0\end{bmatrix}$, of rank $2=m$. Then
+\[
+AA\T=\begin{bmatrix}2&0\\0&1\end{bmatrix},\qquad (AA\T)^{-1}=\begin{bmatrix}1/2&0\\0&1\end{bmatrix},\qquad
+A^{-1}_{\text{right}}=A\T(AA\T)^{-1}=\begin{bmatrix}1/2&0\\0&1\\1/2&0\end{bmatrix}.
+\]
+Check: $AA^{-1}_{\text{right}}=\begin{bmatrix}1/2+1/2&0\\0&1\end{bmatrix}=I_2$. In the other order,
+\[
+A^{-1}_{\text{right}}A=\begin{bmatrix}1/2&0&1/2\\0&1&0\\1/2&0&1/2\end{bmatrix},
+\]
+which is symmetric, equals its own square, and fixes the rows $(1,0,1)$ and $(0,1,0)$ of $A$ while sending the nullspace vector $(1,0,-1)$ to $\vb{0}$: it is the projection onto the row space, as Theorem~\ref{thm:u36-right} predicts. The transpose $A\T$ is $3\times 2$ with full column rank, and its left inverse $(AA\T)^{-1}A=\begin{bmatrix}1/2&0&1/2\\0&1&0\end{bmatrix}$ is just the transpose of $A^{-1}_{\text{right}}$.
+\end{example}
+
+\subsection{From row space to column space, \texorpdfstring{$A$}{A} is invertible}
+
+In the general case $r<m$ and $r<n$ neither one-sided formula works, because both $A\T A$ and $AA\T$ are singular. The way forward is to stop asking $A$ to be invertible on all of $\R^n$ and look only at the row space. Every $\vb{x}\in\R^n$ splits as $\vb{x}=\vb{x}_r+\vb{x}_n$ with $\vb{x}_r\in\Col{A\T}$ and $\vb{x}_n\in\Nul{A}$, and $A\vb{x}=A\vb{x}_r$: the matrix kills the nullspace part, and the row-space part carries all the information.
+
+\begin{theorem}[$A$ is one-to-one from row space onto column space]\label{thm:u36-rowcol}
+If $\vb{x}$ and $\vb{y}$ are in the row space $\Col{A\T}$ and $\vb{x}\neq\vb{y}$, then $A\vb{x}\neq A\vb{y}$. Consequently $\vb{x}\mapsto A\vb{x}$ is an invertible linear map from the $r$-dimensional row space onto the $r$-dimensional column space.
+\end{theorem}
+\begin{proof}
+Suppose $A\vb{x}=A\vb{y}$. Then $A(\vb{x}-\vb{y})=\vb{0}$, so $\vb{x}-\vb{y}\in\Nul{A}$. But the row space is a subspace, so $\vb{x}-\vb{y}$ is also in $\Col{A\T}$. The row space and nullspace are orthogonal complements (Section~\ref{sec:u16}), so the only vector in both is $\vb{0}$, and $\vb{x}=\vb{y}$. Thus the map is one-to-one. Its image lies in $\Col{A}$; it is all of $\Col{A}$ because any $A\vb{z}$ equals $A\vb{z}_r$ with $\vb{z}_r$ the row-space part of $\vb{z}$. A one-to-one linear map between spaces of the same dimension $r$ is invertible.
+\end{proof}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \foreach \ox/\lab/\dimr/\nlab/\dimn/\sp in {0/{row space $\Col{A\T}$}/{$r$}/{nullspace $\Nul{A}$}/{$n-r$}/{\R^n},6.5/{column space $\Col{A}$}/{$r$}/{left nullspace $\Nul{A\T}$}/{$m-r$}/{\R^m}}{
+    \begin{scope}[xshift=\ox cm]
+      \filldraw[fill=blue!12] (0,0) -- (1.7,1.7) -- (0,3.4) -- (-1.7,1.7) -- cycle;
+      \filldraw[fill=orange!15] (0,0) -- (1.1,-1.1) -- (0,-2.2) -- (-1.1,-1.1) -- cycle;
+      \node[above] at (0,3.4) {\lab, dim \dimr};
+      \node[below] at (0,-2.2) {\nlab, dim \dimn};
+    \end{scope}}
+  \draw (0.25,0.25) -- (0.5,0) -- (0.25,-0.25);
+  \draw (6.25,0.25) -- (6.0,0) -- (6.25,-0.25);
+  \node at (-2.3,0) {$\R^n$};
+  \node at (8.8,0) {$\R^m$};
+  \fill (0.3,1.6) circle (1.6pt) node[left] {$\vb{x}_r$};
+  \fill (6.2,1.6) circle (1.6pt) node[right] {$A\vb{x}_r$};
+  \draw[->,thick,blue!70!black] (0.42,1.75) to[bend left=18] node[above] {$A$} (6.08,1.75);
+  \draw[->,thick,red!70!black] (6.08,1.45) to[bend left=18] node[below] {$A^{+}$} (0.42,1.45);
+  \fill (0.35,-0.9) circle (1.6pt) node[left] {$\vb{x}_n$};
+  \draw[->,thick,orange!80!black] (0.47,-0.88) to[bend right=12] node[pos=0.5,below=1pt] {$A\vb{x}_n=\vb{0}$} (6.38,-0.06);
+  \fill (6.75,-1.0) circle (1.6pt) node[right] {$\vb{y}$};
+\end{tikzpicture}
+\caption{The big picture with inverses. Between the two $r$-dimensional spaces (blue) $A$ is invertible, and the pseudoinverse $A^{+}$ is its inverse there. $A$ sends the nullspace to $\vb{0}$, and $A^{+}$ sends every $\vb{y}$ in the left nullspace to $\vb{0}$.}\label{fig:u36-bigpicture}
+\end{figure}
+
+Figure~\ref{fig:u36-bigpicture} is the whole unit in one picture. On the shaded spaces $A$ is a perfect, invertible matrix; the trouble lives entirely in the two nullspaces. Statisticians meet this case constantly: a repeated or redundant experiment makes the columns of the design matrix dependent, $A\T A$ becomes singular, and ordinary least squares breaks down. The inverse of the good part is what they need.
+
+\subsection{The pseudoinverse from the SVD}
+
+\begin{definition}[Pseudoinverse]\label{def:u36-pinv}
+The \emph{pseudoinverse} of an $m\times n$ matrix $A$ is the $n\times m$ matrix $A^{+}$ that inverts $A$ from the row space to the column space and annihilates the left nullspace:
+\[
+A^{+}(A\vb{x})=\vb{x}\ \text{ for every }\vb{x}\in\Col{A\T},\qquad A^{+}\vb{y}=\vb{0}\ \text{ for every }\vb{y}\in\Nul{A\T}.
+\]
+Since $\R^m=\Col{A}\oplus\Nul{A\T}$ and Theorem~\ref{thm:u36-rowcol} makes the first condition well defined, these two rules fix $A^{+}\vb{b}$ for every $\vb{b}\in\R^m$, so $A^{+}$ exists and is unique.
+\end{definition}
+
+To compute it, start from the SVD $A=U\Sigma V\T$: $U$ ($m\times m$) and $V$ ($n\times n$) are orthogonal, and $\Sigma$ is $m\times n$ with $\sigma_1\ge\dots\ge\sigma_r>0$ in its first $r$ diagonal positions and zeros elsewhere. The orthogonal factors are trivial to invert; all the trouble is in $\Sigma$, where it is easy to see what to do. Define $\Sigma^{+}$ as the $n\times m$ matrix with $1/\sigma_1,\dots,1/\sigma_r$ in its first $r$ diagonal positions and zeros elsewhere:
+\[
+\Sigma=\begin{bmatrix}\sigma_1&&&\\&\ddots&&\\&&\sigma_r&\\&&&0\end{bmatrix}_{m\times n},\qquad
+\Sigma^{+}=\begin{bmatrix}1/\sigma_1&&&\\&\ddots&&\\&&1/\sigma_r&\\&&&0\end{bmatrix}_{n\times m}.
+\]
+Then $\Sigma\Sigma^{+}$ is the $m\times m$ diagonal matrix with $r$ ones followed by zeros, and $\Sigma^{+}\Sigma$ is the $n\times n$ matrix of the same pattern. Neither is an identity unless $r=m$ or $r=n$; each is a projection.
+
+\begin{theorem}[Pseudoinverse via the SVD]\label{thm:u36-svd}
+If $A=U\Sigma V\T$, then $A^{+}=V\Sigma^{+}U\T$. Moreover $AA^{+}$ is the projection onto the column space and $A^{+}A$ is the projection onto the row space.
+\end{theorem}
+\begin{proof}
+The SVD says $A\vb{v}_i=\sigma_i\vb{u}_i$ for $i\le r$; the vectors $\vb{v}_1,\dots,\vb{v}_r$ are an orthonormal basis of $\Col{A\T}$ and $\vb{u}_{r+1},\dots,\vb{u}_m$ an orthonormal basis of $\Nul{A\T}$. Let $B=V\Sigma^{+}U\T$. Since $U\T\vb{u}_i$ is the $i$-th standard basis vector,
+\[
+B\vb{u}_i=V\Sigma^{+}\vb{e}_i=\begin{cases}\vb{v}_i/\sigma_i,& i\le r,\\ \vb{0},& i>r.\end{cases}
+\]
+So $B(A\vb{v}_i)=B(\sigma_i\vb{u}_i)=\vb{v}_i$ for $i\le r$, and by linearity $B(A\vb{x})=\vb{x}$ for all $\vb{x}$ in the row space; and $B$ kills a basis of $\Nul{A\T}$. These are the two rules of Definition~\ref{def:u36-pinv}, so $B=A^{+}$. Finally
+\[
+AA^{+}=U\Sigma V\T V\Sigma^{+}U\T=U(\Sigma\Sigma^{+})U\T=\sum_{i\le r}\vb{u}_i\vb{u}_i\T,\qquad A^{+}A=V(\Sigma^{+}\Sigma)V\T=\sum_{i\le r}\vb{v}_i\vb{v}_i\T,
+\]
+the projections onto $\Span\{\vb{u}_1,\dots,\vb{u}_r\}=\Col{A}$ and $\Span\{\vb{v}_1,\dots,\vb{v}_r\}=\Col{A\T}$.
+\end{proof}
+
+One could put nonzero numbers in the lower-right block of $\Sigma^{+}$ and still get $\Sigma\Sigma^{+}$ with $r$ ones, because they multiply zeros. The pseudoinverse is the choice with no extra entries, the smallest matrix that does the job. When an ordinary inverse exists, nothing changes: if $r=m=n$ then $\Sigma^{+}=\Sigma^{-1}$ and $A^{+}=A^{-1}$. The one-sided inverses are also special cases.
+
+\begin{proposition}[One-sided inverses are pseudoinverses]\label{prop:u36-consistent}
+If $r=n$ then $A^{+}=(A\T A)^{-1}A\T$; if $r=m$ then $A^{+}=A\T(AA\T)^{-1}$.
+\end{proposition}
+\begin{proof}
+Let $r=n$ and $B=(A\T A)^{-1}A\T$. Then $BA\vb{x}=\vb{x}$ for every $\vb{x}$ (here the row space is all of $\R^n$), and if $\vb{y}\in\Nul{A\T}$ then $B\vb{y}=(A\T A)^{-1}(A\T\vb{y})=\vb{0}$. These are the defining rules, so $B=A^{+}$. The case $r=m$ is the transpose of this one: $(A\T)^{+}=(A^{+})\T$ follows from $A^{+}=V\Sigma^{+}U\T$.
+\end{proof}
+
+\begin{example}[The pseudoinverse of a $1\times 2$ matrix]\label{ex:u36-row}
+Let $A=\begin{bmatrix}1&2\end{bmatrix}$. Shapes first: $\Sigma$ has the shape of $A$ ($1\times 2$), so $U$ is $1\times 1$ and $V$ is $2\times 2$. The only $1\times1$ orthogonal matrices are $\pm1$; take $U=[1]$. Next
+\[
+A\T A=\begin{bmatrix}1\\2\end{bmatrix}\begin{bmatrix}1&2\end{bmatrix}=\begin{bmatrix}1&2\\2&4\end{bmatrix},
+\]
+which is singular (row two is twice row one), so $\lambda=0$ is an eigenvalue, and the trace gives the other, $\lambda=5$. Unit eigenvectors: $\vb{v}_1=\tfrac{1}{\sqrt5}(1,2)$ for $\lambda=5$ and $\vb{v}_2=\tfrac{1}{\sqrt5}(-2,1)$ for $\lambda=0$. So $\sigma_1=\sqrt5$ and
+\[
+A=\begin{bmatrix}1\end{bmatrix}\begin{bmatrix}\sqrt5&0\end{bmatrix}\frac{1}{\sqrt5}\begin{bmatrix}1&2\\-2&1\end{bmatrix},\qquad
+A^{+}=V\Sigma^{+}U\T=\frac{1}{\sqrt5}\begin{bmatrix}1&-2\\2&1\end{bmatrix}\begin{bmatrix}1/\sqrt5\\0\end{bmatrix}\begin{bmatrix}1\end{bmatrix}=\frac15\begin{bmatrix}1\\2\end{bmatrix}.
+\]
+Because $A$ has full row rank, Proposition~\ref{prop:u36-consistent} gives the same answer faster: $A\T(AA\T)^{-1}=\tfrac15(1,2)$. Now the two products:
+\[
+AA^{+}=\tfrac15(1+4)=[1],\qquad A^{+}A=\frac15\begin{bmatrix}1&2\\2&4\end{bmatrix}.
+\]
+$AA^{+}$ is the $1\times1$ identity, since $\Col{A}=\R^1$. For $\vb{x}=(-2,1)$ in the nullspace, $A^{+}A\vb{x}=\tfrac15(-2+2,\,-4+4)=\vb{0}$. For $\vb{x}=(1,2)$ in the row space, $A^{+}A\vb{x}=\tfrac15(1+4,\,2+8)=(1,2)=\vb{x}$. So $A^{+}A$ acts as the identity on the row space and as zero on the nullspace: it is the projection onto the line through $(1,2)$.
+\end{example}
+
+\begin{example}[A square matrix with no inverse of either kind]\label{ex:u36-square}
+Does $A=\begin{bmatrix}4&3\\8&6\end{bmatrix}$ have a left inverse, a right inverse, a pseudoinverse? Row two is twice row one, so $r=1$ and $\det A=0$. If $AB=I$ then $\det A\det B=1$, impossible; likewise $BA=I$. So there is no one-sided inverse. The pseudoinverse always exists. From $A\T A=\begin{bmatrix}80&60\\60&45\end{bmatrix}$, with eigenvalues $125$ and $0$, the SVD is
+\[
+\begin{bmatrix}4&3\\8&6\end{bmatrix}=\frac{1}{\sqrt5}\begin{bmatrix}1&2\\2&-1\end{bmatrix}\begin{bmatrix}\sqrt{125}&0\\0&0\end{bmatrix}\begin{bmatrix}0.8&0.6\\0.6&-0.8\end{bmatrix},
+\]
+where $\vb{v}_1=(0.8,0.6)$ and $\vb{u}_1=A\vb{v}_1/\sigma_1=(5,10)/\sqrt{125}=(1,2)/\sqrt5$. Only the first singular pair survives in $V\Sigma^{+}U\T$:
+\[
+A^{+}=\frac{1}{\sigma_1}\vb{v}_1\vb{u}_1\T=\frac{1}{\sqrt{125}}\begin{bmatrix}0.8\\0.6\end{bmatrix}\frac{1}{\sqrt5}\begin{bmatrix}1&2\end{bmatrix}=\frac{1}{25}\begin{bmatrix}0.8&1.6\\0.6&1.2\end{bmatrix}=\frac{1}{125}\begin{bmatrix}4&8\\3&6\end{bmatrix}.
+\]
+Check against the definition: $A^{+}\vb{u}_1=\frac{1}{125}\cdot\frac{1}{\sqrt5}(4+16,\,3+12)=\frac{1}{\sqrt{125}}(0.8,0.6)=\vb{v}_1/\sigma_1$, and for $\vb{u}_2=(2,-1)/\sqrt5$ we get $A^{+}\vb{u}_2=\frac{1}{125\sqrt5}(8-8,\,6-6)=\vb{0}$. Here $A^{+}=A\T/125$, and that is no accident: for any rank-one matrix $A=\sigma_1\vb{u}_1\vb{v}_1\T$ the pseudoinverse is $\vb{v}_1\vb{u}_1\T/\sigma_1=A\T/\sigma_1^{2}$.
+\end{example}
+
+\subsection{The shortest least-squares solution}
+
+\begin{theorem}[$A^{+}\vb{b}$ is the minimum-length least-squares solution]\label{thm:u36-minnorm}
+For any $A$ and $\vb{b}$, the vector $\vb{x}^{+}=A^{+}\vb{b}$ minimizes $\|A\vb{x}-\vb{b}\|$, and among all minimizers it is the unique one of smallest length. If $A\vb{x}=\vb{b}$ is solvable, $\vb{x}^{+}$ is its shortest solution.
+\end{theorem}
+\begin{proof}
+By Theorem~\ref{thm:u36-svd}, $A\vb{x}^{+}=AA^{+}\vb{b}$ is the projection $\vb{p}$ of $\vb{b}$ onto $\Col{A}$, the closest point of the column space to $\vb{b}$; so $\vb{x}^{+}$ minimizes $\|A\vb{x}-\vb{b}\|$. Any other minimizer $\vb{x}$ also has $A\vb{x}=\vb{p}$ (the closest point is unique), so $\vb{x}=\vb{x}^{+}+\vb{n}$ with $\vb{n}\in\Nul{A}$. The vector $\vb{x}^{+}=V\Sigma^{+}U\T\vb{b}$ is a combination of $\vb{v}_1,\dots,\vb{v}_r$, so it lies in the row space and is orthogonal to $\vb{n}$. By Pythagoras $\|\vb{x}\|^{2}=\|\vb{x}^{+}\|^{2}+\|\vb{n}\|^{2}\ge\|\vb{x}^{+}\|^{2}$, with equality only when $\vb{n}=\vb{0}$.
+\end{proof}
+
+\begin{example}[Least squares with dependent columns]\label{ex:u36-lsq}
+With $A=\begin{bmatrix}4&3\\8&6\end{bmatrix}$ from Example~\ref{ex:u36-square} and $\vb{b}=(5,0)$, the normal equations $A\T A\hat{\vb{x}}=A\T\vb{b}$ read
+\[
+\begin{bmatrix}80&60\\60&45\end{bmatrix}\hat{\vb{x}}=\begin{bmatrix}20\\15\end{bmatrix},
+\]
+which is the single equation $4\hat x_1+3\hat x_2=1$ written twice: a whole line of least-squares solutions, since $A\T A$ is singular. The pseudoinverse picks one:
+\[
+\vb{x}^{+}=A^{+}\vb{b}=\frac{1}{125}\begin{bmatrix}4&8\\3&6\end{bmatrix}\begin{bmatrix}5\\0\end{bmatrix}=\begin{bmatrix}0.16\\0.12\end{bmatrix}.
+\]
+It lies on that line ($0.64+0.36=1$) and is a multiple of the row $(4,3)$, so it is the point of the line closest to the origin. And $A\vb{x}^{+}=(1,2)$ is the projection of $(5,0)$ onto the column line through $(1,2)$, namely $\frac{5}{5}(1,2)$.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=0.75,>=Stealth,font=\small]
+  \draw[->] (-3.2,0) -- (6.2,0) node[right] {$x_1$};
+  \draw[->] (0,-0.8) -- (0,4.2) node[above] {$x_2$};
+  \draw[thick,orange!80!black] (-2.6,3.8) -- (6,-0.5) node[pos=0,left] {$x_1+2x_2=5$};
+  \draw[blue!60,dashed] (-0.6,-1.2) -- (2.1,4.2) node[above right] {row space};
+  \draw[->,very thick,blue!70!black] (0,0) -- (1,2) node[pos=0.55,left] {$\vb{x}^{+}$};
+  \fill (1,2) circle (2pt);
+  \fill (3,1) circle (2pt) node[above right] {$(3,1)$};
+  \fill (5,0) circle (2pt) node[below] {$(5,0)$};
+  \draw[->,thick,red!70!black] (1,2) -- (3,1) node[pos=0.5,below left] {$\vb{x}_n$};
+  \draw (1.18,1.91) -- (1.27,2.09) -- (1.09,2.18);
+\end{tikzpicture}
+\caption{All solutions of $\begin{bmatrix}1&2\end{bmatrix}\vb{x}=5$ form a line parallel to the nullspace direction $(-2,1)$. The pseudoinverse solution $\vb{x}^{+}=A^{+}5=(1,2)$ is the one in the row space, perpendicular to the line, hence the shortest ($\|\vb{x}^{+}\|=\sqrt5$, against $\sqrt{10}$ for $(3,1)$ and $5$ for $(5,0)$).}\label{fig:u36-minnorm}
+\end{figure}
+
+\begin{trap}
+$(A\T A)^{-1}A\T$ is a left inverse, not an inverse: $A(A\T A)^{-1}A\T$ is a projection, not $I$, whenever $m>n$. And for a rank-deficient matrix there is no $(A\T A)^{-1}$ at all, so ``$A^{+}=(A\T A)^{-1}A\T$'' is meaningless there; go through the SVD. Finally, the pseudoinverse does not reverse products the way an inverse does: in general $(AB)^{+}\neq B^{+}A^{+}$ (Exercise~\ref{exr:u36-product}).
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u36-left}
+Find the left inverse $(A\T A)^{-1}A\T$ of $A=\begin{bmatrix}1&2\\0&1\\1&0\end{bmatrix}$, check that it is a left inverse, and identify $A(A\T A)^{-1}A\T$.
+\end{exercise}
+\begin{solution}
+$A\T A=\begin{bmatrix}2&2\\2&5\end{bmatrix}$ has determinant $6$, so $(A\T A)^{-1}=\frac16\begin{bmatrix}5&-2\\-2&2\end{bmatrix}$ and
+\[
+B=(A\T A)^{-1}A\T=\frac16\begin{bmatrix}5&-2\\-2&2\end{bmatrix}\begin{bmatrix}1&0&1\\2&1&0\end{bmatrix}=\frac16\begin{bmatrix}1&-2&5\\2&2&-2\end{bmatrix}.
+\]
+Then $BA=\frac16\begin{bmatrix}1+0+5&2-2+0\\2+0-2&4+2+0\end{bmatrix}=I_2$. The product
+$AB=\frac16\begin{bmatrix}5&2&1\\2&2&-2\\1&-2&5\end{bmatrix}$
+is symmetric with trace $2$; it is the projection onto the plane $\Col{A}$ (Theorem~\ref{thm:u36-left}). It sends $(1,-2,-1)$, which is orthogonal to both columns, to $\vb{0}$.
+\end{solution}
+
+\begin{exercise}\label{exr:u36-allright}
+Find every right inverse of $A=\begin{bmatrix}1&0&1\\0&1&0\end{bmatrix}$ and show that $A\T(AA\T)^{-1}$ from Example~\ref{ex:u36-right} is the one with the smallest sum of squared entries.
+\end{exercise}
+\begin{solution}
+Write $B=\begin{bmatrix}a&b\\c&d\\e&f\end{bmatrix}$. Then $AB=\begin{bmatrix}a+e&b+f\\c&d\end{bmatrix}=I$ forces $c=0$, $d=1$, $e=1-a$, $f=-b$:
+\[
+B=\begin{bmatrix}a&b\\0&1\\1-a&-b\end{bmatrix},\qquad a,b\ \text{arbitrary}.
+\]
+The sum of squares is $a^{2}+(1-a)^{2}+2b^{2}+1$, smallest at $a=\tfrac12$, $b=0$, which is exactly $A\T(AA\T)^{-1}$. The other right inverses differ from it by matrices whose columns are multiples of $(1,0,-1)$, the nullspace of $A$; the favourite one has its columns in the row space, which is why it is shortest (compare Theorem~\ref{thm:u36-minnorm}).
+\end{solution}
+
+\begin{exercise}\label{exr:u36-product}
+Let $A=\begin{bmatrix}1&1\end{bmatrix}$ and $B=\begin{bmatrix}1\\0\end{bmatrix}$. Compute $(AB)^{+}$ and $B^{+}A^{+}$.
+\end{exercise}
+\begin{solution}
+$AB=[1]$, so $(AB)^{+}=[1]$. $A$ has full row rank, so $A^{+}=A\T(AA\T)^{-1}=\tfrac12\begin{bmatrix}1\\1\end{bmatrix}$; $B$ has full column rank, so $B^{+}=(B\T B)^{-1}B\T=\begin{bmatrix}1&0\end{bmatrix}$. Then $B^{+}A^{+}=\begin{bmatrix}1&0\end{bmatrix}\tfrac12\begin{bmatrix}1\\1\end{bmatrix}=\tfrac12\neq1$. The rule $(AB)^{-1}=B^{-1}A^{-1}$ does not carry over to pseudoinverses.
+\end{solution}
+
+\begin{exercise}\label{exr:u36-ones}
+Find the pseudoinverse of $A=\begin{bmatrix}1&1\\1&1\end{bmatrix}$. Use it to find the shortest solution of $A\vb{x}=(2,2)$ and the shortest least-squares solution of $A\vb{x}=(1,3)$.
+\end{exercise}
+\begin{solution}
+$A$ is symmetric of rank one: $A=2\vb{q}\vb{q}\T$ with $\vb{q}=(1,1)/\sqrt2$, so $\sigma_1=2$, $\vb{u}_1=\vb{v}_1=\vb{q}$ and
+\[
+A^{+}=\frac{1}{2}\vb{q}\vb{q}\T=\frac14\begin{bmatrix}1&1\\1&1\end{bmatrix}.
+\]
+For $\vb{b}=(2,2)$: $A^{+}\vb{b}=(1,1)$, and indeed $A(1,1)=(2,2)$; every other solution $(1+t,1-t)$ is longer. For $\vb{b}=(1,3)$, which is not in $\Col{A}$: $A^{+}\vb{b}=\tfrac14(4,4)=(1,1)$ again, and $A(1,1)=(2,2)$ is the projection of $(1,3)$ onto the line through $(1,1)$, since $\frac{(1,3)\cdot(1,1)}{2}(1,1)=(2,2)$.
+\end{solution}
+
+\begin{exercise}\label{exr:u36-penrose}
+Using $A^{+}=V\Sigma^{+}U\T$, prove that $AA^{+}A=A$ and $A^{+}AA^{+}=A^{+}$, and that $(A^{+})^{+}=A$.
+\end{exercise}
+\begin{solution}
+$AA^{+}A=U\Sigma V\T V\Sigma^{+}U\T U\Sigma V\T=U(\Sigma\Sigma^{+}\Sigma)V\T$. The diagonal entries of $\Sigma\Sigma^{+}\Sigma$ are $\sigma_i\cdot\frac{1}{\sigma_i}\cdot\sigma_i=\sigma_i$ for $i\le r$ and $0$ otherwise, so $\Sigma\Sigma^{+}\Sigma=\Sigma$ and $AA^{+}A=A$. In the same way $\Sigma^{+}\Sigma\Sigma^{+}=\Sigma^{+}$ gives $A^{+}AA^{+}=A^{+}$. Finally $A^{+}=V\Sigma^{+}U\T$ is itself an SVD (orthogonal, diagonal with nonnegative entries $1/\sigma_i$, orthogonal), so its pseudoinverse is $U(\Sigma^{+})^{+}V\T=U\Sigma V\T=A$, because inverting the nonzero diagonal entries twice returns $\sigma_i$.
+\end{solution}

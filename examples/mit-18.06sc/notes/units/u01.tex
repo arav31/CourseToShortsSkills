@@ -1,0 +1,376 @@
+% unit: u01
+% sources: sources/069-the-geometry-of-linear-equations.txt, sources/115-the-geometry-of-linear-equations.txt, sources/116-mit18-06scf11-ses1-1sum-pdf-download-file.txt, sources/117-geometry-of-linear-algebra.txt, sources/118-mit18-06scf11-ses1-1prob-pdf-download-file.txt, sources/119-mit18-06scf11-ses1-1sol-pdf-download-file.txt, short_plan.json (s01)
+\section{The geometry of linear equations}\label{sec:u01}
+
+The central problem of linear algebra is to solve a system of linear equations, and the
+course starts with the friendliest case: $n$ equations in $n$ unknowns. This section looks
+at one small system in three ways. The \emph{row picture} draws one equation at a time and
+looks for the point where the graphs meet. The \emph{column picture} reads the same system
+as a question about combining vectors. The \emph{matrix form} packs everything into the
+single equation $A\vb{x}=\vb{b}$. The column picture is the one that survives in ten or a
+thousand dimensions, and it leads directly to the question that drives the first part of the
+course: for which right-hand sides $\vb{b}$ can the system be solved at all?
+
+\subsection{One system, three readings}
+
+Our first example is the system
+\begin{equation}\label{eq:u01-system}
+\begin{aligned}
+  2x - y &= 0,\\
+  -x + 2y &= 3 .
+\end{aligned}
+\end{equation}
+All the information sits in the numbers multiplying the unknowns and in the numbers on the
+right, so we collect them.
+
+\begin{definition}[Matrix, coefficient matrix, $A\vb{x}=\vb{b}$]\label{def:u01-matrix}
+A \emph{matrix} is a rectangular array of numbers. An $m\times n$ matrix has $m$ rows and
+$n$ columns, and $a_{ij}$ denotes the entry in row $i$ and column $j$. For a system of $m$
+linear equations in $n$ unknowns $x_1,\dots,x_n$, the \emph{coefficient matrix} $A$ holds
+the coefficient of $x_j$ in equation $i$ as its entry $a_{ij}$; the unknowns form the vector
+$\vb{x}=(x_1,\dots,x_n)$ and the right-hand sides form the vector $\vb{b}=(b_1,\dots,b_m)$.
+The system is written $A\vb{x}=\vb{b}$.
+\end{definition}
+
+Vectors are written as columns; to save space we also write them as lists in parentheses,
+so $\vb{b}=(0,3)$ means the column with entries $0$ and $3$. For the system
+\eqref{eq:u01-system},
+\[
+  A=\begin{bmatrix} 2 & -1\\ -1 & 2\end{bmatrix},\qquad
+  \vb{x}=\begin{bmatrix} x\\ y\end{bmatrix},\qquad
+  \vb{b}=\begin{bmatrix} 0\\ 3\end{bmatrix},\qquad
+  \begin{bmatrix} 2 & -1\\ -1 & 2\end{bmatrix}\begin{bmatrix} x\\ y\end{bmatrix}
+  =\begin{bmatrix} 0\\ 3\end{bmatrix}.
+\]
+At this point $A\vb{x}$ is shorthand for ``the left-hand sides''. In
+Section~\ref{subsec:u01-product} we make it a genuine product of a matrix and a vector.
+
+\subsection{The row picture: lines and planes that meet}
+
+In the row picture each equation is drawn separately in the $xy$-plane. All points
+satisfying $2x-y=0$ lie on a straight line (the word \emph{linear} comes from \emph{line}).
+It passes through the origin, because $(0,0)$ satisfies it, and through $(1,2)$ and
+$(\tfrac12,1)$. The second line $-x+2y=3$ does \emph{not} pass through the origin, since
+$x=y=0$ gives $0\neq 3$; two of its points are $(-3,0)$ and $(-1,1)$. A solution of the
+system must lie on both lines, so it is their crossing point. The left panel of
+Figure~\ref{fig:u01-pictures} shows the lines meeting at $(x,y)=(1,2)$, and substituting
+confirms it: $2\cdot1-2=0$ and $-1+2\cdot2=3$.
+
+Two lines in a plane can do three things. They can cross at one point (one solution), they
+can be parallel and distinct (no solution), or they can coincide (infinitely many solutions).
+The nice case $n$ equations, $n$ unknowns, one solution, is the first; the other two are the
+singular cases that the course will learn to detect.
+
+In three unknowns each equation describes a \emph{plane} in $xyz$-space. Take
+\begin{equation}\label{eq:u01-three}
+\begin{aligned}
+  2x - y \phantom{{}-z} &= 0,\\
+  -x + 2y - z &= -1,\\
+  -3y + 4z &= 4 .
+\end{aligned}
+\end{equation}
+The second equation is not satisfied by the origin; it contains $(1,0,0)$, $(0,0,1)$ and
+$(0,-\tfrac12,0)$, and those three points determine its plane. The first equation is another
+plane (it does not involve $z$, so it is ``vertical''). Two non-parallel planes meet in a
+line, and the third plane cuts that line in a single point, the solution. The picture is
+already hard to draw for three planes, and in four dimensions it is hopeless. We need a
+better view.
+
+\subsection{The column picture: combinations of columns}
+
+Read the system \eqref{eq:u01-system} a column at a time. The unknown $x$ multiplies the
+first column of $A$ and $y$ multiplies the second:
+\begin{equation}\label{eq:u01-columns}
+  x\begin{bmatrix} 2\\ -1\end{bmatrix} + y\begin{bmatrix} -1\\ 2\end{bmatrix}
+  = \begin{bmatrix} 0\\ 3\end{bmatrix}.
+\end{equation}
+Vectors are added component by component and multiplied by a number (a \emph{scalar}) in
+every component, so \eqref{eq:u01-columns} is exactly the two equations again. Now the question
+is different: which amounts of the two column vectors add up to the vector $\vb{b}$?
+
+\begin{definition}[Linear combination]\label{def:u01-combination}
+Given vectors $\vb{v}_1,\dots,\vb{v}_n$ in $\R^m$ and scalars $c_1,\dots,c_n$, the vector
+\[
+  c_1\vb{v}_1 + c_2\vb{v}_2 + \cdots + c_n\vb{v}_n
+\]
+is a \emph{linear combination} of $\vb{v}_1,\dots,\vb{v}_n$. The scalars $c_j$ are its
+\emph{weights} (or coefficients).
+\end{definition}
+
+Taking linear combinations is the basic operation of the whole subject. The column picture
+says: solving $A\vb{x}=\vb{b}$ means finding the linear combination of the columns of $A$ that
+produces $\vb{b}$, and the weights in that combination are the unknowns.
+
+\begin{example}[Two pictures of one system]\label{ex:u01-two-pictures}
+Solve \eqref{eq:u01-system} in both pictures. The columns of $A$ are
+$\vb{a}_1=(2,-1)$ and $\vb{a}_2=(-1,2)$, and the target is $\vb{b}=(0,3)$.
+\begin{enumerate}
+  \item \emph{Row picture.} The lines $y=2x$ and $-x+2y=3$ cross where
+    $-x+2(2x)=3$, that is $3x=3$. So $x=1$, $y=2$, and indeed $-1+2\cdot 2=3$.
+  \item \emph{Column picture.} Take $x=1$ copy of $\vb{a}_1$: the arrow from the origin to
+    $(2,-1)$.
+  \item Take $y=2$ copies of $\vb{a}_2$: $2(-1,2)=(-2,4)$.
+  \item Add tip to tail: $(2,-1)+(-2,4)=(2-2,\,-1+4)=(0,3)$, which is exactly $\vb{b}$.
+\end{enumerate}
+The same two numbers $x=1$, $y=2$ are the crossing point of the rows and the recipe
+$1\,\vb{a}_1+2\,\vb{a}_2=\vb{b}$ for the columns. Figure~\ref{fig:u01-pictures} shows both.
+\end{example}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.72,>=Stealth]
+  \draw[->] (-3.4,0) -- (3.2,0) node[right] {$x$};
+  \draw[->] (0,-1.4) -- (0,4.5) node[above] {$y$};
+  \foreach \t in {-3,-2,-1,1,2} \draw (\t,0.08) -- (\t,-0.08) node[below] {\scriptsize $\t$};
+  \foreach \t in {1,2,3,4} \draw (0.08,\t) -- (-0.08,\t) node[left] {\scriptsize $\t$};
+  \draw[very thick,blue] (-0.65,-1.3) -- (2.2,4.4) node[right] {$2x-y=0$};
+  \draw[very thick,orange!85!black] (-3.4,-0.2) -- (3.2,3.1) node[below right] {$-x+2y=3$};
+  \fill (1,2) circle (2.5pt) node[below right=1pt] {$(1,2)$};
+  \node[font=\small] at (0,-2.2) {row picture: $(x,y)$-plane};
+\end{tikzpicture}
+\qquad
+\begin{tikzpicture}[scale=0.72,>=Stealth]
+  \draw[->] (-2.8,0) -- (3,0) node[right] {$b_1$};
+  \draw[->] (0,-1.4) -- (0,4.5) node[above] {$b_2$};
+  \foreach \t in {-2,-1,1,2} \draw (\t,0.08) -- (\t,-0.08) node[below] {\scriptsize $\t$};
+  \foreach \t in {1,2,3,4} \draw (0.08,\t) -- (-0.08,\t) node[left] {\scriptsize $\t$};
+  \draw[->,very thick,blue] (0,0) -- (2,-1) node[below right] {$\vb{a}_1=(2,-1)$};
+  \draw[->,very thick,orange!85!black] (0,0) -- (-1,2) node[left] {$\vb{a}_2$};
+  \draw[->,thick,dashed,orange!85!black] (2,-1) -- (1,1);
+  \draw[->,thick,dashed,orange!85!black] (1,1) -- (0,3);
+  \node[orange!85!black,right,font=\small] at (1.05,1.5) {$2\vb{a}_2=(-2,4)$};
+  \draw[->,very thick] (0,0) -- (0,3);
+  \fill (0,3) circle (2.5pt) node[above right] {$\vb{b}=(0,3)$};
+  \node[font=\small] at (0,-2.2) {column picture: $1\,\vb{a}_1+2\,\vb{a}_2=\vb{b}$};
+\end{tikzpicture}
+\caption{The system $2x-y=0$, $-x+2y=3$ two ways. Left: each equation is a line and the
+solution is the crossing point $(1,2)$. Right: the columns $\vb{a}_1,\vb{a}_2$ are arrows in
+the plane of right-hand sides; one $\vb{a}_1$ followed by two copies of $\vb{a}_2$ (dashed,
+tip to tail) lands on $\vb{b}=(0,3)$. The weights $1,2$ are the coordinates of the crossing
+point.}\label{fig:u01-pictures}
+\end{figure}
+
+The two panels live in different planes. In the row picture the axes are the unknowns
+$x$ and $y$, and the answer is a point. In the column picture the axes are the components
+$b_1,b_2$ of the right-hand side (the first and second equations), and the answer is a pair
+of weights.
+
+What do \emph{all} combinations $x\vb{a}_1+y\vb{a}_2$ give? Multiples of $\vb{a}_1$ fill a
+line through the origin, multiples of $\vb{a}_2$ fill another line, and because the two
+lines point in different directions, adding a point of one to a point of the other reaches
+every point of the plane. So for this $A$ the system can be solved for \emph{every}
+right-hand side $\vb{b}$ (Exercise~\ref{ex:u01-every-b} finds the weights explicitly).
+
+The column picture of the $3\times3$ system \eqref{eq:u01-three} is
+\[
+  x\begin{bmatrix} 2\\ -1\\ 0\end{bmatrix}
+  + y\begin{bmatrix} -1\\ 2\\ -3\end{bmatrix}
+  + z\begin{bmatrix} 0\\ -1\\ 4\end{bmatrix}
+  = \begin{bmatrix} 0\\ -1\\ 4\end{bmatrix}.
+\]
+This right-hand side was chosen to equal the third column, so the combination is visible at
+once: $x=0$, $y=0$, $z=1$. That is the point where the three planes of the row picture meet,
+found without drawing a single plane. If we change the right-hand side to
+$\vb{b}=(1,1,-3)$, which is column~1 plus column~2, the solution becomes $(x,y,z)=(1,1,0)$.
+In the row picture all three planes moved; in the column picture the three columns stayed
+put and only the target changed. Usually the combination is not visible by eye, and the
+systematic method of finding it, elimination, is the subject of Section~\ref{sec:u03}.
+
+\subsection{Multiplying a matrix by a vector}\label{subsec:u01-product}
+
+The column picture tells us what $A\vb{x}$ should mean.
+
+\begin{definition}[Matrix times vector]\label{def:u01-Ax}
+Let $A$ be an $m\times n$ matrix with columns $\vb{a}_1,\dots,\vb{a}_n$ (each in $\R^m$),
+and let $\vb{x}=(x_1,\dots,x_n)\in\R^n$. The product $A\vb{x}$ is the combination of the
+columns with weights from $\vb{x}$:
+\[
+  A\vb{x} = x_1\vb{a}_1 + x_2\vb{a}_2 + \cdots + x_n\vb{a}_n \in \R^m .
+\]
+\end{definition}
+
+The product is defined only when the number of columns of $A$ equals the number of
+components of $\vb{x}$. The familiar ``row times vector'' rule is the same computation
+organised differently.
+
+\begin{proposition}[Row form of $A\vb{x}$]\label{prop:u01-rows}
+For $A$ and $\vb{x}$ as in Definition~\ref{def:u01-Ax}, component $i$ of $A\vb{x}$ is the
+dot product of row $i$ of $A$ with $\vb{x}$:
+\[
+  (A\vb{x})_i = a_{i1}x_1 + a_{i2}x_2 + \cdots + a_{in}x_n = \sum_{j=1}^{n} a_{ij}x_j .
+\]
+\end{proposition}
+
+\begin{proof}
+Component $i$ of the vector $x_j\vb{a}_j$ is $x_j$ times component $i$ of $\vb{a}_j$, which
+is $a_{ij}x_j$. Components of a sum are sums of components, so component $i$ of
+$x_1\vb{a}_1+\cdots+x_n\vb{a}_n$ is $a_{i1}x_1+\cdots+a_{in}x_n$, and this is row $i$ of $A$
+dotted with $\vb{x}$.
+\end{proof}
+
+So the row picture corresponds to computing $A\vb{x}$ by rows (each equation is one dot
+product), and the column picture corresponds to computing $A\vb{x}$ by columns. With
+Definition~\ref{def:u01-Ax}, the shorthand $A\vb{x}=\vb{b}$ for a linear system is now a true
+equation between vectors.
+
+\begin{example}[Both ways]\label{ex:u01-both-ways}
+Compute $\begin{bmatrix} 2 & 5\\ 1 & 3\end{bmatrix}\begin{bmatrix} 1\\ 2\end{bmatrix}$.
+By columns, take one of the first column and two of the second:
+\[
+  1\begin{bmatrix} 2\\ 1\end{bmatrix} + 2\begin{bmatrix} 5\\ 3\end{bmatrix}
+  = \begin{bmatrix} 2+10\\ 1+6\end{bmatrix} = \begin{bmatrix} 12\\ 7\end{bmatrix}.
+\]
+By rows, $(2,5)\cdot(1,2) = 2+10 = 12$ and $(1,3)\cdot(1,2)=1+6=7$. The same four
+multiplications happen in a different order. In particular, if the right-hand side were
+$\vb{b}=(12,7)$, the solution of $A\vb{x}=\vb{b}$ would be $\vb{x}=(1,2)$.
+\end{example}
+
+\subsection{Can every right-hand side be reached?}
+
+For a given square matrix $A$, can we solve $A\vb{x}=\vb{b}$ for \emph{every} $\vb{b}$?
+In the language of the column picture the question becomes: do the linear combinations of
+the columns fill the whole space $\R^n$? For the $2\times2$ example the answer was yes,
+and for the $3\times3$ matrix of \eqref{eq:u01-three} it is also yes. Such matrices are called
+\emph{nonsingular} or \emph{invertible}; Section~\ref{sec:u04} defines the inverse matrix
+that undoes $A$. When the answer is no, $A$ is \emph{singular}.
+
+Here is how the answer can fail in three dimensions. If the three columns happen to lie in
+one plane through the origin, every combination of them lies in that plane too, and no
+right-hand side off the plane can be produced.
+
+\begin{proposition}[A dependent column adds nothing]\label{prop:u01-dependent}
+Let $A$ have columns $\vb{a}_1,\vb{a}_2,\vb{a}_3$ in $\R^3$ and suppose
+$\vb{a}_3 = c_1\vb{a}_1 + c_2\vb{a}_2$. Then every vector $A\vb{x}$ is a combination of
+$\vb{a}_1$ and $\vb{a}_2$ alone.
+\end{proposition}
+
+\begin{proof}
+For any $\vb{x}=(x_1,x_2,x_3)$,
+\[
+  A\vb{x} = x_1\vb{a}_1 + x_2\vb{a}_2 + x_3(c_1\vb{a}_1+c_2\vb{a}_2)
+  = (x_1+c_1x_3)\,\vb{a}_1 + (x_2+c_2x_3)\,\vb{a}_2 . \qedhere
+\]
+\end{proof}
+
+The combinations of two vectors in $\R^3$ fill at most a plane through the origin, so a
+matrix with a dependent column is singular: some $\vb{b}$ are out of reach. (That two
+vectors cannot fill $\R^3$ is intuitively clear; the precise statement, that a space of
+dimension $3$ needs three independent vectors, is proved in Section~\ref{sec:u10}.)
+
+\begin{example}[Three columns in a plane]\label{ex:u01-plane}
+Let $\vb{w}_1=(1,2,3)$, $\vb{w}_2=(4,5,6)$, $\vb{w}_3=(7,8,9)$. Find a combination
+$x_1\vb{w}_1+x_2\vb{w}_2+x_3\vb{w}_3$ that gives the zero vector, and a vector $\vb{b}$ that
+is not a combination of them.
+
+The requirement is three equations:
+\[
+  x_1+4x_2+7x_3=0,\qquad 2x_1+5x_2+8x_3=0,\qquad 3x_1+6x_2+9x_3=0 .
+\]
+Subtract twice the first equation from the second: $-3x_2-6x_3=0$. Subtract three times
+the first from the third: $-6x_2-12x_3=0$, which is twice the previous equation and so
+tells us nothing new. Choose $x_3=1$; then $x_2=-2$ and $x_1=-4x_2-7x_3=8-7=1$. Hence
+\[
+  \vb{w}_1 - 2\vb{w}_2 + \vb{w}_3 = (1-8+7,\; 2-10+8,\; 3-12+9) = (0,0,0).
+\]
+The vectors are \emph{dependent}: $\vb{w}_2=\tfrac12(\vb{w}_1+\vb{w}_3)$ lies in the plane
+of $\vb{w}_1$ and $\vb{w}_3$, so all three lie in one plane through the origin. Which plane?
+Each $\vb{w}_j=(w_1,w_2,w_3)$ satisfies $w_1-2w_2+w_3=0$ ($1-4+3=0$, $4-10+6=0$,
+$7-16+9=0$), and that equation is preserved by adding vectors and multiplying by scalars. So
+every combination $\vb{b}$ satisfies $b_1-2b_2+b_3=0$. The vector $\vb{b}=(1,0,0)$ gives
+$1\neq0$, so $W\vb{x}=(1,0,0)$ has no solution for the matrix $W$ with columns
+$\vb{w}_1,\vb{w}_2,\vb{w}_3$, and $W$ is not invertible.
+\end{example}
+
+The same thinking works in any dimension, even where nothing can be drawn. Nine equations
+in nine unknowns give nine columns, each a vector in $\R^9$. A matrix with random entries
+almost certainly has columns whose combinations fill all of $\R^9$. But if, say, the ninth
+column equals the eighth, it contributes nothing new, and the combinations fill only an
+eight-dimensional ``plane'' through the origin inside $\R^9$. Learning to think about such
+flat pieces of high-dimensional space is the heart of the course.
+
+\begin{trap}
+Do not mix up the two pictures. In the row picture the point $(1,2)$ is a \emph{location}
+in the plane of unknowns; in the column picture the same numbers are \emph{weights}, and the
+arrows live in the plane of right-hand sides, where the target is $\vb{b}=(0,3)$, not
+$(1,2)$. Likewise, $A\vb{x}$ is not only ``rows dotted with $\vb{x}$'': it is a combination
+of the columns of $A$, and that is the view that keeps working when no lines or planes can
+be drawn.
+\end{trap}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u01-multiply}
+Compute $\begin{bmatrix} 1 & 2 & 0\\ 2 & 0 & 3\\ 4 & 1 & 1\end{bmatrix}
+\begin{bmatrix} 3\\ -2\\ 1\end{bmatrix}$ by rows, and again as a combination of columns.
+\end{exercise}
+\begin{solution}
+By rows: $1\cdot3+2\cdot(-2)+0\cdot1=-1$, then $2\cdot3+0\cdot(-2)+3\cdot1=9$, then
+$4\cdot3+1\cdot(-2)+1\cdot1=11$. By columns:
+\[
+  3\begin{bmatrix} 1\\ 2\\ 4\end{bmatrix} - 2\begin{bmatrix} 2\\ 0\\ 1\end{bmatrix}
+  + 1\begin{bmatrix} 0\\ 3\\ 1\end{bmatrix}
+  = \begin{bmatrix} 3-4+0\\ 6-0+3\\ 12-2+1\end{bmatrix}
+  = \begin{bmatrix} -1\\ 9\\ 11\end{bmatrix}. \qedhere
+\]
+\end{solution}
+
+\begin{exercise}\label{ex:u01-shapes}
+True or false: a $3\times2$ matrix $A$ times a $2\times3$ matrix $B$ is a $3\times3$ matrix
+$AB$. State the general rule for the shapes. (Think of $AB$ as $A$ multiplying each column
+of $B$; Section~\ref{sec:u04} develops this.)
+\end{exercise}
+\begin{solution}
+True. Each column of $B$ has $2$ components, which matches the $2$ columns of $A$, so $A$
+can multiply it and produces a vector with $3$ components. $B$ has $3$ columns, so $AB$ has
+$3$ columns of length $3$. In general an $m\times n$ matrix times an $n\times p$ matrix is
+$m\times p$: the inner dimensions must agree and the outer ones give the shape.
+\end{solution}
+
+\begin{exercise}\label{ex:u01-recitation}
+Solve $2x+y=3$, $x-2y=-1$. Sketch the row picture (find two points on each line) and the
+column picture, and write the system in matrix form.
+\end{exercise}
+\begin{solution}
+From the second equation $x=2y-1$; substituting, $2(2y-1)+y=3$, so $5y=5$, $y=1$ and $x=1$.
+Row picture: $2x+y=3$ passes through $(0,3)$ and $(1,1)$; $x-2y=-1$ passes through
+$(0,\tfrac12)$ and $(1,1)$; the lines cross at $(1,1)$. Column picture: the columns are
+$\vb{v}_1=(2,1)$ and $\vb{v}_2=(1,-2)$, and one of each gives the diagonal of the
+parallelogram they span, $(2+1,\,1-2)=(3,-1)=\vb{b}$. Matrix form:
+$\begin{bmatrix} 2 & 1\\ 1 & -2\end{bmatrix}\begin{bmatrix} x\\ y\end{bmatrix}
+=\begin{bmatrix} 3\\ -1\end{bmatrix}$.
+\end{solution}
+
+\begin{exercise}\label{ex:u01-every-b}
+With the columns $\vb{a}_1=(2,-1)$ and $\vb{a}_2=(-1,2)$ of Example~\ref{ex:u01-two-pictures},
+which combination reaches $\vb{b}=(1,1)$? Then find the weights $x,y$ with
+$x\vb{a}_1+y\vb{a}_2=(b_1,b_2)$ for an arbitrary right-hand side, confirming that every $\vb{b}$
+is reachable.
+\end{exercise}
+\begin{solution}
+$\vb{a}_1+\vb{a}_2=(2-1,\,-1+2)=(1,1)$, so $x=y=1$. In general we need $2x-y=b_1$ and
+$-x+2y=b_2$. Adding twice the first equation to the second gives $3x=2b_1+b_2$; adding the
+first to twice the second gives $3y=b_1+2b_2$. So
+\[
+  x=\frac{2b_1+b_2}{3},\qquad y=\frac{b_1+2b_2}{3}.
+\]
+Check: $2x-y=\frac{4b_1+2b_2-b_1-2b_2}{3}=b_1$ and $-x+2y=\frac{-2b_1-b_2+2b_1+4b_2}{3}=b_2$.
+Weights exist for every $\vb{b}$, so the columns fill the plane. For $\vb{b}=(1,1)$ the
+formula gives $x=y=1$ again.
+\end{solution}
+
+\begin{exercise}\label{ex:u01-param}
+The matrix $A$ has columns $(1,0,1)$, $(0,1,1)$ and $(1,1,c)$. For $c=2$, show that the
+columns lie in a plane, find an equation of that plane, and give a right-hand side $\vb{b}$
+for which $A\vb{x}=\vb{b}$ has no solution. For $c=3$, solve $A\vb{x}=(0,0,1)$.
+\end{exercise}
+\begin{solution}
+For $c=2$ the third column is $(1,0,1)+(0,1,1)$, so by
+Proposition~\ref{prop:u01-dependent} every $A\vb{x}$ is a combination
+$s(1,0,1)+t(0,1,1)=(s,\,t,\,s+t)$. These vectors satisfy $b_3=b_1+b_2$, the equation of
+the plane. The vector $\vb{b}=(0,0,1)$ has $b_3=1\neq0=b_1+b_2$, so it is unreachable.
+
+For $c=3$ we need $x_1+x_3=0$, $x_2+x_3=0$ and $x_1+x_2+3x_3=1$. The first two give
+$x_1=x_2=-x_3$, and the third becomes $-x_3-x_3+3x_3=x_3=1$. So $\vb{x}=(-1,-1,1)$, and
+indeed $-(1,0,1)-(0,1,1)+(1,1,3)=(0,0,1)$. The column $(1,1,3)$ is off the plane
+$b_3=b_1+b_2$, which is why the target off that plane can now be reached.
+\end{solution}

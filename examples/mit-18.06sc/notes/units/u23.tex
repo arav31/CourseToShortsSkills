@@ -1,0 +1,381 @@
+% unit: u23
+% sources: sources/095-eigenvalues-and-eigenvectors.txt, sources/041-lecture-21-eigenvalues-and-eigenvectors.txt, sources/194-mit18-06scf11-ses2-8sum-pdf-download-file.txt, sources/042-problem-solving-eigenvalues-and-eigenvectors.txt, sources/195-mit18-06scf11-ses2-8prob-pdf-download-file.txt, sources/196-mit18-06scf11-ses2-8sol-pdf-download-file.txt
+\section{Eigenvalues and eigenvectors}\label{sec:u23}
+
+Up to now a matrix has mostly been the coefficient matrix of a static problem
+$A\vb{x}=\vb{b}$. From here on we also think of a square matrix as an operation that is
+applied again and again: $A\vb{u}$, $A^{2}\vb{u}$, $A^{3}\vb{u}$, or continuously in time.
+For that, the important vectors are the few whose direction $A$ does not change. They and
+their stretching factors, the eigenvectors and eigenvalues, occupy most of the rest of the
+course. This section says what they are and how to find them; the next sections use them.
+
+\subsection{Vectors that keep their direction}
+
+A matrix acts like a function: in goes $\vb{x}$, out comes $A\vb{x}$. For most vectors the
+output points in a new direction. The eigenvectors are the exceptions.
+
+\begin{definition}[Eigenvalue and eigenvector]\label{def:u23-eig}
+Let $A$ be $n\times n$. A number $\lambda$ is an \emph{eigenvalue} of $A$ if there is a
+\emph{nonzero} vector $\vb{x}$ with
+\[
+  A\vb{x}=\lambda\vb{x}.
+\]
+Such an $\vb{x}$ is an \emph{eigenvector} for $\lambda$. The eigenvectors for $\lambda$,
+together with $\vb{0}$, form the \emph{eigenspace} $\Nul{A-\lambda I}$.
+\end{definition}
+
+``Same direction'' allows $\lambda$ to be negative (the vector reverses), zero, or even
+complex. The vector $\vb{0}$ is excluded because $A\vb{0}=\lambda\vb{0}$ for every
+$\lambda$ and would tell us nothing. Any nonzero multiple of an eigenvector is again an
+eigenvector, so ``the'' eigenvector really means a basis for the eigenspace.
+
+\emph{Eigenvalue zero.} $A\vb{x}=0\vb{x}$ says $\vb{x}$ is a nonzero vector in the nullspace.
+So $\lambda=0$ is an eigenvalue exactly when $A$ is singular, and its eigenvectors are the
+nonzero vectors of $\Nul{A}$. Among eigenvalues, zero is no longer special.
+
+Before any formulas, two matrices whose eigenvectors we can see from what they do.
+
+\begin{example}[A projection matrix]\label{ex:u23-projection}
+Let $P$ project $\R^{3}$ onto the plane $x+y+z=0$. By the formula
+$P=I-\vb{n}\vb{n}\T/\vb{n}\T\vb{n}$ with normal $\vb{n}=(1,1,1)$,
+\[
+  P=\frac13\begin{bmatrix} 2&-1&-1\\ -1&2&-1\\ -1&-1&2\end{bmatrix}.
+\]
+A vector already in the plane is not moved: $P\vb{x}=\vb{x}$, so every nonzero vector of the
+plane is an eigenvector with $\lambda=1$, for example $(1,-1,0)$ and $(1,0,-1)$. A vector
+along the normal is projected to zero: $P(1,1,1)=\vb{0}$, so $\vb{n}$ is an eigenvector with
+$\lambda=0$. The eigenvalues are $1,1,0$, and the three eigenvectors are independent. A
+typical vector such as $\vb{b}=(1,0,0)$ is \emph{not} an eigenvector:
+$P\vb{b}=\tfrac13(2,-1,-1)$ points in another direction.
+\end{example}
+
+\begin{example}[A permutation matrix]\label{ex:u23-permutation}
+$B=\begin{bmatrix} 0&1\\ 1&0\end{bmatrix}$ swaps the two components:
+$B(x_1,x_2)=(x_2,x_1)$. The vector $(1,1)$ is unchanged, so it is an eigenvector with
+$\lambda=1$. The vector $(1,-1)$ becomes $(-1,1)$, its negative, so it is an eigenvector
+with $\lambda=-1$. A matrix with no negative entries can still have a negative eigenvalue.
+\end{example}
+
+\subsection{The characteristic equation}
+
+The equation $A\vb{x}=\lambda\vb{x}$ has two unknowns multiplied together, so elimination
+cannot be applied to it directly. The trick is to find $\lambda$ first.
+
+\begin{theorem}[Characteristic equation]\label{thm:u23-chareq}
+$\lambda$ is an eigenvalue of $A$ if and only if
+\[
+  \det(A-\lambda I)=0 .
+\]
+The eigenvectors for $\lambda$ are the nonzero vectors in $\Nul{A-\lambda I}$.
+\end{theorem}
+
+\begin{proof}
+$A\vb{x}=\lambda\vb{x}$ is the same as $(A-\lambda I)\vb{x}=\vb{0}$. A nonzero solution
+exists exactly when $A-\lambda I$ is singular, and a square matrix is singular exactly when
+its determinant is zero (Section~\ref{sec:u20}).
+\end{proof}
+
+By the big formula, $p(\lambda)=\det(A-\lambda I)$ is a polynomial of degree $n$ in
+$\lambda$, the \emph{characteristic polynomial}; its leading term comes from the product of
+the diagonal entries and is $(-\lambda)^{n}$. Over the complex numbers it factors as
+$p(\lambda)=(\lambda_1-\lambda)(\lambda_2-\lambda)\cdots(\lambda_n-\lambda)$, so an
+$n\times n$ matrix has exactly $n$ eigenvalues if repeated roots are counted with their
+multiplicity. The recipe is:
+\begin{enumerate}
+  \item compute $\det(A-\lambda I)$ and find its $n$ roots $\lambda_1,\dots,\lambda_n$;
+  \item for each $\lambda_i$, find the nullspace of the singular matrix $A-\lambda_i I$ by
+  elimination (give the free variable the value $1$).
+\end{enumerate}
+
+\begin{example}[A symmetric $2\times 2$ matrix]\label{ex:u23-31}
+Let $A=\begin{bmatrix} 3&1\\ 1&3\end{bmatrix}$. Then
+\[
+  \det(A-\lambda I)=\begin{vmatrix} 3-\lambda & 1\\ 1 & 3-\lambda\end{vmatrix}
+  =(3-\lambda)^{2}-1=\lambda^{2}-6\lambda+8=(\lambda-4)(\lambda-2),
+\]
+so $\lambda_1=4$ and $\lambda_2=2$. For $\lambda_1=4$:
+$A-4I=\left[\begin{smallmatrix} -1&1\\ 1&-1\end{smallmatrix}\right]$, whose nullspace is the
+line through $\vb{x}_1=(1,1)$. For $\lambda_2=2$:
+$A-2I=\left[\begin{smallmatrix} 1&1\\ 1&1\end{smallmatrix}\right]$, whose nullspace is the
+line through $\vb{x}_2=(-1,1)$. Check: $A(1,1)=(4,4)$ and $A(-1,1)=(-2,2)$.
+Figure~\ref{fig:u23-stretch} shows the two eigenvector lines.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=1.0,>=Stealth]
+  \draw[->,gray] (-3,0) -- (5,0) node[right] {$x_1$};
+  \draw[->,gray] (0,-0.5) -- (0,4.8) node[above] {$x_2$};
+  \draw[blue!50,dashed] (-0.5,-0.5) -- (4.6,4.6);
+  \draw[red!50,dashed] (0.5,-0.5) -- (-2.9,2.9);
+  \draw[->,very thick,blue!60] (0,0) -- (4,4) node[above left] {$A\vb{x}_1=4\vb{x}_1$};
+  \draw[->,very thick,blue!90!black] (0,0) -- (1,1) node[above left] {$\vb{x}_1$};
+  \draw[->,very thick,red!60] (0,0) -- (-2,2) node[left] {$A\vb{x}_2=2\vb{x}_2$};
+  \draw[->,very thick,red!80!black] (0,0) -- (-1,1) node[below left] {$\vb{x}_2$};
+  \draw[->,thick,black!70] (0,0) -- (1,0) node[below] {$\vb{v}$};
+  \draw[->,thick,black!70,dashed] (0,0) -- (3,1) node[right] {$A\vb{v}$};
+\end{tikzpicture}
+\caption{For $A=\left[\begin{smallmatrix} 3&1\\ 1&3\end{smallmatrix}\right]$, vectors on the
+dashed line through $(1,1)$ are stretched by $\lambda_1=4$ and vectors on the line through
+$(-1,1)$ by $\lambda_2=2$, without turning. A typical vector such as $\vb{v}=(1,0)$ is turned:
+$A\vb{v}=(3,1)$ is not a multiple of $\vb{v}$.}
+\label{fig:u23-stretch}
+\end{figure}
+
+The matrix in Example~\ref{ex:u23-31} is $B+3I$, with $B$ the permutation of
+Example~\ref{ex:u23-permutation}. Its eigenvalues $4,2$ are those of $B$ (namely $1,-1$)
+plus $3$, and its eigenvectors are the same lines. This is a general fact.
+
+\begin{proposition}[Shifting by a multiple of $I$]\label{prop:u23-shift}
+If $A\vb{x}=\lambda\vb{x}$, then $(A+cI)\vb{x}=(\lambda+c)\vb{x}$. So $A+cI$ has the
+eigenvalues of $A$ shifted by $c$, with the same eigenvectors.
+\end{proposition}
+
+\begin{proof}
+$(A+cI)\vb{x}=A\vb{x}+c\vb{x}=\lambda\vb{x}+c\vb{x}=(\lambda+c)\vb{x}$.
+\end{proof}
+
+\begin{trap}
+It is tempting to argue: if $A\vb{x}=\lambda\vb{x}$ and $B\vb{x}=\alpha\vb{x}$ then
+$(A+B)\vb{x}=(\lambda+\alpha)\vb{x}$, so eigenvalues add. The flaw is that $A$ and $B$
+usually have \emph{different} eigenvectors, and then nothing can be concluded. For
+$A=\left[\begin{smallmatrix} 0&1\\ 0&0\end{smallmatrix}\right]$ and
+$B=\left[\begin{smallmatrix} 0&0\\ 1&0\end{smallmatrix}\right]$ all four eigenvalues are $0$,
+yet $A+B$ has eigenvalues $1$ and $-1$, and $AB=\left[\begin{smallmatrix} 1&0\\ 0&0\end{smallmatrix}\right]$
+has eigenvalues $1$ and $0$. Eigenvalues are neither additive nor multiplicative; the shift
+$B=cI$ works only because every vector is an eigenvector of $cI$.
+\end{trap}
+
+\subsection{Trace and determinant}
+
+In Example~\ref{ex:u23-31} the coefficient $6$ in $\lambda^{2}-6\lambda+8$ is $3+3$, the sum
+of the diagonal entries, and the constant $8$ is $\det A$. That is no accident.
+
+\begin{theorem}[Sum and product of the eigenvalues]\label{thm:u23-trace}
+Let $\lambda_1,\dots,\lambda_n$ be the eigenvalues of $A$, repeated according to
+multiplicity. Then
+\[
+  \lambda_1+\lambda_2+\dots+\lambda_n=a_{11}+a_{22}+\dots+a_{nn}=\tr A,
+  \qquad
+  \lambda_1\lambda_2\cdots\lambda_n=\det A .
+\]
+\end{theorem}
+
+\begin{proof}
+Compare two expressions for the characteristic polynomial,
+\[
+  \det(A-\lambda I)=(\lambda_1-\lambda)(\lambda_2-\lambda)\cdots(\lambda_n-\lambda).
+\]
+\emph{Product.} Set $\lambda=0$: $\det A=\lambda_1\lambda_2\cdots\lambda_n$.
+
+\emph{Sum.} Look at the coefficient of $\lambda^{n-1}$. On the right it is
+$(-1)^{n-1}(\lambda_1+\dots+\lambda_n)$. On the left, use the big formula: each term is a
+product of $n$ entries of $A-\lambda I$, one from each row and each column. A term that uses
+an off-diagonal entry in position $(i,j)$ cannot also use the diagonal entries of row $i$ or
+of column $j$, so it contains at most $n-2$ factors with $\lambda$. Hence only the diagonal
+product $(a_{11}-\lambda)\cdots(a_{nn}-\lambda)$ reaches $\lambda^{n-1}$, with coefficient
+$(-1)^{n-1}(a_{11}+\dots+a_{nn})$. Equate the two coefficients.
+\end{proof}
+
+For a $2\times 2$ matrix this pins the characteristic equation down completely:
+\[
+  \lambda^{2}-(\tr A)\,\lambda+\det A=0 .
+\]
+Knowing one eigenvalue, the trace gives the other at once. The two facts are also the
+quickest check on a computation: add the eigenvalues and compare with the diagonal.
+
+\begin{example}[Two cities: finding eigenvalues by inspection]\label{ex:u23-markov}
+Each year $80\%$ of the people in city~1 stay and $20\%$ move to city~2, while $70\%$ of
+city~2 stays and $30\%$ moves to city~1. The populations change by
+\[
+  A=\begin{bmatrix} 0.8&0.3\\ 0.2&0.7\end{bmatrix}.
+\]
+Try $\vb{x}_1=(600,400)$:
+$A\vb{x}_1=(480+120,\;120+280)=(600,400)$. So $\vb{x}_1$ is an eigenvector with
+$\lambda_1=1$. The trace is $0.8+0.7=1.5$, so $\lambda_2=1.5-1=0.5$. The determinant
+confirms it: $0.56-0.06=0.5=\lambda_1\lambda_2$. For $\lambda_2$,
+$A-0.5I=\left[\begin{smallmatrix} 0.3&0.3\\ 0.2&0.2\end{smallmatrix}\right]$ has nullspace
+spanned by $\vb{x}_2=(1,-1)$, and indeed $A(1,-1)=(0.5,-0.5)=0.5\,\vb{x}_2$. The two
+eigenvectors are the key to what happens to the populations year after year:
+Section~\ref{sec:u24} follows them.
+\end{example}
+
+\subsection{Complex eigenvalues}
+
+The $90^{\circ}$ rotation $Q=\begin{bmatrix} 0&-1\\ 1&0\end{bmatrix}$ turns every nonzero
+vector, so no real vector can be an eigenvector. The trace and determinant agree that
+something is strange: $\lambda_1+\lambda_2=0$ but $\lambda_1\lambda_2=1$, impossible for
+real numbers. The characteristic equation settles it:
+\[
+  \det(Q-\lambda I)=\begin{vmatrix} -\lambda & -1\\ 1 & -\lambda\end{vmatrix}=\lambda^{2}+1=0,
+  \qquad \lambda_1=i,\quad \lambda_2=-i .
+\]
+For $\lambda_1=i$, the nullspace of $Q-iI$ contains $\vb{x}_1=(1,-i)$; check:
+$Q(1,-i)=(i,1)=i(1,-i)$. Similarly $\vb{x}_2=(1,i)$ goes with $-i$. A perfectly real matrix
+can have complex eigenvalues and eigenvectors.
+
+\begin{proposition}[Conjugate pairs]\label{prop:u23-conj}
+If $A$ is real and $A\vb{x}=\lambda\vb{x}$, then $A\bar{\vb{x}}=\bar\lambda\bar{\vb{x}}$.
+So the nonreal eigenvalues of a real matrix come in conjugate pairs $a\pm ib$, with conjugate
+eigenvectors.
+\end{proposition}
+
+\begin{proof}
+Take complex conjugates of every entry in $A\vb{x}=\lambda\vb{x}$. Since $\bar A=A$, this
+gives $A\bar{\vb{x}}=\bar\lambda\bar{\vb{x}}$, and $\bar{\vb{x}}\neq\vb{0}$.
+\end{proof}
+
+How far a matrix is from symmetric decides how complex its eigenvalues can be. Symmetric
+matrices ($A\T=A$) have real eigenvalues and perpendicular eigenvectors; this is proved in
+Section~\ref{sec:u29}, and the examples $B$ and $\left[\begin{smallmatrix} 3&1\\ 1&3\end{smallmatrix}\right]$
+above show it. The rotation $Q$ is antisymmetric ($Q\T=-Q$), the opposite extreme, and its
+eigenvalues are purely imaginary.
+
+\subsection{Triangular matrices and repeated eigenvalues}
+
+\begin{proposition}[Triangular matrices]\label{prop:u23-triangular}
+The eigenvalues of a triangular matrix are its diagonal entries.
+\end{proposition}
+
+\begin{proof}
+$A-\lambda I$ is triangular with diagonal entries $a_{ii}-\lambda$, and the determinant of a
+triangular matrix is the product of its diagonal entries. So
+$\det(A-\lambda I)=(a_{11}-\lambda)\cdots(a_{nn}-\lambda)$, with roots $a_{11},\dots,a_{nn}$.
+\end{proof}
+
+Triangular matrices show the one real danger in this subject: a repeated eigenvalue can come
+with too few eigenvectors.
+
+\begin{example}[A shortage of eigenvectors]\label{ex:u23-defective}
+$A=\begin{bmatrix} 3&1\\ 0&3\end{bmatrix}$ has $\det(A-\lambda I)=(3-\lambda)^{2}$, so
+$\lambda_1=\lambda_2=3$. The eigenvectors fill the nullspace of
+$A-3I=\left[\begin{smallmatrix} 0&1\\ 0&0\end{smallmatrix}\right]$, which has rank $1$, so
+the nullspace is only the line through $(1,0)$. There is no second independent eigenvector.
+Compare $3I$, which has the same eigenvalues $3,3$ but for which every nonzero vector is an
+eigenvector. A repeated eigenvalue may or may not cost us eigenvectors; Section~\ref{sec:u24}
+explains why this matters.
+\end{example}
+
+\subsection{Eigenvalues of powers, inverses and polynomials}
+
+Once the eigenvectors of $A$ are known, many related matrices come for free.
+
+\begin{proposition}[Functions of $A$]\label{prop:u23-functions}
+Suppose $A\vb{x}=\lambda\vb{x}$. Then $A^{k}\vb{x}=\lambda^{k}\vb{x}$ for $k=1,2,\dots$, and
+for any polynomial $p$, $p(A)\vb{x}=p(\lambda)\vb{x}$. If $A$ is invertible, then
+$\lambda\neq0$ and $A^{-1}\vb{x}=\lambda^{-1}\vb{x}$.
+\end{proposition}
+
+\begin{proof}
+$A^{2}\vb{x}=A(\lambda\vb{x})=\lambda A\vb{x}=\lambda^{2}\vb{x}$, and induction gives
+$A^{k}\vb{x}=\lambda^{k}\vb{x}$. A polynomial $p(A)=c_0I+c_1A+\dots+c_mA^{m}$ then sends
+$\vb{x}$ to $(c_0+c_1\lambda+\dots+c_m\lambda^{m})\vb{x}$. If $A$ is invertible it is not
+singular, so $\lambda\neq0$; multiplying $A\vb{x}=\lambda\vb{x}$ by $A^{-1}$ and dividing by
+$\lambda$ gives $A^{-1}\vb{x}=\lambda^{-1}\vb{x}$.
+\end{proof}
+
+\begin{example}[Eigenvalues of $A^{2}$ and $A^{-1}-I$ without computing them]\label{ex:u23-recitation}
+Find the eigenvalues and eigenvectors of $A^{2}$ and of $A^{-1}-I$ for
+\[
+  A=\begin{bmatrix} 1&2&3\\ 0&1&-2\\ 0&1&4\end{bmatrix}.
+\]
+
+By Proposition~\ref{prop:u23-functions} it is enough to find those of $A$. Expand
+$\det(A-\lambda I)$ down the first column, which has a single nonzero entry:
+\[
+  \det(A-\lambda I)=(1-\lambda)\begin{vmatrix} 1-\lambda & -2\\ 1 & 4-\lambda\end{vmatrix}
+  =(1-\lambda)(\lambda^{2}-5\lambda+6)=(1-\lambda)(\lambda-2)(\lambda-3).
+\]
+The eigenvalues are $1,2,3$ (trace check: $1+1+4=6=1+2+3$). The eigenvectors:
+\begin{itemize}
+  \item $\lambda=1$: $A-I=\left[\begin{smallmatrix} 0&2&3\\ 0&0&-2\\ 0&1&3\end{smallmatrix}\right]$
+  has a zero first column, so $x_1$ is free; the last two rows force $x_3=0$, then $x_2=0$.
+  Eigenvector $(1,0,0)$.
+  \item $\lambda=2$: $A-2I=\left[\begin{smallmatrix} -1&2&3\\ 0&-1&-2\\ 0&1&2\end{smallmatrix}\right]$.
+  Row~2 gives $x_2=-2x_3$; row~1 gives $x_1=2x_2+3x_3=-x_3$. With $x_3=1$: $(-1,-2,1)$.
+  \item $\lambda=3$: $A-3I=\left[\begin{smallmatrix} -2&2&3\\ 0&-2&-2\\ 0&1&1\end{smallmatrix}\right]$.
+  Row~3 gives $x_2=-x_3$; row~1 gives $2x_1=2x_2+3x_3=x_3$. With $x_3=2$: $(1,-2,2)$.
+\end{itemize}
+These three vectors are eigenvectors of $A^{2}$ with eigenvalues $1,4,9$, and of $A^{-1}-I$
+with eigenvalues $\tfrac11-1=0$, $\tfrac12-1=-\tfrac12$ and $\tfrac13-1=-\tfrac23$. We
+never squared or inverted a $3\times3$ matrix.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u23-B012}
+A $3\times3$ matrix $B$ has eigenvalues $0$, $1$, $2$. Which of the following can be
+determined from this information? Give them where possible.
+(a) the rank of $B$; (b) $\det(B\T B)$; (c) the eigenvalues of $B\T B$;
+(d) the eigenvalues of $(B^{2}+I)^{-1}$.
+\end{exercise}
+\begin{solution}
+(a) The rank is $2$. Since $0$ is an eigenvalue, $B$ is singular and the rank is at most $2$.
+Eigenvectors $\vb{x}_1,\vb{x}_2$ for $\lambda=1,2$ lie in the column space, because
+$\vb{x}=B(\vb{x}/\lambda)$ when $\lambda\neq0$. They are independent: if
+$\vb{x}_2=c\,\vb{x}_1$ then $2\vb{x}_2=B\vb{x}_2=c\,\vb{x}_1=\vb{x}_2$, impossible for
+$\vb{x}_2\neq\vb{0}$. So the rank is at least $2$.
+
+(b) $\det(B\T B)=\det B\T\det B=0\cdot0=0$, since $\det B=0\cdot1\cdot2$.
+
+(c) Not determined. For $B=\operatorname{diag}(0,1,2)$, $B\T B=\operatorname{diag}(0,1,4)$
+has eigenvalues $0,1,4$. For the triangular
+$B=\left[\begin{smallmatrix} 0&1&0\\ 0&1&0\\ 0&0&2\end{smallmatrix}\right]$, which also has
+eigenvalues $0,1,2$, we get
+$B\T B=\left[\begin{smallmatrix} 0&0&0\\ 0&2&0\\ 0&0&4\end{smallmatrix}\right]$ with
+eigenvalues $0,2,4$.
+
+(d) By Proposition~\ref{prop:u23-functions}, an eigenvector of $B$ with eigenvalue
+$\lambda$ is an eigenvector of $B^{2}+I$ with eigenvalue $\lambda^{2}+1\neq0$, hence of its
+inverse with eigenvalue $1/(\lambda^{2}+1)$. The eigenvalues are $1$, $\tfrac12$, $\tfrac15$.
+\end{solution}
+
+\begin{exercise}\label{exr:u23-ABC}
+Find the eigenvalues of
+\[
+  A=\begin{bmatrix} 1&2&3\\ 0&4&5\\ 0&0&6\end{bmatrix},\qquad
+  B=\begin{bmatrix} 0&0&1\\ 0&2&0\\ 3&0&0\end{bmatrix},\qquad
+  C=\begin{bmatrix} 2&2&2\\ 2&2&2\\ 2&2&2\end{bmatrix}.
+\]
+\end{exercise}
+\begin{solution}
+$A$ is triangular, so its eigenvalues are $1,4,6$
+(Proposition~\ref{prop:u23-triangular}). For $B$, expand along the middle row:
+\[
+  \det(B-\lambda I)=(2-\lambda)\begin{vmatrix} -\lambda & 1\\ 3 & -\lambda\end{vmatrix}
+  =(2-\lambda)(\lambda^{2}-3),
+\]
+so the eigenvalues are $2$, $\sqrt3$, $-\sqrt3$ (check: the sum is $2=\tr B$ and the product
+$-6$ equals $\det B=-6$). $C$ has rank $1$, so its nullspace is a plane and $\lambda=0$ is an
+eigenvalue twice; the trace $6$ gives the third eigenvalue $6$, with eigenvector $(1,1,1)$.
+Directly, $\det(C-\lambda I)=-\lambda^{3}+6\lambda^{2}=-\lambda^{2}(\lambda-6)$.
+\end{solution}
+
+\begin{exercise}\label{exr:u23-idempotent}
+Show that every eigenvalue of a projection matrix ($P^{2}=P$) is $0$ or $1$.
+\end{exercise}
+\begin{solution}
+If $P\vb{x}=\lambda\vb{x}$ with $\vb{x}\neq\vb{0}$, then by
+Proposition~\ref{prop:u23-functions} $\lambda^{2}\vb{x}=P^{2}\vb{x}=P\vb{x}=\lambda\vb{x}$,
+so $(\lambda^{2}-\lambda)\vb{x}=\vb{0}$ and $\lambda(\lambda-1)=0$. Example~\ref{ex:u23-projection}
+shows both values occurring: the plane gives $\lambda=1$, the normal line $\lambda=0$.
+\end{solution}
+
+\begin{exercise}\label{exr:u23-rotation}
+Find the eigenvalues and eigenvectors of the rotation through the angle $\theta$,
+\[
+  R=\begin{bmatrix} \cos\theta & -\sin\theta\\ \sin\theta & \cos\theta\end{bmatrix},
+\]
+and check Theorem~\ref{thm:u23-trace}.
+\end{exercise}
+\begin{solution}
+$\det(R-\lambda I)=(\cos\theta-\lambda)^{2}+\sin^{2}\theta=\lambda^{2}-2\lambda\cos\theta+1$.
+The quadratic formula gives
+$\lambda=\cos\theta\pm\sqrt{\cos^{2}\theta-1}=\cos\theta\pm i\sin\theta=e^{\pm i\theta}$.
+For $\lambda=e^{i\theta}$, the vector $(1,-i)$ works:
+$R(1,-i)=(\cos\theta+i\sin\theta,\;\sin\theta-i\cos\theta)=e^{i\theta}(1,-i)$; the conjugate
+$(1,i)$ goes with $e^{-i\theta}$ (Proposition~\ref{prop:u23-conj}). The sum
+$e^{i\theta}+e^{-i\theta}=2\cos\theta$ is the trace and the product $1$ is
+$\det R=\cos^{2}\theta+\sin^{2}\theta$. For $\theta=90^{\circ}$ this is the matrix $Q$ above,
+with eigenvalues $\pm i$. Both eigenvalues have $|\lambda|=1$: a rotation does not change
+lengths.
+\end{solution}

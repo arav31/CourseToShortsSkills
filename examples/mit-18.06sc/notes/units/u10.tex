@@ -1,0 +1,333 @@
+% unit: u10
+% sources: sources/087-independence-basis-and-dimension.txt, sources/152-independence-basis-and-dimension.txt, sources/153-mit18-06scf11-ses1-9sum-pdf-download-file.txt, sources/154-basis-and-dimension.txt, sources/155-mit18-06scf11-ses1-9prob-pdf-download-file.txt, sources/156-mit18-06scf11-ses1-9sol-pdf-download-file.txt
+\section{Independence, basis and dimension}\label{sec:u10}
+
+Sections~\ref{sec:u08} and~\ref{sec:u09} spoke loosely of a ``two-dimensional nullspace''. This
+section gives precise meaning to four words: vectors are \emph{independent}, vectors \emph{span} a
+space, vectors form a \emph{basis}, and a space has a \emph{dimension}. The words attach to
+different objects. Independence, spanning and being a basis are properties of a list of vectors;
+dimension is a property of a space; rank is a property of a matrix. The payoff is the pair of
+formulas $\dim\Col{A}=r$ and $\dim\Nul{A}=n-r$.
+
+\subsection{Linear independence}
+
+\begin{definition}[Independence]\label{def:u10-indep}
+Vectors $\vb{v}_1,\dots,\vb{v}_n$ in a vector space are \emph{linearly independent} if the only
+combination that gives the zero vector is the zero combination:
+\[
+c_1\vb{v}_1+c_2\vb{v}_2+\dots+c_n\vb{v}_n=\vb{0}\quad\Longrightarrow\quad c_1=c_2=\dots=c_n=0.
+\]
+Otherwise they are \emph{dependent}: some combination with not all $c_i=0$ gives $\vb{0}$.
+\end{definition}
+
+Two quick cases. The vectors $\vb{v}$ and $2\vb{v}$ are dependent, since
+$2\vb{v}-(2\vb{v})=\vb{0}$. Any list that contains the zero vector is dependent: if
+$\vb{v}_2=\vb{0}$, take $0\cdot\vb{v}_1+6\cdot\vb{v}_2=\vb{0}$. Two vectors are independent when
+they do not lie on one line; three vectors are independent when they do not lie in one plane.
+
+\begin{example}[Three vectors in the plane]\label{ex:u10-three}
+Let $\vb{v}_1=(2,1)$, $\vb{v}_2=(1,2)$, $\vb{v}_3=(\tfrac52,-1)$. Put them in the columns of
+the $2\times3$ matrix $A=\begin{bmatrix}2&1&\tfrac52\\1&2&-1\end{bmatrix}$. It has more columns
+than rows, so Corollary~\ref{cor:u08-wide} guarantees a nonzero $\vb{c}$ in $\Nul{A}$. Elimination
+replaces row~2 by row~2 minus $\tfrac12\,$row~1, which is $(0,\tfrac32,-\tfrac94)$. Choosing the
+free variable $c_3=2$, the second row gives $c_2=3$ and the first gives $c_1=-4$:
+\[
+-4\vb{v}_1+3\vb{v}_2+2\vb{v}_3=(-8+3+5,\;-4+6-2)=(0,0).
+\]
+Figure~\ref{fig:u10-loop} draws this: go out along $3\vb{v}_2$, then along $2\vb{v}_3$, then back
+along $-4\vb{v}_1$, and you are home.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[>=Stealth]
+  \begin{scope}[scale=0.8]
+    \draw[->,gray] (-0.4,0) -- (3.2,0);
+    \draw[->,gray] (0,-1.4) -- (0,2.6);
+    \draw[->,very thick,blue] (0,0) -- (2,1) node[right,font=\small] {$\vb{v}_1$};
+    \draw[->,very thick,orange!80!black] (0,0) -- (1,2) node[above,font=\small] {$\vb{v}_2$};
+    \draw[->,very thick,green!50!black] (0,0) -- (2.5,-1) node[right,font=\small] {$\vb{v}_3$};
+  \end{scope}
+  \begin{scope}[xshift=4.6cm,yshift=-1.0cm,scale=0.42]
+    \draw[->,gray] (-0.6,0) -- (9,0);
+    \draw[->,gray] (0,-0.6) -- (0,6.8);
+    \draw[->,very thick,orange!80!black] (0,0) -- (3,6) node[midway,left,font=\small] {$3\vb{v}_2$};
+    \draw[->,very thick,green!50!black] (3,6) -- (8,4) node[midway,above right,font=\small] {$2\vb{v}_3$};
+    \draw[->,very thick,blue] (8,4) -- (0.12,0.06) node[pos=0.45,below right,font=\small] {$-4\vb{v}_1$};
+    \fill (0,0) circle (3pt);
+  \end{scope}
+\end{tikzpicture}
+\caption{Left: three vectors in $\R^2$. Right: the combination $3\vb{v}_2+2\vb{v}_3-4\vb{v}_1$
+traced head to tail returns to the origin, so the three vectors are dependent. Any three vectors in
+the plane admit such a closed path (Corollary~\ref{cor:u10-toomany}).}
+\label{fig:u10-loop}
+\end{figure}
+
+When the vectors are columns, independence is a statement about a nullspace, and elimination
+decides it.
+
+\begin{theorem}[Independence test]\label{thm:u10-test}
+The columns of an $m\times n$ matrix $A$ are independent if and only if $\Nul{A}=\{\vb{0}\}$, if
+and only if $\rank A=n$ (every column is a pivot column, no free variables).
+\end{theorem}
+\begin{proof}
+$A\vb{c}=c_1\vb{a}_1+\dots+c_n\vb{a}_n$, so a combination of the columns that gives $\vb{0}$ is
+exactly a vector $\vb{c}$ in $\Nul{A}$; the columns are independent precisely when the only such
+vector is $\vb{c}=\vb{0}$. By Theorem~\ref{thm:u08-special}, $\Nul{A}=\{\vb{0}\}$ exactly when there
+are no special solutions, i.e.\ no free columns, i.e.\ $r=n$.
+\end{proof}
+
+\begin{corollary}[Too many vectors]\label{cor:u10-toomany}
+Any $n$ vectors in $\R^m$ with $n>m$ are dependent.
+\end{corollary}
+\begin{proof}
+As columns of an $m\times n$ matrix they give $r\le m<n$, so Theorem~\ref{thm:u10-test} applies.
+\end{proof}
+
+\subsection{Spanning sets and bases}
+
+\begin{definition}[Span]\label{def:u10-span}
+Vectors $\vb{v}_1,\dots,\vb{v}_k$ \emph{span} a space $V$ if $V$ consists of all their linear
+combinations; we write $V=\Span\{\vb{v}_1,\dots,\vb{v}_k\}$. For example, the columns of $A$ span
+$\Col{A}$.
+\end{definition}
+
+The span is the \emph{smallest} subspace containing the vectors: it is a subspace (sums and multiples
+of combinations are combinations), and any subspace that contains $\vb{v}_1,\dots,\vb{v}_k$ must
+contain all their combinations.
+
+\begin{definition}[Basis]\label{def:u10-basis}
+A \emph{basis} for a vector space $V$ is a list of vectors $\vb{v}_1,\dots,\vb{v}_d$ that (i) are
+independent and (ii) span $V$.
+\end{definition}
+
+Spanning means there are enough vectors; independence means there are not too many. A basis tells
+us everything about the space: every vector in it is a combination of the basis vectors, and, by the
+next proposition, in only one way.
+
+\begin{proposition}[Coordinates are unique]\label{prop:u10-unique}
+If $\vb{v}_1,\dots,\vb{v}_d$ is a basis of $V$, every $\vb{v}\in V$ can be written as
+$\vb{v}=c_1\vb{v}_1+\dots+c_d\vb{v}_d$ in exactly one way.
+\end{proposition}
+\begin{proof}
+Spanning gives at least one way. If $\sum c_i\vb{v}_i=\sum c_i'\vb{v}_i$ then
+$\sum(c_i-c_i')\vb{v}_i=\vb{0}$, and independence forces $c_i=c_i'$ for every $i$.
+\end{proof}
+
+\begin{proposition}[Bases of \texorpdfstring{\(\R^n\)}{Rn}]\label{prop:u10-Rn}
+Vectors $\vb{v}_1,\dots,\vb{v}_n$ in $\R^n$ form a basis of $\R^n$ if and only if the $n\times n$
+matrix with these columns is invertible.
+\end{proposition}
+\begin{proof}
+Let $A$ be that matrix. Independence means $r=n$ (Theorem~\ref{thm:u10-test}); spanning $\R^n$ means
+$A\vb{x}=\vb{b}$ is solvable for every $\vb{b}$, i.e.\ $r=m=n$ (Theorem~\ref{thm:u09-fullrank}).
+For a square matrix both say $r=n$, which is invertibility.
+\end{proof}
+
+\begin{example}[Many bases of \texorpdfstring{\(\R^3\)}{R3}]\label{ex:u10-R3}
+The standard basis $(1,0,0),(0,1,0),(0,0,1)$ consists of the columns of $I$, and
+$\Nul{I}=\{\vb{0}\}$. It is far from the only basis. The vectors $(1,1,2)$ and $(2,2,5)$ are
+independent (neither is a multiple of the other) but cannot span $\R^3$: as columns of a $3\times2$
+matrix they give $r\le2<3$. They \emph{are} a basis for the plane they span. To complete them to a
+basis of $\R^3$ we need a third vector outside that plane. $(3,3,7)$ fails, being their sum. The
+vector $(1,0,0)$ works: the matrix $\begin{bmatrix}1&2&1\\1&2&0\\2&5&0\end{bmatrix}$ is invertible
+(its determinant is $1$; elimination finds three pivots).
+\end{example}
+
+\begin{trap}
+In the lecture, after rejecting $(3,3,7)$, the vector $(3,3,8)$ was offered as a third basis vector
+``sticking a little out of the plane''. It does not: the matrix
+$\begin{bmatrix}1&2&3\\1&2&3\\2&5&8\end{bmatrix}$ has two equal rows, so it is not invertible and by
+Proposition~\ref{prop:u10-Rn} its columns are dependent. Indeed $(3,3,8)=-(1,1,2)+2(2,2,5)$. Every
+vector in the plane of $(1,1,2)$ and $(2,2,5)$ has equal first and second components, and so does
+$(3,3,8)$. Checking the \emph{rows} can expose a dependence among the columns that is invisible
+column by column; Section~\ref{sec:u11} explains why (row rank equals column rank).
+\end{trap}
+
+\subsection{Dimension}
+
+All bases of $\R^3$ above had three vectors. That is the central fact of the section.
+
+\begin{lemma}[Independent sets are no larger than spanning sets]\label{lem:u10-count}
+If $\vb{v}_1,\dots,\vb{v}_m$ span $V$ and $\vb{w}_1,\dots,\vb{w}_n\in V$ are independent, then
+$n\le m$.
+\end{lemma}
+\begin{proof}
+Suppose $n>m$. Each $\vb{w}_j$ is a combination of the $\vb{v}$'s:
+$\vb{w}_j=a_{1j}\vb{v}_1+\dots+a_{mj}\vb{v}_m$. Collect the coefficients in the $m\times n$ matrix
+$A=(a_{ij})$; in matrix shorthand $W=VA$, where $V$ and $W$ have the $\vb{v}$'s and $\vb{w}$'s as
+columns. Since $n>m$, Corollary~\ref{cor:u08-wide} gives $\vb{x}\neq\vb{0}$ with $A\vb{x}=\vb{0}$.
+Then $W\vb{x}=VA\vb{x}=\vb{0}$, i.e.\ $x_1\vb{w}_1+\dots+x_n\vb{w}_n=\vb{0}$ with not all $x_j=0$,
+contradicting the independence of the $\vb{w}$'s.
+\end{proof}
+
+\begin{theorem}[Every basis has the same size]\label{thm:u10-dim}
+Any two bases of a vector space $V$ contain the same number of vectors.
+\end{theorem}
+\begin{proof}
+Let $\vb{v}_1,\dots,\vb{v}_m$ and $\vb{w}_1,\dots,\vb{w}_n$ be bases. The $\vb{v}$'s span and the
+$\vb{w}$'s are independent, so $n\le m$ by Lemma~\ref{lem:u10-count}. Exchanging roles,
+$m\le n$.
+\end{proof}
+
+\begin{definition}[Dimension]\label{def:u10-dim}
+The \emph{dimension} of $V$, written $\dim V$, is the number of vectors in any basis of $V$. The
+space $\{\vb{0}\}$ has the empty basis and dimension $0$.
+\end{definition}
+
+So $\dim\R^n=n$, the plane spanned by $(1,1,2)$ and $(2,2,5)$ has dimension $2$, and a line through
+the origin has dimension $1$. Knowing the dimension saves half the work of checking a basis:
+
+\begin{proposition}[The right number of vectors]\label{prop:u10-right}
+Let $\dim V=d$. (a) Any $d$ independent vectors in $V$ form a basis. (b) Any $d$ vectors that span
+$V$ form a basis. (c) Any independent list in $V$ can be extended to a basis of $V$.
+\end{proposition}
+\begin{proof}
+First a remark: if $\vb{u}_1,\dots,\vb{u}_k$ are independent and $\vb{u}\notin\Span\{\vb{u}_i\}$,
+then $\vb{u}_1,\dots,\vb{u}_k,\vb{u}$ are independent. (In a combination equal to $\vb{0}$ the
+coefficient of $\vb{u}$ must vanish, otherwise $\vb{u}$ would be a combination of the $\vb{u}_i$;
+then the other coefficients vanish too.)
+
+(c) Keep adjoining a vector of $V$ outside the current span. Each list stays independent, and by
+Lemma~\ref{lem:u10-count} (comparing with a basis of $d$ vectors) no independent list has more than
+$d$ vectors, so the process stops; when it stops the list spans $V$.
+(a) If $d$ independent vectors did not span $V$, the remark would produce $d+1$ independent vectors,
+contradicting Lemma~\ref{lem:u10-count}.
+(b) If $d$ spanning vectors were dependent, one of them would be a combination of the others and
+could be dropped, leaving $d-1$ spanning vectors; but a basis of $V$ consists of $d$ independent
+vectors, contradicting Lemma~\ref{lem:u10-count}.
+\end{proof}
+
+\subsection{Bases for the column space and the nullspace}
+
+\begin{example}[Pivot columns and special solutions]\label{ex:u10-CN}
+Take
+\[
+A=\begin{bmatrix}1&2&3&1\\1&1&2&1\\1&2&3&1\end{bmatrix},\qquad
+R=\begin{bmatrix}1&0&1&1\\0&1&1&0\\0&0&0&0\end{bmatrix}.
+\]
+The four columns span $\Col{A}$ by definition, but they are not independent: column~3 is
+column~1 plus column~2, and column~4 equals column~1. The pivot columns $(1,1,1)$ and $(2,1,2)$
+form a basis of $\Col{A}$, so $\dim\Col{A}=2=\rank A$. Other bases are columns $1,3$, or columns
+$2,3$, or columns $2,4$, or vectors not among the columns at all such as $(2,2,2)$ and $(7,5,7)$
+(two independent vectors in a two-dimensional space, Proposition~\ref{prop:u10-right}(a)). The
+special solutions
+\[
+\vb{s}_1=(-1,-1,1,0),\qquad \vb{s}_2=(-1,0,0,1)
+\]
+record exactly those two dependencies, and they form a basis of $\Nul{A}$, which has dimension
+$4-2=2$.
+\end{example}
+
+\begin{theorem}[Basis of the column space]\label{thm:u10-col}
+The pivot columns of $A$ (columns of $A$ itself, not of $R$) form a basis of $\Col{A}$. Hence
+$\dim\Col{A}=\rank A$.
+\end{theorem}
+\begin{proof}
+Let $EA=R$ with $E$ invertible; by Proposition~\ref{prop:u08-same-null}, $A\vb{c}=\vb{0}$ if and
+only if $R\vb{c}=\vb{0}$, so the columns of $A$ satisfy exactly the same linear relations as the
+columns of $R$.
+
+\emph{Independent:} a combination of the pivot columns of $A$ equal to $\vb{0}$ is a vector
+$\vb{c}$ with $A\vb{c}=\vb{0}$ and nonzero entries only in pivot positions. Then $R\vb{c}=\vb{0}$.
+The pivot columns of $R$ are the distinct identity columns $\vb{e}_1,\dots,\vb{e}_r$, so
+$R\vb{c}=\sum_i c_{p_i}\vb{e}_i=\vb{0}$ forces every $c_{p_i}=0$.
+
+\emph{Spanning:} for a free column $\vb{a}_j$, the special solution $\vb{s}_j$ has $1$ in position
+$j$, zeros in the other free positions, and $A\vb{s}_j=\vb{0}$. So $\vb{a}_j$ equals minus a
+combination of pivot columns. Every column, hence every vector of $\Col{A}$, is a combination of the
+pivot columns.
+\end{proof}
+
+\begin{theorem}[Basis of the nullspace]\label{thm:u10-null}
+The $n-r$ special solutions form a basis of $\Nul{A}$. Hence $\dim\Nul{A}=n-r$.
+\end{theorem}
+\begin{proof}
+They span $\Nul{A}$ by Theorem~\ref{thm:u08-special}. If $\sum_j c_j\vb{s}_j=\vb{0}$, look at the
+$j$th free position: only $\vb{s}_j$ is nonzero there, with entry $1$, so the left side has entry
+$c_j$ there. Hence every $c_j=0$.
+\end{proof}
+
+Mind the grammar: a matrix has a rank, a space has a dimension. ``The rank of $A$ is the dimension
+of its column space'' is correct; ``the dimension of $A$'' and ``the rank of $\Col{A}$'' are not.
+
+\begin{example}[Basis and dimension of a span]\label{ex:u10-span}
+Find a basis and the dimension of the subspace of $\R^5$ spanned by
+\[
+\vb{w}_1=(1,1,-2,0,-1),\ \ \vb{w}_2=(1,2,0,-4,1),\ \ \vb{w}_3=(0,1,3,-3,2),\ \ \vb{w}_4=(2,3,0,-2,0).
+\]
+\emph{As rows.} Put the vectors in the rows of a matrix and eliminate: row~2 $-$ row~1 and
+row~4 $-\,2\,$row~1 give $(0,1,2,-4,2)$ and $(0,1,4,-2,2)$; subtracting this new row~2 from rows~3
+and~4 gives $(0,0,1,1,0)$ and $(0,0,2,2,0)$; finally row~4 $-\,2\,$row~3 $=\vb{0}$. Every step
+replaces a row by a combination of rows and can be undone, so the span of the rows never changes.
+The three nonzero rows
+\[
+(1,1,-2,0,-1),\qquad(0,1,2,-4,2),\qquad(0,0,1,1,0)
+\]
+are independent (look at the staircase of leading entries) and span the space: a basis, and the
+dimension is $3$.
+
+\emph{As columns.} Put the vectors in the columns of a $5\times4$ matrix instead. Elimination
+finds pivots in columns $1,2,3$, so $\vb{w}_1,\vb{w}_2,\vb{w}_3$ themselves form a basis
+(Theorem~\ref{thm:u10-col}); the free column records $\vb{w}_4=3\vb{w}_1-\vb{w}_2+2\vb{w}_3$. Here
+one must use the original columns: the columns of the eliminated matrix have zeros in their last two
+entries and span a different space. Both answers are correct; a space has many bases but one
+dimension.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u10-six}
+Find the largest possible number of independent vectors among
+\begin{gather*}
+\vb{v}_1=(1,-1,0,0),\ \vb{v}_2=(1,0,-1,0),\ \vb{v}_3=(1,0,0,-1),\\
+\vb{v}_4=(0,1,-1,0),\ \vb{v}_5=(0,1,0,-1),\ \vb{v}_6=(0,0,1,-1).
+\end{gather*}
+\end{exercise}
+\begin{solution}
+Observe $\vb{v}_4=\vb{v}_2-\vb{v}_1$, $\vb{v}_5=\vb{v}_3-\vb{v}_1$ and $\vb{v}_6=\vb{v}_3-\vb{v}_2$,
+so the span is that of $\vb{v}_1,\vb{v}_2,\vb{v}_3$. Eliminating
+$\begin{bmatrix}\vb{v}_1&\vb{v}_2&\vb{v}_3\end{bmatrix}$ (row~2 $+$ row~1, then row~3 $+$ row~2,
+then row~4 $+$ row~3) leaves pivots $1,1,1$ in the first three rows and a zero fourth row: three
+pivots, so $\vb{v}_1,\vb{v}_2,\vb{v}_3$ are independent. The answer is $3$, the rank of the
+$4\times6$ matrix of all six vectors. (All six vectors have components adding to zero, so they lie
+in a three-dimensional subspace of $\R^4$; Section~\ref{sec:u13} meets them again as the edges of a
+graph.)
+\end{solution}
+
+\begin{exercise}\label{exr:u10-plane}
+Find a basis for the plane $x-2y+3z=0$ in $\R^3$, then a basis for its intersection with the
+$xy$-plane, then a basis for all vectors perpendicular to the plane.
+\end{exercise}
+\begin{solution}
+The plane is $\Nul{\begin{bmatrix}1&-2&3\end{bmatrix}}$. The pivot variable is $x$; the special
+solutions are $\vb{v}_1=(2,1,0)$ (from $y=1,z=0$) and $\vb{v}_2=(-3,0,1)$ (from $y=0,z=1$), a basis
+of the plane. The intersection with the $xy$-plane ($z=0$) contains $\vb{v}_1$ but not $\vb{v}_2$,
+so it is a line, with basis $\vb{v}_1$. The vector $\vb{v}_3=(1,-2,3)$ satisfies
+$\vb{v}_3\cdot\vb{v}_1=2-2+0=0$ and $\vb{v}_3\cdot\vb{v}_2=-3+0+3=0$, so it is perpendicular to the
+plane; the perpendicular vectors form a line, with basis $\vb{v}_3$.
+\end{solution}
+
+\begin{exercise}\label{exr:u10-wdep}
+Suppose $\vb{w}_1,\vb{w}_2,\vb{w}_3$ are independent. Show that $\vb{v}_1=\vb{w}_2-\vb{w}_3$,
+$\vb{v}_2=\vb{w}_1-\vb{w}_3$, $\vb{v}_3=\vb{w}_1-\vb{w}_2$ are dependent, and that
+$\vb{u}_1=\vb{w}_2+\vb{w}_3$, $\vb{u}_2=\vb{w}_1+\vb{w}_3$, $\vb{u}_3=\vb{w}_1+\vb{w}_2$ are
+independent.
+\end{exercise}
+\begin{solution}
+$\vb{v}_1-\vb{v}_2+\vb{v}_3=(\vb{w}_2-\vb{w}_3)-(\vb{w}_1-\vb{w}_3)+(\vb{w}_1-\vb{w}_2)=\vb{0}$ is a
+nonzero combination giving $\vb{0}$. For the $\vb{u}$'s, suppose
+$c_1\vb{u}_1+c_2\vb{u}_2+c_3\vb{u}_3=\vb{0}$, i.e.
+$(c_2+c_3)\vb{w}_1+(c_1+c_3)\vb{w}_2+(c_1+c_2)\vb{w}_3=\vb{0}$. Independence of the $\vb{w}$'s gives
+$c_2+c_3=c_1+c_3=c_1+c_2=0$; adding, $c_1+c_2+c_3=0$, and subtracting each equation gives
+$c_1=c_2=c_3=0$.
+\end{solution}
+
+\begin{exercise}\label{exr:u10-invertible}
+Let $\vb{v}_1,\dots,\vb{v}_n$ be a basis of $\R^n$ and $B$ an invertible $n\times n$ matrix. Show
+that $B\vb{v}_1,\dots,B\vb{v}_n$ is also a basis of $\R^n$.
+\end{exercise}
+\begin{solution}
+If $\sum c_iB\vb{v}_i=\vb{0}$ then $B\bigl(\sum c_i\vb{v}_i\bigr)=\vb{0}$; multiplying by $B^{-1}$
+gives $\sum c_i\vb{v}_i=\vb{0}$, so all $c_i=0$. The $n$ vectors $B\vb{v}_i$ are therefore
+independent, and since $\dim\R^n=n$, Proposition~\ref{prop:u10-right}(a) says they form a basis.
+\end{solution}

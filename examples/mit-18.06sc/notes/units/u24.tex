@@ -1,0 +1,392 @@
+% unit: u24
+% sources: sources/092-diagonalization-and-powers-of-a.txt, sources/043-lecture-22-diagonalization-and-powers-of-a.txt, sources/197-mit18-06scf11-ses2-9sum-pdf-download-file.txt, sources/044-problem-solving-powers-of-a-matrix.txt, sources/198-mit18-06scf11-ses2-9prob-pdf-download-file.txt, sources/199-mit18-06scf11-ses2-9sol-pdf-download-file.txt, short_plan.json (s04)
+\section{Diagonalization and powers of \texorpdfstring{\(A\)}{A}}\label{sec:u24}
+
+Section~\ref{sec:u23} found eigenvalues and eigenvectors one at a time. Now we use all of
+them at once. Putting the eigenvectors into the columns of a matrix turns $A$ into a
+diagonal matrix, and that single factorization makes powers of $A$ easy: $A^{100}$ costs no
+more than $A$. Powers of a matrix are what we need for any process that repeats the same
+linear step, such as populations that move every year or the Fibonacci numbers.
+
+\subsection{The eigenvector matrix diagonalizes \texorpdfstring{\(A\)}{A}}
+
+\begin{theorem}[Diagonalization]\label{thm:u24-diag}
+Suppose the $n\times n$ matrix $A$ has $n$ linearly independent eigenvectors
+$\vb{x}_1,\dots,\vb{x}_n$, with $A\vb{x}_i=\lambda_i\vb{x}_i$. Put them in the columns of
+the \emph{eigenvector matrix} $X$ and the eigenvalues on the diagonal of the
+\emph{eigenvalue matrix} $\Lambda$:
+\[
+  X=\begin{bmatrix} \vb{x}_1 & \cdots & \vb{x}_n\end{bmatrix},\qquad
+  \Lambda=\begin{bmatrix} \lambda_1 & & \\ & \ddots & \\ & & \lambda_n\end{bmatrix}.
+\]
+Then $AX=X\Lambda$, and since $X$ is invertible,
+\[
+  X^{-1}AX=\Lambda\qquad\text{and}\qquad A=X\Lambda X^{-1}.
+\]
+Conversely, if $A=X\Lambda X^{-1}$ with $X$ invertible and $\Lambda$ diagonal, then the
+columns of $X$ are $n$ independent eigenvectors of $A$ and the diagonal entries of $\Lambda$
+are the matching eigenvalues.
+\end{theorem}
+
+\begin{proof}
+Multiply a column at a time. Column $j$ of $AX$ is $A\vb{x}_j=\lambda_j\vb{x}_j$. Column $j$
+of $X\Lambda$ is $X$ times column $j$ of $\Lambda$, which is $\lambda_j$ times the $j$th
+unit vector, so it is $\lambda_j\vb{x}_j$ as well. Hence $AX=X\Lambda$. The columns of $X$ are
+independent, so $X^{-1}$ exists; multiplying on the left or on the right by $X^{-1}$ gives
+the two forms. Conversely, $A=X\Lambda X^{-1}$ gives $AX=X\Lambda$, whose column $j$ reads
+$A\vb{x}_j=\lambda_j\vb{x}_j$; and $\vb{x}_j\neq\vb{0}$ because $X$ is invertible.
+\end{proof}
+
+A matrix that can be written this way is called \emph{diagonalizable}. The lectures call the
+eigenvector matrix $S$; these notes write $X$, as in the notation table. To remember the
+order of the factors, note that $A$ multiplies its eigenvectors, so $X$ stands immediately to
+the right of $A$ in $AX=X\Lambda$. The factorization $A=X\Lambda X^{-1}$ joins $A=LU$ from
+elimination and $A=QR$ from Gram--Schmidt; unlike those two, it describes what $A$
+\emph{does} when it is applied repeatedly.
+
+\begin{example}[Diagonalizing the two-city matrix]\label{ex:u24-diag}
+In Section~\ref{sec:u23} the two-city matrix
+$A=\left[\begin{smallmatrix} 0.8&0.3\\ 0.2&0.7\end{smallmatrix}\right]$ had eigenvalues $1$
+and $0.5$ with eigenvectors along $(600,400)$ and $(1,-1)$. Scale the first to $(3,2)$:
+\[
+  X=\begin{bmatrix} 3&1\\ 2&-1\end{bmatrix},\qquad
+  \Lambda=\begin{bmatrix} 1&0\\ 0&0.5\end{bmatrix},\qquad
+  X^{-1}=\frac{1}{-5}\begin{bmatrix} -1&-1\\ -2&3\end{bmatrix}
+  =\frac15\begin{bmatrix} 1&1\\ 2&-3\end{bmatrix}.
+\]
+Check: $X\Lambda=\left[\begin{smallmatrix} 3&0.5\\ 2&-0.5\end{smallmatrix}\right]$ and
+\[
+  X\Lambda X^{-1}=\frac15\begin{bmatrix} 3+1 & 3-1.5\\ 2-1 & 2+1.5\end{bmatrix}
+  =\begin{bmatrix} 0.8&0.3\\ 0.2&0.7\end{bmatrix}=A .
+\]
+\end{example}
+
+\subsection{Powers of \texorpdfstring{\(A\)}{A}}
+
+Squaring $A=X\Lambda X^{-1}$, the inner $X^{-1}X$ cancels:
+$A^{2}=X\Lambda X^{-1}X\Lambda X^{-1}=X\Lambda^{2}X^{-1}$.
+
+\begin{proposition}[Powers]\label{prop:u24-powers}
+If $A=X\Lambda X^{-1}$, then $A^{k}=X\Lambda^{k}X^{-1}$ for every $k\ge1$, where
+$\Lambda^{k}=\operatorname{diag}(\lambda_1^{k},\dots,\lambda_n^{k})$. So $A^{k}$ has the same
+eigenvectors as $A$ and eigenvalues $\lambda_i^{k}$. If $A$ is invertible the same holds for
+$k=-1$.
+\end{proposition}
+
+\begin{proof}
+In the product of $k$ copies of $X\Lambda X^{-1}$, each of the $k-1$ inner pairs
+$X^{-1}X$ equals $I$, leaving $X\Lambda^{k}X^{-1}$. A power of a diagonal matrix is
+diagonal with the powers of its entries. For $k=-1$, $(X\Lambda X^{-1})^{-1}=X\Lambda^{-1}X^{-1}$,
+which exists when no $\lambda_i$ is zero.
+\end{proof}
+
+Compare this with $LU$: multiplying $LU$ by itself a hundred times gives a hundred factors
+that do not simplify. The eigenvector picture is the one that makes $A^{100}$ transparent.
+For the two-city matrix of Example~\ref{ex:u24-diag},
+\[
+  A^{k}=X\begin{bmatrix} 1&0\\ 0&0.5^{k}\end{bmatrix}X^{-1}
+  =\frac15\begin{bmatrix} 3+2(0.5)^{k} & 3-3(0.5)^{k}\\ 2-2(0.5)^{k} & 2+3(0.5)^{k}\end{bmatrix}
+  \;\longrightarrow\;\begin{bmatrix} 0.6&0.6\\ 0.4&0.4\end{bmatrix}\quad(k\to\infty).
+\]
+At $k=1$ this gives back $A$. The question ``does $A^{k}$ go to zero?'' cannot be answered
+from the pivots, but the eigenvalues answer it at once.
+
+\begin{theorem}[When powers go to zero]\label{thm:u24-stable}
+Let $A$ be diagonalizable with eigenvalues $\lambda_1,\dots,\lambda_n$. Then $A^{k}\to0$ as
+$k\to\infty$ if and only if $|\lambda_i|<1$ for every $i$.
+\end{theorem}
+
+\begin{proof}
+If every $|\lambda_i|<1$, then each $\lambda_i^{k}\to0$, so $\Lambda^{k}\to0$ and
+$A^{k}=X\Lambda^{k}X^{-1}\to0$ because $X$ and $X^{-1}$ do not change with $k$. Conversely,
+if some $|\lambda_j|\ge1$, then $A^{k}\vb{x}_j=\lambda_j^{k}\vb{x}_j$ has length
+$|\lambda_j|^{k}\|\vb{x}_j\|\ge\|\vb{x}_j\|>0$ for every $k$, so $A^{k}$ does not go to zero.
+\end{proof}
+
+The absolute value matters because eigenvalues can be negative or complex. The theorem stays
+true for matrices that cannot be diagonalized (Exercise~\ref{exr:u24-jordan} shows one), but
+that proof needs the Jordan form of Section~\ref{sec:u32}.
+
+\subsection{Which matrices can be diagonalized?}
+
+Everything above assumed $n$ independent eigenvectors. Distinct eigenvalues guarantee them.
+
+\begin{theorem}[Distinct eigenvalues give independent eigenvectors]\label{thm:u24-distinct}
+Eigenvectors $\vb{x}_1,\dots,\vb{x}_k$ that belong to distinct eigenvalues
+$\lambda_1,\dots,\lambda_k$ are linearly independent. In particular, an $n\times n$ matrix
+with $n$ distinct eigenvalues is diagonalizable.
+\end{theorem}
+
+\begin{proof}
+Induction on $k$; one nonzero vector is independent. Suppose the statement holds for $k-1$
+vectors, and $c_1\vb{x}_1+\dots+c_k\vb{x}_k=\vb{0}$. Multiply by $A-\lambda_kI$. Since
+$(A-\lambda_kI)\vb{x}_i=(\lambda_i-\lambda_k)\vb{x}_i$, the last term disappears:
+\[
+  c_1(\lambda_1-\lambda_k)\vb{x}_1+\dots+c_{k-1}(\lambda_{k-1}-\lambda_k)\vb{x}_{k-1}=\vb{0}.
+\]
+By the induction hypothesis every coefficient is zero, and $\lambda_i\neq\lambda_k$, so
+$c_1=\dots=c_{k-1}=0$. Then $c_k\vb{x}_k=\vb{0}$ forces $c_k=0$.
+\end{proof}
+
+A random matrix has distinct eigenvalues (MATLAB's \texttt{eig(rand(10))} will show ten
+different numbers), so ``most'' matrices are diagonalizable. Trouble can come only from
+repeated eigenvalues, and then we must count.
+
+\begin{definition}[Algebraic and geometric multiplicity]\label{def:u24-mult}
+The \emph{algebraic multiplicity} of an eigenvalue $\lambda$ is the number of times it is a
+root of $\det(A-\lambda I)$. Its \emph{geometric multiplicity} is the number of independent
+eigenvectors, $\dim\Nul{A-\lambda I}$.
+\end{definition}
+
+The geometric multiplicity is at least $1$ and never exceeds the algebraic one (a proof uses
+the similar matrices of Section~\ref{sec:u32}). Eigenvectors from different eigenspaces
+combine independently, by the same argument as Theorem~\ref{thm:u24-distinct}, so $A$ is
+diagonalizable exactly when the geometric multiplicities add up to $n$, that is, when every
+eigenvalue has as many independent eigenvectors as its algebraic multiplicity.
+
+\begin{example}[Repeated eigenvalues, two outcomes]\label{ex:u24-repeated}
+The $n\times n$ identity has the eigenvalue $1$ repeated $n$ times, and every nonzero vector
+is an eigenvector; any invertible $X$ gives $X^{-1}IX=I=\Lambda$. In contrast,
+$A=\left[\begin{smallmatrix} 2&1\\ 0&2\end{smallmatrix}\right]$ has
+$\det(A-\lambda I)=(2-\lambda)^{2}$, algebraic multiplicity $2$, but
+$A-2I=\left[\begin{smallmatrix} 0&1\\ 0&0\end{smallmatrix}\right]$ has a one-dimensional
+nullspace spanned by $(1,0)$: geometric multiplicity $1$. There is no invertible $X$ with
+$X^{-1}AX$ diagonal; indeed the only diagonal candidate is $\Lambda=2I$, and
+$X(2I)X^{-1}=2I\neq A$.
+\end{example}
+
+\begin{trap}
+Diagonalizable and invertible are unrelated properties. Invertibility is about the
+eigenvalues (none is $0$); diagonalizability is about the eigenvectors (enough of them).
+$\left[\begin{smallmatrix} 2&1\\ 0&2\end{smallmatrix}\right]$ is invertible but not
+diagonalizable; $\left[\begin{smallmatrix} 1&0\\ 0&0\end{smallmatrix}\right]$ is
+diagonalizable but singular. Also, $X$ is not unique: its columns can be rescaled and
+reordered, as long as $\Lambda$ is reordered the same way.
+\end{trap}
+
+\subsection{Difference equations \texorpdfstring{\(\vb{u}_{k+1}=A\vb{u}_k\)}{u(k+1) = A u(k)}}
+
+Start with a vector $\vb{u}_0$ and apply the same step over and over:
+$\vb{u}_1=A\vb{u}_0$, $\vb{u}_2=A\vb{u}_1=A^{2}\vb{u}_0$, and in general
+$\vb{u}_k=A^{k}\vb{u}_0$. This is a first-order system of difference equations. The compact
+formula $A^{k}\vb{u}_0$ does not show what happens; the eigenvectors do.
+
+\begin{proposition}[Solution by eigenvectors]\label{prop:u24-difference}
+Let $A$ have independent eigenvectors $\vb{x}_1,\dots,\vb{x}_n$ with eigenvalues
+$\lambda_1,\dots,\lambda_n$, and write the start as $\vb{u}_0=c_1\vb{x}_1+\dots+c_n\vb{x}_n$,
+that is, solve $X\vb{c}=\vb{u}_0$. Then
+\[
+  \vb{u}_k=A^{k}\vb{u}_0=c_1\lambda_1^{k}\vb{x}_1+c_2\lambda_2^{k}\vb{x}_2+\dots+c_n\lambda_n^{k}\vb{x}_n
+  =X\Lambda^{k}\vb{c}.
+\]
+\end{proposition}
+
+\begin{proof}
+$A^{k}$ is linear and $A^{k}\vb{x}_i=\lambda_i^{k}\vb{x}_i$, so
+$A^{k}\vb{u}_0=\sum_i c_iA^{k}\vb{x}_i=\sum_i c_i\lambda_i^{k}\vb{x}_i$. In matrix form,
+$A^{k}\vb{u}_0=X\Lambda^{k}X^{-1}\vb{u}_0=X\Lambda^{k}\vb{c}$.
+\end{proof}
+
+Each eigenvector component goes its own way, multiplied by its own $\lambda$ at every step.
+The three tasks are: find the eigenvalues, find the eigenvectors, find the $c_i$ from
+$\vb{u}_0$. The eigenvalues alone already tell whether $\vb{u}_k$ grows, decays or settles.
+
+\begin{example}[Where do the 1000 people end up?]\label{ex:u24-cities}
+A thousand people move between two cities by the rule of Example~\ref{ex:u24-diag}: each
+year $80\%$ of city~1 stays and $20\%$ moves, $70\%$ of city~2 stays and $30\%$ moves. All
+start in city~1: $\vb{u}_0=(1000,0)$.
+
+\emph{Eigenvectors.} $A(600,400)=(480+120,\,120+280)=(600,400)$, so $\lambda_1=1$ with
+$\vb{x}_1=(600,400)$; and $A(1,-1)=(0.5,-0.5)$, so $\lambda_2=0.5$ with $\vb{x}_2=(1,-1)$.
+
+\emph{Split the start.} $(1000,0)=(600,400)+400\,(1,-1)$, so $c_1=1$ and $c_2=400$.
+
+\emph{Follow each piece.} The $\lambda=1$ piece never changes; the $\lambda=0.5$ piece
+halves every year:
+\[
+  \vb{u}_k=(600,400)+400\,(0.5)^{k}\,(1,-1).
+\]
+\begin{center}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+year $k$ & 0 & 1 & 2 & 3 & 4 & $\infty$\\
+\midrule
+city 1 & 1000 & 800 & 700 & 650 & 625 & 600\\
+city 2 & 0 & 200 & 300 & 350 & 375 & 400\\
+gap $400(0.5)^{k}$ & 400 & 200 & 100 & 50 & 25 & 0\\
+\bottomrule
+\end{tabular}
+\end{center}
+A direct multiplication confirms one step: $A(800,200)=(640+60,\,160+140)=(700,300)$.
+
+\emph{Interpretation.} The populations approach the steady state $(600,400)$, the
+eigenvector for $\lambda=1$, and the distance to it halves every year because the other
+eigenvalue is $\tfrac12$ (Figure~\ref{fig:u24-cities}). Starting instead from
+$(0,1000)=(600,400)-600\,(1,-1)$ gives $\vb{u}_1=(300,700)$ and the same limit $(600,400)$:
+the start only decides how large the decaying piece is.
+\end{example}
+
+\begin{figure}[ht]\centering
+\begin{tikzpicture}[scale=0.78,>=Stealth]
+  \draw[->] (-0.3,0) -- (11.2,0) node[right] {city 1};
+  \draw[->] (0,-0.3) -- (0,7.2) node[above] {city 2};
+  \foreach \x in {2,4,6,8,10} \draw (\x,0.1) -- (\x,-0.1) node[below] {\small $\x00$};
+  \foreach \y in {2,4,6} \draw (0.1,\y) -- (-0.1,\y) node[left] {\small $\y00$};
+  % eigenvector lines
+  \draw[blue!60,dashed] (0,0) -- (10.5,7) node[right] {\small $\lambda_1=1$};
+  \draw[red!60,dashed] (11,-1) -- (3.5,6.5) node[above] {\small $\lambda_2=\tfrac12$};
+  % fixed arrow and sliding arrow
+  \draw[->,very thick,blue!80!black] (0,0) -- (6,4);
+  \draw[->,very thick,red!80!black] (6,4) -- (10,0);
+  \draw[->,thick,red!70!black] (6,4) -- (8,2);
+  % states
+  \foreach \p/\l/\a in {(10,0)/0/above right,(8,2)/1/above right,(7,3)/2/above right,(6.5,3.5)/3/above right}
+    \fill[black] \p circle (2.5pt) node[\a] {\small $\vb{u}_{\l}$};
+  \fill[black] (6.25,3.75) circle (2pt);
+  \fill[blue!80!black] (6,4) circle (3pt) node[above left] {$(600,400)$};
+  \node[blue!80!black] at (2.6,2.6) {$\vb{x}_1$};
+\end{tikzpicture}
+\caption{The two-city model of Example~\ref{ex:u24-cities}. Every state lies on the line
+$u_1+u_2=1000$ through the steady state $(600,400)$ in the direction $(1,-1)$. Each state is
+the fixed arrow $(600,400)$ plus a sliding arrow $400(0.5)^{k}(1,-1)$; every year the sliding
+arrow halves and the state hops $\vb{u}_0\to\vb{u}_1\to\vb{u}_2\to\dots$ toward $(600,400)$.}
+\label{fig:u24-cities}
+\end{figure}
+
+\subsection{Fibonacci numbers}
+
+The Fibonacci numbers $0,1,1,2,3,5,8,13,\dots$ obey $F_{k+2}=F_{k+1}+F_k$. How fast do
+they grow, and what is $F_{100}$? The rule is a single second-order equation; a small trick
+makes it a first-order system. Let $\vb{u}_k=(F_{k+1},F_k)$ and add the trivial equation
+$F_{k+1}=F_{k+1}$:
+\[
+  \begin{aligned} F_{k+2}&=F_{k+1}+F_k\\ F_{k+1}&=F_{k+1}\end{aligned}
+  \qquad\Longleftrightarrow\qquad
+  \vb{u}_{k+1}=\begin{bmatrix} 1&1\\ 1&0\end{bmatrix}\vb{u}_k .
+\]
+
+\begin{example}[A formula for $F_k$]\label{ex:u24-fibonacci}
+For $A=\left[\begin{smallmatrix} 1&1\\ 1&0\end{smallmatrix}\right]$ the trace is $1$ and the
+determinant is $-1$, so
+\[
+  \det(A-\lambda I)=\lambda^{2}-\lambda-1=0,\qquad
+  \lambda_1=\frac{1+\sqrt5}{2}\approx1.618,\qquad
+  \lambda_2=\frac{1-\sqrt5}{2}\approx-0.618 .
+\]
+The equation $\lambda^{2}=\lambda+1$ is the Fibonacci rule itself. The eigenvalues are
+distinct, so $A$ is diagonalizable. For the eigenvectors,
+$A-\lambda I=\left[\begin{smallmatrix} 1-\lambda & 1\\ 1 & -\lambda\end{smallmatrix}\right]$
+kills $(\lambda,1)$: the second row gives $\lambda-\lambda=0$ and the first gives
+$(1-\lambda)\lambda+1=-(\lambda^{2}-\lambda-1)=0$. So $\vb{x}_1=(\lambda_1,1)$ and
+$\vb{x}_2=(\lambda_2,1)$.
+
+The start is $\vb{u}_0=(F_1,F_0)=(1,0)=c_1\vb{x}_1+c_2\vb{x}_2$. The second components give
+$c_1+c_2=0$, the first $c_1\lambda_1+c_2\lambda_2=1$, so
+$c_1=-c_2=1/(\lambda_1-\lambda_2)=1/\sqrt5$. Reading off the second component of
+$\vb{u}_k=c_1\lambda_1^{k}\vb{x}_1+c_2\lambda_2^{k}\vb{x}_2$:
+\[
+  F_k=\frac{1}{\sqrt5}\left(\frac{1+\sqrt5}{2}\right)^{k}-\frac{1}{\sqrt5}\left(\frac{1-\sqrt5}{2}\right)^{k}.
+\]
+The second term is smaller than $\tfrac12$ in absolute value for every $k\ge0$ and shrinks
+fast, so $F_k$ is the integer nearest to $\lambda_1^{k}/\sqrt5$. For $k=10$:
+$\lambda_1^{10}/\sqrt5\approx55.004$ and $F_{10}=55$. For $k=100$: $F_{100}\approx3.54\times10^{20}$.
+The large eigenvalue controls the growth: each Fibonacci number is about $1.618$ times the
+previous one.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{exr:u24-allX}
+Describe all matrices $X$ that diagonalize
+$A=\left[\begin{smallmatrix} 4&0\\ 1&2\end{smallmatrix}\right]$. Then describe all matrices
+that diagonalize $A^{-1}$.
+\end{exercise}
+\begin{solution}
+$A$ is triangular, so $\lambda_1=4$, $\lambda_2=2$. For $\lambda_1=4$:
+$A-4I=\left[\begin{smallmatrix} 0&0\\ 1&-2\end{smallmatrix}\right]$, so $y=2z$ and the
+eigenvectors are the nonzero multiples of $(2,1)$. For $\lambda_2=2$:
+$A-2I=\left[\begin{smallmatrix} 2&0\\ 1&0\end{smallmatrix}\right]$, so $y=0$ and the
+eigenvectors are the nonzero multiples of $(0,1)$. The diagonalizing matrices are
+$X=\left[\begin{smallmatrix} 2a&0\\ a&b\end{smallmatrix}\right]$ and
+$X=\left[\begin{smallmatrix} 0&2a\\ b&a\end{smallmatrix}\right]$ with $a,b\neq0$ (the
+eigenvalues in $\Lambda$ then come in the order $4,2$ or $2,4$). Since
+$A^{-1}=X\Lambda^{-1}X^{-1}$, exactly the same matrices diagonalize $A^{-1}$.
+\end{solution}
+
+\begin{exercise}\label{exr:u24-limit}
+Diagonalize $A=\left[\begin{smallmatrix} 0.6&0.9\\ 0.4&0.1\end{smallmatrix}\right]$. What
+is the limit of $\Lambda^{k}$ as $k\to\infty$? What is the limit of $X\Lambda^{k}X^{-1}$,
+and what do you see in its columns?
+\end{exercise}
+\begin{solution}
+Each column adds to $1$, so (as Section~\ref{sec:u26} explains) $\lambda_1=1$; the trace
+$0.7$ gives $\lambda_2=-0.3$. From
+$A-I=\left[\begin{smallmatrix} -0.4&0.9\\ 0.4&-0.9\end{smallmatrix}\right]$,
+$\vb{x}_1=(9,4)$; from
+$A+0.3I=\left[\begin{smallmatrix} 0.9&0.9\\ 0.4&0.4\end{smallmatrix}\right]$,
+$\vb{x}_2=(1,-1)$. So
+$X=\left[\begin{smallmatrix} 9&1\\ 4&-1\end{smallmatrix}\right]$,
+$\Lambda=\operatorname{diag}(1,-0.3)$, and $\Lambda^{k}\to\operatorname{diag}(1,0)$ because
+$|-0.3|<1$. With $X^{-1}=\tfrac1{13}\left[\begin{smallmatrix} 1&1\\ 4&-9\end{smallmatrix}\right]$,
+\[
+  A^{k}\to X\begin{bmatrix} 1&0\\ 0&0\end{bmatrix}X^{-1}
+  =\begin{bmatrix} 9\\ 4\end{bmatrix}\frac{1}{13}\begin{bmatrix} 1&1\end{bmatrix}
+  =\frac1{13}\begin{bmatrix} 9&9\\ 4&4\end{bmatrix}.
+\]
+Both columns are the steady state $(9,4)/13$: whatever the start (with components adding to
+$1$), $A^{k}\vb{u}_0$ approaches it.
+\end{solution}
+
+\begin{exercise}\label{exr:u24-Ck}
+For numbers $a\neq b$, let
+$C=\left[\begin{smallmatrix} 2b-a & a-b\\ 2b-2a & 2a-b\end{smallmatrix}\right]$. Find the
+eigenvalues and eigenvectors of $C$, a formula for $C^{k}$, and $C^{100}$ when $a=1$, $b=-1$.
+\end{exercise}
+\begin{solution}
+The trace is $a+b$ and the determinant is $(2b-a)(2a-b)-(a-b)(2b-2a)=ab$, so
+$\det(C-\lambda I)=\lambda^{2}-(a+b)\lambda+ab=(\lambda-a)(\lambda-b)$. For $\lambda=a$:
+$C-aI=\left[\begin{smallmatrix} 2b-2a & a-b\\ 2b-2a & a-b\end{smallmatrix}\right]$; its first
+column is $-2$ times its second, so $(1,2)$ is in the nullspace. For $\lambda=b$:
+$C-bI=\left[\begin{smallmatrix} b-a & a-b\\ 2b-2a & 2a-2b\end{smallmatrix}\right]$, killed by
+$(1,1)$. With $X=\left[\begin{smallmatrix} 1&1\\ 2&1\end{smallmatrix}\right]$ and
+$X^{-1}=\left[\begin{smallmatrix} -1&1\\ 2&-1\end{smallmatrix}\right]$,
+\[
+  C^{k}=X\begin{bmatrix} a^{k}&0\\ 0&b^{k}\end{bmatrix}X^{-1}
+  =\begin{bmatrix} 2b^{k}-a^{k} & a^{k}-b^{k}\\ 2b^{k}-2a^{k} & 2a^{k}-b^{k}\end{bmatrix}.
+\]
+At $k=1$ this is $C$, a useful check. For $a=1$, $b=-1$ and $k=100$, $a^{k}=b^{k}=1$ and
+$C^{100}=\left[\begin{smallmatrix} 1&0\\ 0&1\end{smallmatrix}\right]=I$. (Here
+$C=\left[\begin{smallmatrix} -3&2\\ -4&3\end{smallmatrix}\right]$ already has $C^{2}=I$.)
+\end{solution}
+
+\begin{exercise}\label{exr:u24-lucas}
+The Lucas numbers $2,1,3,4,7,11,18,\dots$ follow the Fibonacci rule
+$L_{k+2}=L_{k+1}+L_k$ but start from $L_0=2$, $L_1=1$. Show that
+$L_k=\lambda_1^{k}+\lambda_2^{k}$ with $\lambda_{1,2}=(1\pm\sqrt5)/2$.
+\end{exercise}
+\begin{solution}
+Use the same $A$ and eigenvectors as in Example~\ref{ex:u24-fibonacci} with
+$\vb{u}_0=(L_1,L_0)=(1,2)$. The equations $c_1+c_2=2$ and $c_1\lambda_1+c_2\lambda_2=1$ are
+solved by $c_1=c_2=1$, because $\lambda_1+\lambda_2=1$ (the trace). The second component of
+$\vb{u}_k=\lambda_1^{k}\vb{x}_1+\lambda_2^{k}\vb{x}_2$ is $L_k=\lambda_1^{k}+\lambda_2^{k}$.
+Check: $\lambda_1^{2}+\lambda_2^{2}=(\lambda_1+\lambda_2)^{2}-2\lambda_1\lambda_2=1+2=3=L_2$.
+\end{solution}
+
+\begin{exercise}\label{exr:u24-jordan}
+Let $N=\left[\begin{smallmatrix} 1/2 & 1\\ 0 & 1/2\end{smallmatrix}\right]$. Show that $N$
+is not diagonalizable, that
+$N^{k}=\left[\begin{smallmatrix} 2^{-k} & k\,2^{1-k}\\ 0 & 2^{-k}\end{smallmatrix}\right]$,
+and that $N^{k}\to0$ anyway.
+\end{exercise}
+\begin{solution}
+The eigenvalue $\tfrac12$ is repeated, and $N-\tfrac12I=\left[\begin{smallmatrix} 0&1\\ 0&0\end{smallmatrix}\right]$
+has only a one-dimensional nullspace, so there is just one independent eigenvector. The
+formula holds for $k=1$; if it holds for $k$, then
+\[
+  N^{k+1}=N^{k}N=\begin{bmatrix} 2^{-k}\cdot\tfrac12 & 2^{-k}+k\,2^{1-k}\cdot\tfrac12\\ 0 & 2^{-k}\cdot\tfrac12\end{bmatrix}
+  =\begin{bmatrix} 2^{-(k+1)} & (k+1)\,2^{-k}\\ 0 & 2^{-(k+1)}\end{bmatrix},
+\]
+which is the formula for $k+1$. Since $k\,2^{1-k}\to0$, $N^{k}\to0$. The off-diagonal entry
+decays more slowly than $2^{-k}$ (it is $1,1,\tfrac34,\tfrac12,\dots$) because of the factor
+$k$, but the decay of $|\lambda|^{k}$ wins in the end.
+\end{solution}

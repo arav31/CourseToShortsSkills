@@ -1,0 +1,350 @@
+% unit: u19
+% sources: sources/089-orthogonal-matrices-and-gram-schmidt.txt, sources/032-lecture-17-orthogonal-matrices-and-gram-schmidt.txt, sources/182-mit18-06scf11-ses2-4sum-pdf-download-file.txt, sources/033-problem-solving-gram-schmidt-orthogonalization.txt, sources/183-mit18-06scf11-ses2-4prob-pdf-download-file.txt, sources/184-mit18-06scf11-ses2-4sol-pdf-download-file.txt
+\section{Orthogonal matrices and Gram--Schmidt}\label{sec:u19}
+
+The last step in the story of orthogonality is an orthogonal \emph{basis}. Section~\ref{sec:u18}
+ended with the observation that the normal equations become trivial when the columns of $A$
+are perpendicular unit vectors, because then $A\T A=I$. This section collects such matrices,
+called $Q$, shows exactly which formulas simplify, and then gives the Gram--Schmidt process,
+which turns any independent columns into orthonormal ones. In matrix language Gram--Schmidt is
+a factorization $A=QR$, just as elimination was $A=LU$.
+
+\subsection{Orthonormal vectors and the matrix \texorpdfstring{$Q$}{Q}}
+
+\begin{definition}[Orthonormal vectors]\label{def:u19-orthonormal}
+Vectors $\vb{q}_1,\dots,\vb{q}_n$ in $\R^m$ are \emph{orthonormal} if
+\[
+  \vb{q}_i\T\vb{q}_j=\begin{cases}0 & i\neq j\quad\text{(orthogonal)},\\ 1 & i=j\quad\text{(normalized: unit length)}.\end{cases}
+\]
+\end{definition}
+
+Put orthonormal vectors into the columns of an $m\times n$ matrix $Q$. Then $Q\T Q$ is the
+matrix of all their dot products: row $i$ of $Q\T$ is $\vb{q}_i\T$, column $j$ of $Q$ is
+$\vb{q}_j$.
+
+\begin{proposition}\label{prop:u19-qtq}
+$Q$ has orthonormal columns if and only if $Q\T Q=I$ (the $n\times n$ identity).
+\end{proposition}
+
+\begin{proof}
+The $(i,j)$ entry of $Q\T Q$ is $\vb{q}_i\T\vb{q}_j$; Definition~\ref{def:u19-orthonormal}
+says precisely that these are the entries of $I$.
+\end{proof}
+
+$Q$ need not be square: two orthonormal columns in $\R^4$ give a $4\times 2$ matrix with
+$Q\T Q=I_2$ (but $QQ\T\neq I_4$). Orthonormal columns are automatically independent
+(Exercise~\ref{ex:u19-indep}). This adds a new family to our list of special matrices
+(triangular, diagonal, permutation, symmetric, echelon, projection).
+
+\begin{definition}[Orthogonal matrix]\label{def:u19-orthogonal}
+A \emph{square} matrix with orthonormal columns is called an \emph{orthogonal matrix}. For
+such $Q$, $Q\T Q=I$ means $Q\T=Q^{-1}$, and then also $QQ\T=I$.
+\end{definition}
+
+The name is a historical accident (``orthonormal matrix'' would be more accurate), and it is
+reserved for the square case.
+
+\begin{example}[A gallery of orthogonal matrices]\label{ex:u19-gallery}
+Four families are worth knowing.
+\begin{itemize}
+  \item Every permutation matrix, e.g.\
+    $Q=\left[\begin{smallmatrix}0&0&1\\1&0&0\\0&1&0\end{smallmatrix}\right]$: its columns
+    are distinct standard basis vectors, and $Q\T$ (another permutation) is its inverse.
+  \item Rotations
+    $Q=\begin{bmatrix}\cos\theta&-\sin\theta\\ \sin\theta&\cos\theta\end{bmatrix}$: both
+    columns have length $\cos^2\theta+\sin^2\theta=1$ and their dot product is
+    $-\cos\theta\sin\theta+\sin\theta\cos\theta=0$.
+  \item $\begin{bmatrix}1&1\\1&-1\end{bmatrix}$ has orthogonal columns of length $\sqrt2$;
+    dividing by $\sqrt2$ makes it orthogonal. Repeating the sign pattern in blocks gives
+    \[
+      Q=\frac12\begin{bmatrix}1&1&1&1\\1&-1&1&-1\\1&1&-1&-1\\1&-1&-1&1\end{bmatrix},
+    \]
+    a \emph{Hadamard matrix}: entries $\pm1$ (scaled), columns of length $2$ before
+    scaling. Such matrices exist for sizes $2,4,8,16,\dots$ and many others, but which sizes
+    allow them is still an open question.
+  \item A rectangular example without square roots, and a square one extending it:
+    \[
+      Q=\frac13\begin{bmatrix}1&-2\\2&-1\\2&2\end{bmatrix},\qquad
+      Q'=\frac13\begin{bmatrix}1&-2&2\\2&-1&-2\\2&2&1\end{bmatrix}.
+    \]
+    Each column has squared length $\frac{1+4+4}{9}=1$, and the dot products vanish, e.g.\
+    $(1,2,2)\cdot(-2,-1,2)=-2-2+4=0$.
+\end{itemize}
+\end{example}
+
+\subsection{Orthonormal columns make projection easy}
+
+Suppose $Q$ has orthonormal columns and we project onto its column space. The projection
+formula of Section~\ref{sec:u17} contains $Q\T Q=I$, which disappears:
+
+\begin{proposition}[Projection with an orthonormal basis]\label{prop:u19-proj}
+If $Q$ has orthonormal columns, the projection onto $\Col{Q}$ is
+\[
+  P=Q(Q\T Q)^{-1}Q\T=QQ\T ,
+\]
+the least-squares solution of $Q\vb{x}=\vb{b}$ is $\hat{\vb{x}}=Q\T\vb{b}$, that is
+$\hat{x}_i=\vb{q}_i\T\vb{b}$, and
+$\vb{p}=\vb{q}_1(\vb{q}_1\T\vb{b})+\cdots+\vb{q}_n(\vb{q}_n\T\vb{b})$.
+If $Q$ is square, $P=I$.
+\end{proposition}
+
+\begin{proof}
+Substitute $Q\T Q=I$ into $P=A(A\T A)^{-1}A\T$ and into the normal equations
+$Q\T Q\hat{\vb{x}}=Q\T\vb{b}$. Writing $QQ\T\vb{b}$ column by column gives the sum of
+one-dimensional projections. If $Q$ is square, $QQ\T=I$ by Definition~\ref{def:u19-orthogonal}.
+As a check, $QQ\T$ is symmetric and $(QQ\T)(QQ\T)=Q(Q\T Q)Q\T=QQ\T$.
+\end{proof}
+
+No matrix needs to be inverted and no system solved: each coefficient is one dot product.
+This is the formula behind Fourier series and much of numerical linear algebra, where
+orthonormal vectors are prized because they never grow or shrink, so roundoff stays under
+control. For the $3\times 2$ matrix of Example~\ref{ex:u19-gallery},
+\[
+  QQ\T=\frac19\begin{bmatrix}5&4&-2\\4&5&2\\-2&2&8\end{bmatrix},
+\]
+the projection onto the plane spanned by $(1,2,2)$ and $(-2,-1,2)$.
+
+\subsection{The Gram--Schmidt process}
+
+Elimination aimed for a triangular matrix; Gram--Schmidt aims for orthonormal columns. Start
+with two independent vectors $\vb{a}$ and $\vb{b}$. Keep the direction of the first:
+$\vb{A}=\vb{a}$. The second is not perpendicular to $\vb{A}$, so remove its projection onto
+$\vb{A}$ and keep the rest, which is exactly the error vector $\vb{e}$ of
+Section~\ref{sec:u17}:
+\[
+  \vb{B}=\vb{b}-\frac{\vb{A}\T\vb{b}}{\vb{A}\T\vb{A}}\,\vb{A}.
+\]
+It is perpendicular to $\vb{A}$:
+$\vb{A}\T\vb{B}=\vb{A}\T\vb{b}-\frac{\vb{A}\T\vb{b}}{\vb{A}\T\vb{A}}\vb{A}\T\vb{A}=0$
+(Figure~\ref{fig:u19-gs}). Finally divide by lengths:
+$\vb{q}_1=\vb{A}/\|\vb{A}\|$, $\vb{q}_2=\vb{B}/\|\vb{B}\|$. With a third vector $\vb{c}$,
+subtract its components along \emph{both} earlier directions:
+\[
+  \vb{C}=\vb{c}-\frac{\vb{A}\T\vb{c}}{\vb{A}\T\vb{A}}\,\vb{A}-\frac{\vb{B}\T\vb{c}}{\vb{B}\T\vb{B}}\,\vb{B},
+  \qquad \vb{q}_3=\vb{C}/\|\vb{C}\|.
+\]
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[>=Stealth,scale=1.3]
+    \draw[->,very thick,blue] (0,0) -- (3,0.8) node[right] {$\vb{a}=\vb{A}$};
+    \draw[->,very thick,red!75!black] (0,0) -- (1.5,2.2) node[above] {$\vb{b}$};
+    \draw[->,thick,green!50!black] (0,0) -- (1.948,0.5195) node[below right=-1pt] {$\frac{\vb{A}\T\vb{b}}{\vb{A}\T\vb{A}}\vb{A}$};
+    \draw[dashed] (1.948,0.5195) -- (1.5,2.2);
+    \draw[->,very thick,orange!85!black] (0,0) -- (-0.448,1.6805) node[above left] {$\vb{B}=\vb{b}-\frac{\vb{A}\T\vb{b}}{\vb{A}\T\vb{A}}\vb{A}$};
+    \draw[rotate=14.93] (0.2,0) -- (0.2,0.2) -- (0,0.2);
+    \draw[shift={(1.948,0.5195)},rotate=14.93] (-0.18,0) -- (-0.18,0.18) -- (0,0.18);
+    \fill (0,0) circle (1.2pt) node[below left] {$\vb{0}$};
+  \end{tikzpicture}
+  \caption{One Gram--Schmidt step. Subtracting from $\vb{b}$ its projection onto $\vb{A}$
+  leaves $\vb{B}$, perpendicular to $\vb{A}$ and parallel to the dashed error segment. The
+  plane spanned by $\vb{A},\vb{B}$ is the plane spanned by $\vb{a},\vb{b}$.}
+  \label{fig:u19-gs}
+\end{figure}
+
+\begin{theorem}[Gram--Schmidt]\label{thm:u19-gs}
+Let $\vb{a}_1,\dots,\vb{a}_n$ be independent. Define recursively
+\[
+  \vb{A}_k=\vb{a}_k-\sum_{i<k}(\vb{q}_i\T\vb{a}_k)\,\vb{q}_i,\qquad
+  \vb{q}_k=\vb{A}_k/\|\vb{A}_k\|.
+\]
+Then each $\vb{A}_k\neq\vb{0}$, the vectors $\vb{q}_1,\dots,\vb{q}_n$ are orthonormal, and for
+every $k$
+\[
+  \Span\{\vb{q}_1,\dots,\vb{q}_k\}=\Span\{\vb{a}_1,\dots,\vb{a}_k\}.
+\]
+\end{theorem}
+
+(Since $\vb{q}_i=\vb{A}_i/\|\vb{A}_i\|$, the term $(\vb{q}_i\T\vb{a}_k)\vb{q}_i$ equals
+$\frac{\vb{A}_i\T\vb{a}_k}{\vb{A}_i\T\vb{A}_i}\vb{A}_i$, the form used above.)
+
+\begin{proof}
+Induction on $k$. Assume $\vb{q}_1,\dots,\vb{q}_{k-1}$ are orthonormal and span the same
+space $V_{k-1}$ as $\vb{a}_1,\dots,\vb{a}_{k-1}$. The vector $\vb{A}_k$ is $\vb{a}_k$ minus an
+element of $V_{k-1}$. If $\vb{A}_k$ were $\vb{0}$, then $\vb{a}_k\in V_{k-1}$, contradicting
+independence; so $\vb{q}_k$ is defined. For $j<k$,
+\[
+  \vb{q}_j\T\vb{A}_k=\vb{q}_j\T\vb{a}_k-\sum_{i<k}(\vb{q}_i\T\vb{a}_k)\,\vb{q}_j\T\vb{q}_i
+  =\vb{q}_j\T\vb{a}_k-\vb{q}_j\T\vb{a}_k=0,
+\]
+because only the $i=j$ term survives. So $\vb{q}_k$ is a unit vector orthogonal to the
+earlier $\vb{q}$'s. Finally $\vb{q}_k$ is a combination of $\vb{a}_k$ and $V_{k-1}$, and
+$\vb{a}_k=\|\vb{A}_k\|\vb{q}_k+\sum_{i<k}(\vb{q}_i\T\vb{a}_k)\vb{q}_i$ is a combination of
+$\vb{q}_1,\dots,\vb{q}_k$; hence the two spans agree.
+\end{proof}
+
+\begin{example}[Two vectors in \texorpdfstring{$\R^3$}{R3}]\label{ex:u19-lecture}
+Let $\vb{a}=(1,1,1)$ and $\vb{b}=(1,0,2)$. Then $\vb{A}=\vb{a}$, $\vb{A}\T\vb{b}=3$,
+$\vb{A}\T\vb{A}=3$, and
+\[
+  \vb{B}=\begin{bmatrix}1\\0\\2\end{bmatrix}-\frac33\begin{bmatrix}1\\1\\1\end{bmatrix}
+  =\begin{bmatrix}0\\-1\\1\end{bmatrix},
+  \qquad \vb{A}\T\vb{B}=0-1+1=0 .
+\]
+Dividing by the lengths $\sqrt3$ and $\sqrt2$,
+\[
+  Q=\begin{bmatrix}\vb{q}_1&\vb{q}_2\end{bmatrix}
+  =\begin{bmatrix}1/\sqrt3&0\\1/\sqrt3&-1/\sqrt2\\1/\sqrt3&1/\sqrt2\end{bmatrix}.
+\]
+The column space of $Q$ is the same plane as the column space of
+$\left[\begin{smallmatrix}1&1\\1&0\\1&2\end{smallmatrix}\right]$; only the basis improved.
+\end{example}
+
+\begin{trap}
+When computing $\vb{C}$, subtract the projections of $\vb{c}$ onto the \emph{new} orthogonal
+vectors $\vb{A}$ and $\vb{B}$, not onto the original $\vb{a}$ and $\vb{b}$; the original
+vectors are not perpendicular, and subtracting both of their projections over-corrects.
+And do not forget the final division by lengths: $\vb{A},\vb{B},\vb{C}$ are orthogonal but
+generally not orthonormal. Doing the normalization last keeps square roots out of the
+intermediate arithmetic.
+\end{trap}
+
+\subsection{\texorpdfstring{$A=QR$}{A = QR}}
+
+Elimination is summarized by $A=LU$; Gram--Schmidt is summarized by a factorization that
+connects $A$ to $Q$. Since $\Col{A}=\Col{Q}$, each column of $A$ is a combination of the
+$\vb{q}$'s, and the coefficients form a matrix $R$.
+
+\begin{theorem}[\texorpdfstring{$QR$}{QR} factorization]\label{thm:u19-qr}
+If $A$ ($m\times n$) has independent columns and $Q$ comes from Gram--Schmidt, then
+\[
+  A=QR,\qquad R=Q\T A,\qquad r_{ij}=\vb{q}_i\T\vb{a}_j ,
+\]
+and $R$ is upper triangular with positive diagonal entries $r_{kk}=\|\vb{A}_k\|$.
+\end{theorem}
+
+\begin{proof}
+Rearranging the definition of $\vb{A}_k$,
+$\vb{a}_k=\sum_{i<k}(\vb{q}_i\T\vb{a}_k)\vb{q}_i+\|\vb{A}_k\|\,\vb{q}_k$. This says column $k$
+of $A$ equals $Q$ times the column $(r_{1k},\dots,r_{kk},0,\dots,0)$, with
+$r_{ik}=\vb{q}_i\T\vb{a}_k$ for $i<k$ and $r_{kk}=\|\vb{A}_k\|>0$; note also
+$\vb{q}_k\T\vb{a}_k=\|\vb{A}_k\|$ by dotting the same identity with $\vb{q}_k$. The entries
+below the diagonal are zero because $\vb{a}_k$ lies in the span of
+$\vb{q}_1,\dots,\vb{q}_k$, so $\vb{q}_i\T\vb{a}_k=0$ for $i>k$: later $\vb{q}$'s are
+perpendicular to earlier $\vb{a}$'s. Multiplying $A=QR$ by $Q\T$ gives $R=Q\T A$.
+\end{proof}
+
+For two columns,
+\[
+  \begin{bmatrix}\vb{a}_1&\vb{a}_2\end{bmatrix}
+  =\begin{bmatrix}\vb{q}_1&\vb{q}_2\end{bmatrix}
+  \begin{bmatrix}\vb{q}_1\T\vb{a}_1&\vb{q}_1\T\vb{a}_2\\0&\vb{q}_2\T\vb{a}_2\end{bmatrix},
+\]
+and the zero is $\vb{q}_2\T\vb{a}_1=0$ because $\vb{q}_2$ was built perpendicular to
+$\vb{a}_1=\vb{A}$. In Example~\ref{ex:u19-lecture}, $\vb{q}_1\T\vb{a}=3/\sqrt3$,
+$\vb{q}_1\T\vb{b}=3/\sqrt3$ and $\vb{q}_2\T\vb{b}=2/\sqrt2$, so
+\[
+  \begin{bmatrix}1&1\\1&0\\1&2\end{bmatrix}
+  =\begin{bmatrix}1/\sqrt3&0\\1/\sqrt3&-1/\sqrt2\\1/\sqrt3&1/\sqrt2\end{bmatrix}
+   \begin{bmatrix}\sqrt3&\sqrt3\\0&\sqrt2\end{bmatrix}.
+\]
+
+\begin{example}[A lucky \texorpdfstring{$3\times 3$}{3 by 3} with no square roots]\label{ex:u19-recitation}
+Orthonormalize the columns $\vb{a}=(1,0,0)$, $\vb{b}=(2,0,3)$, $\vb{c}=(4,5,6)$ of
+$A=\left[\begin{smallmatrix}1&2&4\\0&0&5\\0&3&6\end{smallmatrix}\right]$, working directly
+with unit vectors.
+\begin{itemize}
+  \item $\vb{a}$ already has length $1$: $\vb{q}_1=(1,0,0)$.
+  \item $\vb{b}-(\vb{b}\T\vb{q}_1)\vb{q}_1=(2,0,3)-2(1,0,0)=(0,0,3)$, of length $3$, so
+    $\vb{q}_2=(0,0,1)$.
+  \item $\vb{c}-(\vb{c}\T\vb{q}_1)\vb{q}_1-(\vb{c}\T\vb{q}_2)\vb{q}_2=(4,5,6)-4(1,0,0)-6(0,0,1)=(0,5,0)$,
+    of length $5$, so $\vb{q}_3=(0,1,0)$.
+\end{itemize}
+The numbers subtracted and the lengths are exactly the entries of $R$:
+\[
+  \underbrace{\begin{bmatrix}1&2&4\\0&0&5\\0&3&6\end{bmatrix}}_{A}
+  =\underbrace{\begin{bmatrix}1&0&0\\0&0&1\\0&1&0\end{bmatrix}}_{Q}
+   \underbrace{\begin{bmatrix}1&2&4\\0&3&6\\0&0&5\end{bmatrix}}_{R},
+\]
+which reads column by column as $\vb{a}=1\vb{q}_1$, $\vb{b}=2\vb{q}_1+3\vb{q}_2$,
+$\vb{c}=4\vb{q}_1+6\vb{q}_2+5\vb{q}_3$. Here $Q$ happens to be a permutation matrix, and $R$
+is $A$ with rows~2 and~3 exchanged.
+\end{example}
+
+\paragraph{Least squares with \texorpdfstring{$A=QR$}{A = QR}.}
+Substituting $A=QR$ into the normal equations,
+$R\T Q\T QR\hat{\vb{x}}=R\T Q\T\vb{b}$ becomes $R\T R\hat{\vb{x}}=R\T Q\T\vb{b}$, and since $R$
+is invertible,
+\[
+  R\hat{\vb{x}}=Q\T\vb{b},
+\]
+a triangular system solved by back substitution. This is how least squares is computed in
+practice.
+
+\begin{example}[The best-fit line again, via \texorpdfstring{$QR$}{QR}]\label{ex:u19-short}
+For the data $(0,6),(1,0),(2,0)$ of Section~\ref{sec:u18}, $A$ has columns
+$\vb{a}_1=(1,1,1)$ and $\vb{a}_2=(0,1,2)$, and $\vb{b}=(6,0,0)$. Gram--Schmidt:
+$\vb{A}_2=(0,1,2)-\frac33(1,1,1)=(-1,0,1)$, so
+\[
+  \vb{q}_1=\tfrac{1}{\sqrt3}(1,1,1),\quad \vb{q}_2=\tfrac{1}{\sqrt2}(-1,0,1),\qquad
+  R=\begin{bmatrix}\sqrt3&\sqrt3\\0&\sqrt2\end{bmatrix},\qquad
+  Q\T\vb{b}=\begin{bmatrix}6/\sqrt3\\-6/\sqrt2\end{bmatrix}=\begin{bmatrix}2\sqrt3\\-3\sqrt2\end{bmatrix}.
+\]
+Back substitution in $R\hat{\vb{x}}=Q\T\vb{b}$: $\sqrt2\,D=-3\sqrt2$ gives $D=-3$, then
+$\sqrt3\,C+\sqrt3\,D=2\sqrt3$ gives $C=5$, the same line $b=5-3t$. The projection is a sum of
+two independent one-dimensional projections:
+$\vb{p}=\vb{q}_1(\vb{q}_1\T\vb{b})+\vb{q}_2(\vb{q}_2\T\vb{b})=2(1,1,1)-3(-1,0,1)=(5,2,-1)$.
+\end{example}
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u19-indep}
+Orthonormal vectors are automatically independent. Give a matrix proof: if $Q$ has
+orthonormal columns, show that $Q\vb{x}=\vb{0}$ implies $\vb{x}=\vb{0}$. ($Q$ may be
+rectangular, so use $Q\T$, not $Q^{-1}$.)
+\end{exercise}
+
+\begin{solution}
+Multiply $Q\vb{x}=\vb{0}$ by $Q\T$: $Q\T Q\vb{x}=Q\T\vb{0}$, i.e.\ $I\vb{x}=\vb{0}$, so
+$\vb{x}=\vb{0}$. Thus $\Nul{Q}=\{\vb{0}\}$ and no nontrivial combination of the columns
+vanishes.
+\end{solution}
+
+\begin{exercise}\label{ex:u19-perpd}
+Apply Gram--Schmidt to $\vb{a}=(1,-1,0,0)$, $\vb{b}=(0,1,-1,0)$, $\vb{c}=(0,0,1,-1)$ to get
+orthogonal vectors $\vb{A},\vb{B},\vb{C}$. Show that $\{\vb{A},\vb{B},\vb{C}\}$ and
+$\{\vb{a},\vb{b},\vb{c}\}$ are both bases for the space of vectors perpendicular to
+$\vb{d}=(1,1,1,1)$.
+\end{exercise}
+
+\begin{solution}
+$\vb{A}=\vb{a}=(1,-1,0,0)$. Then $\vb{A}\T\vb{b}=-1$, $\vb{A}\T\vb{A}=2$, and
+$\vb{B}=\vb{b}+\frac12\vb{A}=(\frac12,\frac12,-1,0)$. Next $\vb{A}\T\vb{c}=0$,
+$\vb{B}\T\vb{c}=-1$, $\vb{B}\T\vb{B}=\frac32$, so
+$\vb{C}=\vb{c}+\frac23\vb{B}=(\frac13,\frac13,\frac13,-1)$. The three are mutually orthogonal
+(check the three dot products) and each has components summing to zero, so each is
+perpendicular to $\vb{d}$; so are $\vb{a},\vb{b},\vb{c}$. The space $\vb{d}^{\perp}$ is the
+nullspace of the $1\times 4$ matrix $\vb{d}\T$, of dimension $4-1=3$. Three independent
+vectors in a $3$-dimensional space form a basis. $\vb{A},\vb{B},\vb{C}$ are independent
+because they are orthogonal and nonzero (normalize them and use Exercise~\ref{ex:u19-indep}).
+For $\vb{a},\vb{b},\vb{c}$: the combination
+$x_1\vb{a}+x_2\vb{b}+x_3\vb{c}=(x_1,\,x_2-x_1,\,x_3-x_2,\,-x_3)$ is zero only when
+$x_1=x_2=x_3=0$.
+\end{solution}
+
+\begin{exercise}\label{ex:u19-qr}
+Find the $QR$ factorization of $A=\begin{bmatrix}1&1\\2&0\\2&1\end{bmatrix}$.
+\end{exercise}
+
+\begin{solution}
+$\|\vb{a}_1\|=3$, so $\vb{q}_1=\frac13(1,2,2)$ and $r_{11}=3$. Next
+$r_{12}=\vb{q}_1\T\vb{a}_2=\frac{1+0+2}{3}=1$, and
+$\vb{A}_2=\vb{a}_2-\vb{q}_1=(1,0,1)-\frac13(1,2,2)=\frac13(2,-2,1)$, which already has length
+$1$; so $\vb{q}_2=\frac13(2,-2,1)$ and $r_{22}=1$. Hence
+\[
+  A=\frac13\begin{bmatrix}1&2\\2&-2\\2&1\end{bmatrix}\begin{bmatrix}3&1\\0&1\end{bmatrix},
+\]
+and multiplying out reproduces the columns $(1,2,2)$ and $(1,0,1)$.
+\end{solution}
+
+\begin{exercise}\label{ex:u19-length}
+Show that multiplication by a matrix with orthonormal columns preserves lengths and dot
+products: $\|Q\vb{x}\|=\|\vb{x}\|$ and $(Q\vb{x})\T(Q\vb{y})=\vb{x}\T\vb{y}$. What does this
+say about the rotation matrices of Example~\ref{ex:u19-gallery}?
+\end{exercise}
+
+\begin{solution}
+$(Q\vb{x})\T(Q\vb{y})=\vb{x}\T Q\T Q\vb{y}=\vb{x}\T\vb{y}$; taking $\vb{y}=\vb{x}$ gives
+$\|Q\vb{x}\|^2=\|\vb{x}\|^2$. Rotations therefore move vectors without stretching them and
+preserve the angles between them, as a rigid rotation of the plane should.
+\end{solution}

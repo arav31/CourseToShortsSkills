@@ -1,0 +1,356 @@
+% unit: u06
+% sources: sources/067-transposes-permutations-vector-spaces.txt, sources/137-transposes-permutations-vector-spaces.txt, sources/138-mit18-06scf11-ses1-5sum-pdf-download-file.txt, sources/139-subspaces-of-three-dimensional-space.txt, sources/140-mit18-06scf11-ses1-5prob-pdf-download-file.txt, sources/141-mit18-06scf11-ses1-5sol-pdf-download-file.txt
+\section{Transposes, permutations, vector spaces}\label{sec:u06}
+
+This section closes the chapter on elimination and opens the one on vector spaces. First we
+finish two loose ends: permutation matrices, which complete $A=LU$ to $PA=LU$, and
+transposes, which produce the symmetric matrices that dominate applications. Then comes
+the step that turns a toolbox of computations into linear algebra proper: instead of
+individual vectors we study \emph{spaces} of vectors, and especially the subspaces that live
+inside $\R^n$. The first such subspace attached to a matrix is its column space.
+
+\subsection{Permutations complete elimination: \texorpdfstring{\(PA=LU\)}{PA = LU}}
+
+A permutation matrix is the identity with its rows reordered
+(Definition~\ref{def:u03-perm}); $PA$ puts the rows of $A$ in the same new order. There is
+one permutation matrix for each ordering of $n$ rows. The first row of $P$ can be any of the
+$n$ rows of $I$, the second any of the remaining $n-1$, and so on, so there are
+$n(n-1)\cdots2\cdot1=n!$ permutation matrices of size $n$: $6$ when $n=3$, $24$ when $n=4$,
+$120$ when $n=5$.
+
+\begin{theorem}[The inverse of a permutation is its transpose]\label{thm:u06-PTP}
+Every permutation matrix satisfies $P\T P=I$, so $P^{-1}=P\T$.
+\end{theorem}
+
+\begin{proof}
+The rows of $P$ are the rows of $I$ in a new order, so each column of $P$ contains exactly
+one $1$ and the columns of $P$ are the standard vectors $\vb{e}_1,\dots,\vb{e}_n$ in some
+order, each appearing once. The $(i,j)$ entry of $P\T P$ is (column $i$ of $P$)$\cdot$(column $j$
+of $P$). For $i=j$ this is $\vb{e}_k\cdot\vb{e}_k=1$; for $i\neq j$ it is the dot product of two
+different standard vectors, which is $0$. Hence $P\T P=I$, and by
+Corollary~\ref{cor:u04-onesided} $P\T$ is the inverse of $P$.
+\end{proof}
+
+Section~\ref{sec:u05} factored $A=LU$ when elimination needs no row exchanges. Most matrices
+need none, but some do: a zero can land in a pivot position while a nonzero sits below it.
+The cure is to do all the necessary exchanges first.
+
+\begin{theorem}[$PA=LU$]\label{thm:u06-PALU}
+If $A$ is an invertible $n\times n$ matrix, there is a permutation matrix $P$ such that
+elimination on $PA$ needs no row exchanges, so that $PA=LU$ with $L$ lower triangular with
+unit diagonal and $U$ upper triangular with the (nonzero) pivots on its diagonal.
+\end{theorem}
+
+\begin{proof}[Sketch]
+Run elimination on $A$, exchanging rows whenever a pivot position holds zero; since $A$ is
+invertible a nonzero entry is always available below (Theorem~\ref{thm:u04-test}). Let $P$
+be the product of all the exchanges made. A row exchange only swaps two rows that are not yet
+pivot rows, and elimination never mixes a row into the rows above it, so performing all the
+exchanges at the very start puts every row where it eventually ends up. Elimination on $PA$
+then meets the same pivots in the same places and needs no exchange, and
+Theorem~\ref{thm:u05-LU} gives $PA=LU$. (In the bookkeeping, a later exchange of rows $i$ and
+$k$ also exchanges the multipliers already recorded in those rows of $L$.)
+\end{proof}
+
+\begin{example}[A $3\times3$ factorization $PA=LU$]\label{ex:u06-PALU}
+Let $A=\begin{bmatrix} 0&2&1\\ 1&1&1\\ 2&0&3\end{bmatrix}$. The $(1,1)$ position holds $0$,
+so exchange rows~1 and~2:
+\[
+  P_{12}A=\begin{bmatrix} 1&1&1\\ 0&2&1\\ 2&0&3\end{bmatrix}.
+\]
+Now eliminate without further exchanges: $\ell_{21}=0$; $\ell_{31}=2$ turns row~3 into
+$(2,0,3)-2(1,1,1)=(0,-2,1)$; then $\ell_{32}=-2/2=-1$ turns it into
+$(0,-2,1)+(0,2,1)=(0,0,2)$. Therefore
+\[
+  \underbrace{\begin{bmatrix} 0&1&0\\ 1&0&0\\ 0&0&1\end{bmatrix}}_{P}
+  \underbrace{\begin{bmatrix} 0&2&1\\ 1&1&1\\ 2&0&3\end{bmatrix}}_{A}
+  =\underbrace{\begin{bmatrix} 1&0&0\\ 0&1&0\\ 2&-1&1\end{bmatrix}}_{L}
+  \underbrace{\begin{bmatrix} 1&1&1\\ 0&2&1\\ 0&0&2\end{bmatrix}}_{U}.
+\]
+Check row~3: $2\,(1,1,1)-1\,(0,2,1)+1\,(0,0,2)=(2,0,3)$, which is row~3 of $PA$. The pivots
+are $1,2,2$, and $A$ itself has no $LU$ factorization because its first pivot position holds
+zero.
+\end{example}
+
+In practice, software exchanges rows more often than algebra requires. MATLAB's elimination
+chooses, in each column, the largest available entry as the pivot (\emph{partial pivoting}):
+dividing by a tiny pivot would magnify rounding errors. The algebra is the same, $PA=LU$;
+only $P$ changes.
+
+\subsection{Transposes and symmetric matrices}
+
+The transpose (Definition~\ref{def:u05-transpose}) flips a matrix across its main diagonal,
+$(A\T)_{ij}=a_{ji}$; the rows of $A$ become the columns of $A\T$. A $3\times2$ matrix becomes
+$2\times3$:
+\[
+  \begin{bmatrix} 1&3\\ 2&3\\ 4&1\end{bmatrix}\T=\begin{bmatrix} 1&2&4\\ 3&3&1\end{bmatrix}.
+\]
+
+\begin{definition}[Symmetric matrix]\label{def:u06-symmetric}
+A square matrix $S$ is \emph{symmetric} if $S\T=S$, that is, $s_{ij}=s_{ji}$ for all $i,j$.
+\end{definition}
+
+The diagonal of a symmetric matrix is unrestricted, and each entry above the diagonal is
+mirrored below it, as in
+$\begin{bmatrix} 3&1&7\\ 1&2&9\\ 7&9&4\end{bmatrix}$. Symmetric matrices are the most
+important special family in applications, and the most common way they arise is this.
+
+\begin{theorem}[$R\T R$ is symmetric]\label{thm:u06-RTR}
+For every $m\times n$ matrix $R$, the $n\times n$ matrix $R\T R$ is symmetric, and so is the
+$m\times m$ matrix $RR\T$.
+\end{theorem}
+
+\begin{proof}
+By the rule for transposes of products (Theorem~\ref{thm:u05-transpose-product}) and
+$(R\T)\T=R$,
+\[
+  (R\T R)\T=R\T(R\T)\T=R\T R .
+\]
+The same computation with $R\T$ in place of $R$ shows $(RR\T)\T=RR\T$.
+\end{proof}
+
+\begin{example}[Building symmetric matrices from a rectangular one]\label{ex:u06-RTR}
+Take the $2\times3$ matrix $R=\begin{bmatrix} 1&2&4\\ 3&3&1\end{bmatrix}$. Then
+\[
+  R\T R=\begin{bmatrix} 1&3\\ 2&3\\ 4&1\end{bmatrix}\begin{bmatrix} 1&2&4\\ 3&3&1\end{bmatrix}
+  =\begin{bmatrix} 10&11&7\\ 11&13&11\\ 7&11&17\end{bmatrix},\qquad
+  RR\T=\begin{bmatrix} 21&13\\ 13&19\end{bmatrix}.
+\]
+The $(1,2)$ entry of $R\T R$ is row~1 of $R\T$ times column~2 of $R$, namely
+$(1,3)\cdot(2,3)=11$; the $(2,1)$ entry is $(2,3)\cdot(1,3)$, the same dot product taken in
+the other order. In general $(R\T R)_{ij}$ is the dot product of columns $i$ and $j$ of $R$,
+which is why the matrix must be symmetric. The product $R\T R$ will be central to least
+squares (Section~\ref{sec:u17}).
+\end{example}
+
+\subsection{Vector spaces}
+
+The two operations we perform on vectors are adding them and multiplying them by
+numbers (scalars). A \emph{space} of vectors is a collection in which these operations can
+always be carried out without leaving the collection.
+
+\begin{definition}[The space \texorpdfstring{$\R^n$}{Rn}]\label{def:u06-Rn}
+$\R^n$ is the set of all column vectors with $n$ real components, with addition and scalar
+multiplication done component by component.
+\end{definition}
+
+$\R^2$ contains $(3,2)$, $(0,0)$, $(\pi,e)$ and every other pair of real numbers; drawn as
+arrows from the origin (or as their endpoints), it is the whole $xy$-plane. The vector
+$(3,2,0)$ belongs to $\R^3$, not to $\R^2$: it has three components, one of which happens to
+be zero.
+
+\begin{definition}[Vector space]\label{def:u06-vspace}
+A \emph{vector space} is a nonempty set $V$ of objects (vectors) with an addition and a
+multiplication by real scalars such that $V$ is \emph{closed} under both: if $\vb{v},\vb{w}\in V$
+and $c\in\R$, then $\vb{v}+\vb{w}\in V$ and $c\vb{v}\in V$. The operations must obey the usual
+rules: $\vb{v}+\vb{w}=\vb{w}+\vb{v}$; $(\vb{u}+\vb{v})+\vb{w}=\vb{u}+(\vb{v}+\vb{w})$; there is a
+zero vector with $\vb{v}+\vb{0}=\vb{v}$; each $\vb{v}$ has a negative with $\vb{v}+(-\vb{v})=\vb{0}$;
+$1\vb{v}=\vb{v}$; $c(d\vb{v})=(cd)\vb{v}$; $c(\vb{v}+\vb{w})=c\vb{v}+c\vb{w}$; and
+$(c+d)\vb{v}=c\vb{v}+d\vb{v}$.
+\end{definition}
+
+In $\R^n$ the eight rules hold automatically, because they hold for each component; the
+question in practice is always closure. Closure under both operations is the same as closure
+under linear combinations $c\vb{v}+d\vb{w}$. Vector spaces need not consist of columns:
+the set of all $2\times2$ matrices, with the usual addition and scalar multiplication, is a
+vector space too (Section~\ref{sec:u12} studies such spaces).
+
+\begin{proposition}[Every vector space contains zero]\label{prop:u06-zero}
+If $V$ is a vector space, then $\vb{0}\in V$.
+\end{proposition}
+
+\begin{proof}
+$V$ is nonempty; pick any $\vb{v}\in V$. Closure under scalar multiplication puts
+$0\cdot\vb{v}$ in $V$, and $0\cdot\vb{v}=(0+0)\vb{v}=0\cdot\vb{v}+0\cdot\vb{v}$; adding the
+negative of $0\cdot\vb{v}$ to both sides gives $0\cdot\vb{v}=\vb{0}$.
+\end{proof}
+
+So the $xy$-plane with the origin removed is not a vector space. Neither is the quarter-plane
+$Q$ of vectors with both components nonnegative: adding two vectors of $Q$ stays in $Q$, but
+$-1\cdot(3,2)=(-3,-2)$ does not. $Q$ is closed under addition but not under multiplication by
+all real numbers (right panel of Figure~\ref{fig:u06-subspaces}).
+
+\subsection{Subspaces}
+
+\begin{definition}[Subspace]\label{def:u06-subspace}
+A \emph{subspace} of a vector space $V$ is a nonempty subset $S\subseteq V$ that is itself a
+vector space with the same operations. Equivalently, $S$ is nonempty and closed under
+addition and scalar multiplication: $\vb{v},\vb{w}\in S$ and $c\in\R$ imply
+$\vb{v}+\vb{w}\in S$ and $c\vb{v}\in S$.
+\end{definition}
+
+The two descriptions agree because the eight rules are inherited from $V$, and the zero
+vector and negatives lie in $S$ by closure ($0\vb{v}=\vb{0}$, $(-1)\vb{v}=-\vb{v}$). By
+Proposition~\ref{prop:u06-zero} every subspace contains $\vb{0}$.
+
+If a subspace of $\R^2$ contains a nonzero vector $\vb{v}$, it contains every multiple
+$c\vb{v}$: the whole line through $\vb{0}$ and $\vb{v}$. That line $L=\{c\vb{v}:c\in\R\}$ is a
+subspace, since $c\vb{v}+d\vb{v}=(c+d)\vb{v}$ and $k(c\vb{v})=(kc)\vb{v}$ stay on it. A line that
+misses the origin is never a subspace: multiplying one of its vectors by $0$ leaves the line
+(left panel of Figure~\ref{fig:u06-subspaces}).
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.62,>=Stealth]
+  \draw[->] (-3.6,0) -- (4.2,0) node[right] {$x$};
+  \draw[->] (0,-2.4) -- (0,3.8) node[above] {$y$};
+  \draw[very thick,blue] (-3.6,-1.8) -- (4.2,2.1) node[below right] {$L$};
+  \draw[thick,dashed,orange!85!black] (-3.6,-0.3) -- (4.2,3.6) node[above left] {$\vb{u}+L$};
+  \draw[->,very thick,blue] (0,0) -- (2,1) node[below right=-2pt] {$\vb{v}$};
+  \draw[->,thick,blue] (0,0) -- (-2,-1) node[below] {$-\vb{v}$};
+  \fill[orange!85!black] (1,2) circle (3pt) node[above left] {$\vb{u}$};
+  \fill (0,0) circle (2.5pt) node[below right] {$0\,\vb{u}=\vb{0}$};
+\end{tikzpicture}
+\qquad
+\begin{tikzpicture}[scale=0.62,>=Stealth]
+  \fill[green!12] (0,0) rectangle (4.2,3.6);
+  \draw[->] (-3.6,0) -- (4.2,0) node[right] {$x$};
+  \draw[->] (0,-2.4) -- (0,3.8) node[above] {$y$};
+  \node[green!40!black] at (3.2,3.1) {$Q$};
+  \draw[->,very thick] (0,0) -- (3,2) node[right] {$(3,2)$};
+  \draw[->,very thick,red!75!black] (0,0) -- (-3,-2) node[left] {$(-3,-2)$};
+\end{tikzpicture}
+\caption{Left: the line $L$ through the origin (all multiples of $\vb{v}$) is a subspace of
+$\R^2$. The parallel dashed line through $\vb{u}=(1,2)$ is not: $0\,\vb{u}=\vb{0}$ is not on it.
+Right: the quarter-plane $Q$ is closed under addition but not under scalar multiplication,
+since $-1\cdot(3,2)$ leaves it.}\label{fig:u06-subspaces}
+\end{figure}
+
+\begin{proposition}[The subspaces of \texorpdfstring{$\R^2$}{R2}]\label{prop:u06-R2}
+Every subspace of $\R^2$ is one of: the zero subspace $Z=\{\vb{0}\}$; a line through the
+origin; all of $\R^2$.
+\end{proposition}
+
+\begin{proof}
+Let $S$ be a subspace. If $S=\{\vb{0}\}$ we are done. Otherwise $S$ contains some
+$\vb{v}\neq\vb{0}$ and hence the line $L$ of its multiples. If $S=L$ we are done. Otherwise $S$
+contains a vector $\vb{w}$ off that line, so $\delta=v_1w_2-v_2w_1\neq0$ (if $\delta=0$, $\vb{w}$
+would be a multiple of $\vb{v}$). For any $\vb{b}\in\R^2$, the weights
+$x=(b_1w_2-b_2w_1)/\delta$ and $y=(v_1b_2-v_2b_1)/\delta$ satisfy $x\vb{v}+y\vb{w}=\vb{b}$, as
+direct substitution confirms. By closure $\vb{b}\in S$, so $S=\R^2$.
+\end{proof}
+
+Similarly, the subspaces of $\R^3$ are $Z$, the lines through the origin, the planes through
+the origin, and $\R^3$ itself; the proof uses the idea of dimension
+(Section~\ref{sec:u10}). A line through the origin in $\R^2$ looks like $\R^1$, but it is not
+$\R^1$: its vectors have two components.
+
+\begin{trap}
+$\R^2$ is \emph{not} a subspace of $\R^3$: its vectors have two components, so it is not
+even a subset of $\R^3$. The plane of vectors $(x,y,0)$ \emph{is} a subspace of $\R^3$; it
+looks like $\R^2$ but is a different set. Also, closure under addition alone proves
+nothing (the quarter-plane passes that test); always check scalar multiplication by negative
+numbers and by zero.
+\end{trap}
+
+\subsection{The column space of a matrix}
+
+Subspaces of $\R^m$ come naturally from matrices. Put two vectors in the columns of a matrix;
+a subspace containing them must contain all their combinations, and the set of all
+combinations is already a subspace.
+
+\begin{definition}[Column space]\label{def:u06-colspace}
+The \emph{column space} $\Col{A}$ of an $m\times n$ matrix $A$ is the set of all linear
+combinations of the columns of $A$. Equivalently, $\Col{A}=\{A\vb{x}:\vb{x}\in\R^n\}$. It is a
+subspace of $\R^m$.
+\end{definition}
+
+It is a subspace because $A\vb{x}+A\vb{y}=A(\vb{x}+\vb{y})$ and $c(A\vb{x})=A(c\vb{x})$ are again
+of the form $A(\text{something})$.
+
+\begin{example}[A plane in \texorpdfstring{$\R^3$}{R3}]\label{ex:u06-colspace}
+Let $A=\begin{bmatrix} 1&3\\ 2&3\\ 4&1\end{bmatrix}$. Its columns $(1,2,4)$ and $(3,3,1)$ are
+vectors in $\R^3$ that do not lie on one line, so their combinations fill a plane through the
+origin: $\Col{A}$ is a plane in $\R^3$. It contains $\vb{0}$, both columns, their sum
+$(4,5,5)$, and, e.g., $(1,2,4)+3(3,3,1)=(10,11,7)$. Which plane? A vector $\vb{b}$ is in
+$\Col{A}$ when $x_1(1,2,4)+x_2(3,3,1)=\vb{b}$ can be solved. Eliminate on the augmented matrix:
+\[
+  \left[\begin{array}{rr|l} 1&3&b_1\\ 2&3&b_2\\ 4&1&b_3\end{array}\right]
+  \to
+  \left[\begin{array}{rr|l} 1&3&b_1\\ 0&-3&b_2-2b_1\\ 0&-11&b_3-4b_1\end{array}\right]
+  \to
+  \left[\begin{array}{rr|l} 1&3&b_1\\ 0&-3&b_2-2b_1\\ 0&0&b_3-4b_1-\tfrac{11}{3}(b_2-2b_1)\end{array}\right].
+\]
+The last row says $0=\tfrac{10}{3}b_1-\tfrac{11}{3}b_2+b_3$. So
+\[
+  \Col{A}=\{\vb{b}\in\R^3: 10b_1-11b_2+3b_3=0\}.
+\]
+Check: $(1,2,4)$ gives $10-22+12=0$, $(3,3,1)$ gives $30-33+3=0$, $(4,5,5)$ gives
+$40-55+15=0$. The vector $(1,0,0)$ gives $10\neq0$; it is not in the column space, and
+$A\vb{x}=(1,0,0)$ has no solution.
+\end{example}
+
+The same construction works in any dimension: five vectors in $\R^{10}$, each with ten
+components, have combinations that fill a subspace of $\R^{10}$, at most five-dimensional and
+smaller if the vectors are dependent. How the column space decides which systems
+$A\vb{x}=\vb{b}$ are solvable is the subject of Section~\ref{sec:u07}.
+
+\subsection{Exercises}
+
+\begin{exercise}\label{ex:u06-cycle}
+(a) Find a $3\times3$ permutation matrix with $P^3=I$ but $P\neq I$. (b) Find a $4\times4$
+permutation matrix $\widehat{P}$ with $\widehat{P}^4\neq I$.
+\end{exercise}
+\begin{solution}
+(a) Move the rows in a cycle: row~1 to position~2, row~2 to position~3, row~3 to position~1.
+\[
+  P=\begin{bmatrix} 0&0&1\\ 1&0&0\\ 0&1&0\end{bmatrix},\qquad
+  P^2=\begin{bmatrix} 0&1&0\\ 0&0&1\\ 1&0&0\end{bmatrix},\qquad P^3=I .
+\]
+Indeed $P(1,2,3)=(3,1,2)$, and applying the cycle three times returns every row home.
+(b) Use the block matrix $\widehat{P}=\begin{bmatrix} 1&0\\ 0&P\end{bmatrix}$, which leaves
+row~1 alone and cycles rows~2, 3, 4. By block multiplication $\widehat{P}^3=I$, so
+$\widehat{P}^4=\widehat{P}\neq I$.
+\end{solution}
+
+\begin{exercise}\label{ex:u06-count}
+How many entries of a $4\times4$ matrix $A$ can be chosen independently if (a) $A$ is
+symmetric; (b) $A$ is skew-symmetric, $A\T=-A$?
+\end{exercise}
+\begin{solution}
+(a) The $4$ diagonal entries and the $6$ entries above the diagonal are free; the $6$ below
+are copies. So $10$ entries:
+$A=\begin{bmatrix} a&e&f&g\\ e&b&h&i\\ f&h&c&j\\ g&i&j&d\end{bmatrix}$.
+(b) Now $a_{ii}=-a_{ii}$ forces a zero diagonal, and the entries below the diagonal are the
+negatives of those above. So $6$ entries:
+$A=\begin{bmatrix} 0&-a&-b&-c\\ a&0&-d&-e\\ b&d&0&-f\\ c&e&f&0\end{bmatrix}$.
+\end{solution}
+
+\begin{exercise}\label{ex:u06-matrix-subspaces}
+In the vector space $M$ of all $n\times n$ matrices, decide which of these are subspaces:
+(a) the symmetric matrices; (b) the skew-symmetric matrices; (c) the unsymmetric matrices
+($A\T\neq A$).
+\end{exercise}
+\begin{solution}
+(a) Yes. If $A\T=A$ and $B\T=B$, then $(A+B)\T=A\T+B\T=A+B$ and $(cA)\T=cA\T=cA$.
+(b) Yes. If $A\T=-A$ and $B\T=-B$, then $(A+B)\T=-A-B=-(A+B)$ and $(cA)\T=-cA$.
+(c) No. The zero matrix is symmetric, so it is not in the set; and the set is not closed
+under addition:
+$\begin{bmatrix} 1&1\\ 0&0\end{bmatrix}+\begin{bmatrix} 0&0\\ 1&1\end{bmatrix}
+=\begin{bmatrix} 1&1\\ 1&1\end{bmatrix}$, two unsymmetric matrices with a symmetric sum.
+\end{solution}
+
+\begin{exercise}\label{ex:u06-lines}
+Let $\vb{x}_1=(1,2,3)$ and $\vb{x}_2=(1,3,0)$ in $\R^3$. Let $V_1$ and $V_2$ be the smallest
+subspaces containing $\vb{x}_1$, respectively $\vb{x}_2$, and $V_3$ the smallest subspace
+containing both. (a) Describe $V_1$, $V_2$ and $V_1\cap V_2$. (b) Is $V_1\cup V_2$ a subspace? Is it
+$V_3$? (c) Find a subspace $S$ of $V_3$ containing neither $\vb{x}_1$ nor $\vb{x}_2$.
+(d) Describe $V_3\cap\{\text{the $xy$-plane}\}$.
+\end{exercise}
+\begin{solution}
+(a) A subspace containing $\vb{x}_1$ contains all its multiples, and the multiples already form
+a subspace, so $V_1$ is the line through $(1,2,3)$; likewise $V_2$ is the line through
+$(1,3,0)$. If $c(1,2,3)=d(1,3,0)$, the third components give $3c=0$, so $c=0=d$: the lines meet
+only at the origin, and $V_1\cap V_2=\{\vb{0}\}$, the zero subspace.
+(b) No. $\vb{x}_1+\vb{x}_2=(2,5,3)$ is on neither line ($(2,5,3)$ is not a multiple of $(1,2,3)$
+since $5\neq2\cdot2$, and its third component is not $0$), so the union is not closed under
+addition and cannot equal $V_3$. Instead $V_3$ is the plane of all combinations
+$s\vb{x}_1+t\vb{x}_2=(s+t,\,2s+3t,\,3s)$. Eliminating $s=b_3/3$ and $t=b_1-b_3/3$ from
+$b_2=2s+3t$ gives its equation $9b_1-3b_2-b_3=0$.
+(c) The line through $\vb{x}_1+\vb{x}_2=(2,5,3)$ lies in $V_3$ and contains neither
+$\vb{x}_1$ nor $\vb{x}_2$ (neither is a multiple of $(2,5,3)$). Other choices, such as the line
+through $2\vb{x}_1+\vb{x}_2$, work too.
+(d) Points of the $xy$-plane have $b_3=0$; on $V_3$ this forces $9b_1=3b_2$, i.e.\ $b_2=3b_1$.
+So the intersection is the line through $(1,3,0)$, which is $V_2$. This makes sense: $\vb{x}_2$
+lies in both planes, and two different planes through the origin meet in a line.
+\end{solution}
