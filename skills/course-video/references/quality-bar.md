@@ -12,8 +12,8 @@ A short is done when every item holds.
    through setup → operation → consequence. Replacing everything between beats is a slideshow.
 3. **Every motion means something.** Each animation performs an operation, comparison,
    mapping, accumulation or state change. Pulses, wiggles and sweeping highlight bars do not.
-4. **The mechanism is visible.** Merge sort splits and merges; BFS grows a frontier from a
-   queue; a coset translates a subgroup and tiles the group; a tax drives a wedge between
+4. **The mechanism is visible.** Merge sort splits and merges; BFS grows its frontier level by
+   level (a queue or level sets); a coset translates a subgroup and tiles the group; a tax drives a wedge between
    buyer and seller prices. If the narration describes a step the picture does not show, fix the picture.
 5. **The conclusion comes last.** The formula or theorem arrives as the summary of what the
    picture just did, never before the derivation.
@@ -27,7 +27,8 @@ A short is done when every item holds.
 ## The frame (9:16 on a phone)
 
 10. **The main object dominates the stage.** Use `STAGE.fit(...)` or `stage_plane(...)`; a small
-    diagram floating in the middle of a big empty frame fails.
+    diagram floating in the middle of a big empty frame fails. `render.py` reports each beat's
+    `stage_fill` and warns (`small-diagram`) when the picture spans under 65 % of the stage height for long.
 11. **Readable text.** Nothing below `MIN_FONT_SIZE`. Superscripts and subscripts render at ~70 %, so
     give formulas with exponents a size bump. Simplify or split a busy beat instead of shrinking.
 12. **No overlaps, no clipping.** Text never overlaps text, never leaves the safe area, never
