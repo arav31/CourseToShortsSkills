@@ -3,6 +3,7 @@
 
     python run_status.py runs/<course>           # stage-by-stage status
     python run_status.py runs/<course> --gate    # exit 1 unless publish-ready
+    python run_status.py runs/<course> --gate --shorts-only   # the user asked for shorts, not notes
     python run_status.py runs/<course> --json
 
 Reads the reports each skill writes (plan_check.json, notes/notes_report.json,
@@ -10,7 +11,8 @@ shorts/*/render_report.json, shorts/*/review.json) and checks they are still
 current: a report or approval made before the artifact changed counts as
 missing. Publish-ready means: the plan passes its check, the notes compiled
 with a real TeX engine without errors, and every planned short has a final
-render with no errors and an approved review of that exact MP4.
+render with no errors and an approved review of that exact MP4. With
+--shorts-only the notes stage is reported but does not block.
 """
 
 from __future__ import annotations
@@ -45,9 +47,11 @@ def short_dir(run: Path, index: int, short: dict) -> Path:
     return run / "shorts" / f"{index:02d}-{short.get('slug', '')}"
 
 
-def status(run: Path) -> dict:
-    out: dict = {"run": str(run), "stages": {}, "shorts": [], "blockers": []}
-    st, blockers = out["stages"], out["blockers"]
+def status(run: Path, shorts_only: bool = False) -> dict:
+    out: dict = {"run": str(run), "stages": {}, "shorts": [], "blockers": [], "shorts_only": shorts_only}
+    st = out["stages"]
+    blockers = out["blockers"]
+    note_blockers: list[str] = []  # notes problems block the gate unless the run is shorts-only
 
     pack = read(run / "source_pack.json")
     if pack:
@@ -75,10 +79,10 @@ def status(run: Path) -> dict:
     report = read(notes_dir / "notes_report.json")
     if not (notes_dir / "notes.tex").exists():
         st["notes"] = {"state": "missing"}
-        blockers.append("notes: write notes/notes.tex (course-notes)")
+        note_blockers.append("notes: write notes/notes.tex (course-notes)")
     elif not report:
         st["notes"] = {"state": "unbuilt"}
-        blockers.append("notes: run course-notes build_notes.py")
+        note_blockers.append("notes: run course-notes build_notes.py")
     else:
         files = [notes_dir / f for f in report.get("files", [])]
         current = hashlib.sha256(b"".join(f.read_bytes() for f in files if f.exists())).hexdigest()
@@ -89,11 +93,11 @@ def status(run: Path) -> dict:
         st["notes"] = {"state": state, "pages": report.get("pages"), "engine": report.get("engine"),
                        "errors": len([i for i in report.get("issues", []) if i["severity"] == "error"])}
         if stale:
-            blockers.append("notes: sources changed since the last build; rebuild")
+            note_blockers.append("notes: sources changed since the last build; rebuild")
         elif report.get("status") != "ok":
-            blockers.append(f"notes: {st['notes']['errors']} lint/compile errors")
+            note_blockers.append(f"notes: {st['notes']['errors']} lint/compile errors")
         if unlisted:
-            blockers.append(f"notes: unit files not \\input by notes.tex: {', '.join(unlisted)}")
+            note_blockers.append(f"notes: unit files not \\input by notes.tex: {', '.join(unlisted)}")
         if plan and (run / "outline.json").exists():
             outline = read(run / "outline.json") or {}
             text = " ".join(f.read_text(errors="replace") for f in files if f.exists())
@@ -101,7 +105,11 @@ def status(run: Path) -> dict:
                        if u.get("id") and not re.search(rf"%\s*unit:\s*{re.escape(u['id'])}\b", text)]
             if missing:
                 st["notes"]["units_missing"] = missing
-                blockers.append(f"notes: {len(missing)} outline units have no '% unit: <id>' chapter (e.g. {missing[0]})")
+                note_blockers.append(f"notes: {len(missing)} outline units have no '% unit: <id>' chapter (e.g. {missing[0]})")
+    if shorts_only:
+        st["notes"]["gated"] = False
+    else:
+        blockers.extend(note_blockers)
 
     for i, short in enumerate((plan or {}).get("shorts", []), 1):
         sdir = short_dir(run, i, short)
@@ -147,15 +155,20 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run", type=Path)
     ap.add_argument("--gate", action="store_true", help="exit 1 unless everything is publish-ready")
+    ap.add_argument("--shorts-only", action="store_true",
+                    help="the run makes shorts only: report the notes stage but do not block on it")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
-    data = status(args.run)
+    data = status(args.run, shorts_only=args.shorts_only)
     if args.json:
         print(json.dumps(data, indent=2))
     else:
         print(f"run: {args.run}")
         for name, info in data["stages"].items():
-            extras = ", ".join(f"{k}={v}" for k, v in info.items() if k != "state" and not isinstance(v, list))
+            extras = ", ".join(f"{k}={v}" for k, v in info.items()
+                               if k not in {"state", "gated"} and not isinstance(v, list))
+            if info.get("gated") is False:
+                extras = (extras + ", " if extras else "") + "not gated (--shorts-only)"
             print(f"  {name:<8} {info['state']:<12} {extras}")
         if data["shorts"]:
             print("  shorts:")

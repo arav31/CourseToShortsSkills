@@ -25,7 +25,9 @@ text, strips navigation and footer boilerplate, and writes one `.txt` per page/P
 and a failed re-run leaves the previous sources in place. Then:
 
 - Read `sources/INDEX.md`. It starts with the **course sequence** (the site's navigation, in
-  order) when the site has one; that is usually the outline's backbone. Each file lists a
+  order) when the site has one; that is usually the outline's backbone. When that sequence is
+  only the site menu (Syllabus, Calendar, Lecture Notes, ...), take the order from the
+  `calendar` or `syllabus` source instead. Each file lists a
   `context`: the page that linked to it (e.g. the session a PDF belongs to). Trust context and
   the file's own first heading over file names, which are often misnumbered.
 - Expect a syllabus or calendar, lecture notes and/or transcripts, and ideally problem sets,
