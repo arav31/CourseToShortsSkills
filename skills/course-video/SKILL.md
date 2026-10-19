@@ -31,7 +31,12 @@ Write `scene.py` with shortkit. Read [references/shortkit.md](references/shortki
 
 Narration is spoken English for the ear ("A times x", "x sub one", "two by two"), 1–2
 sentences per beat, and the first line poses the question. Total length follows the
-idea; 30–75 s is typical.
+idea; 30–75 s is typical. Real voices are slower than you expect (lists of numbers especially),
+so synthesize first and check the length before animating:
+
+```bash
+$PY "$SKILL_DIR/scripts/voice.py" <short_dir>     # prints total narration seconds; cached per beat
+```
 
 ## 3. Preview render and look
 

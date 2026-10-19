@@ -46,6 +46,7 @@ Prose that explains why the definition is the right one, with the picture in wor
 
 - The two comment lines at the top are required: `% unit: <id>` lets the status gate check
   coverage; `% sources:` records provenance (sources are never listed in the visible text).
+- Headings use sentence case ("Projection matrices and least squares"), matching across units.
 - Subsection titles come from the content ("Gauss–Jordan finds the inverse"), and the structure
   follows the material: a proof-heavy unit is mostly statements and proofs; an algorithms unit
   has pseudocode, a trace and complexity; a modelling unit has assumptions, model, solution, interpretation.
@@ -77,6 +78,11 @@ Exams and exam reviews in the outline become study material, not summaries of lo
 - Use the short's worked example (from short_plan.json) in the matching unit so notes and videos agree;
   when a short spans several units, the full example goes in its `primary_unit` (default: the first
   unit listed) and the others refer to it.
+- Transcripts are machine-extracted and sometimes jumbled (two columns interleaved); cross-check
+  them against the session summaries and solutions. Provenance for material that is not a course
+  source goes on the same comment line: `% sources: sources/..., short_plan.json (s04)`.
+- Load extra TikZ libraries in `notes.tex` (the template already loads the common ones), never
+  inside a unit file.
 - Course materials contain slips (a wrong matrix entry in a recitation, a sign error in a posted
   solution). Recompute every number you take from a source; when the source is wrong, give the
   correct value and point out the slip in a `trap`.

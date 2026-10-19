@@ -36,6 +36,8 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
   beat (real word timings with edge-tts, an even-pace estimate otherwise), so motion lands on the
   spoken word. `self.beat_time()` is the time since the beat started.
 - `self.clear_stage(*keep)` fades out everything except the title and `keep`.
+- `self.swap(old, new, morph=False)` replaces an equation/label in one slot: `old` fades out before
+  `new` fades in (or `morph=True` for TransformMatchingShapes), so two formulas never superimpose.
 - `self.allow_overlap(a, b)` declares an intentional overlap between two texts or a text and a
   shape (rarely needed; `highlight()` outlines are already exempt).
 - `self.show_zones()` draws zone outlines while debugging (remove before final).
@@ -64,6 +66,10 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 | `highlight(mob, color=YELLOW_K)` | outline (not a filled sweep) |
 | `matrix_grid([[2, 1], [1, 2]], col_colors=[BLUE_K, ORANGE_K])` | matrix with `.entries[i][j]`, `.rows[i]`, `.cols[j]`, `.brackets` to point at or move |
 | `live_text(lambda: f"{t.get_value():.1f}", align="left")` | a number/label that updates every frame (counters, readouts) |
+| `clipped_line(plane, (0, 0), (1, 2))` | the whole line through a point along a direction, clipped to the plane |
+| `ortho(yaw, pitch, scale, origin)` | 3D→2D orthographic projector for 3D ideas on 9:16 (use instead of ThreeDScene) |
+| `background(mob)` | mark scenery (translucent planes, shaded regions) so the checker ignores it |
+| `spoken(89) == "eighty-nine"` | number words, for asserting that narration matches computed values |
 | `Size.TITLE 48, HEADLINE 46, BODY 38, LABEL 34, SMALL 30`, `MIN_FONT_SIZE 28` | font sizes |
 
 Colour inside LaTeX: `\cB{..}` blue (input), `\cY{..}` yellow (rule), `\cG{..}` green (result),
@@ -91,14 +97,28 @@ narration says the same thing, so an edit to one cannot silently contradict the 
 
 ```python
 FP = round(0.09 * 990)                      # 89
-assert "eighty-nine" in BEATS[3][1] and FP == 89
+assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
 ```
+
+## Changelog (SHORTKIT_VERSION)
+
+- 2.1: rules (fraction bars) render; `title(*also)`, `cue()`, `swap()`, `matrix_grid()`,
+  `live_text()`, `clipped_line()`, `ortho()`, `background()`, `spoken()`; glyph-level overlap
+  checks; text-over-geometry warnings; shadowing check; renders never use Manim's cache (sync).
 
 ## Manim gotchas worth knowing
 
+- `FadeIn` of an `always_redraw` object can crash ("zip() argument 2 is shorter") if its glyph
+  count changed while hidden: call `obj.update()` first, or fade in a static copy.
+- After animating slices into a target (`TransformFromCopy(rows[0][-1], coord[1])`), remove the
+  temporary groups and the slices and re-add the whole target (`self.remove(frame, *coord);
+  self.add(coord)`), as the check beat of `assets/example_scene.py` does.
 - `tex()` glyphs come out in reading order of the typeset formula (for `\frac`: numerator, bar,
   denominator), so `eq[0:5]` selects the first five glyphs. Slices are fine to animate, but they
   are new groups: after `TransformFromCopy(a, eq[3:6])`, remove the loose copies and `self.add(eq)`.
+- Never name a module-level variable after a Manim export (`LEFT`, `OUT`, `UP`, `ORIGIN`,
+  `RIGHT`...): `from shortkit import *` puts them in your namespace, and replacing them breaks
+  Manim internals far from your code. shortkit reports this as a `shadows-manim` error.
 - `self.remove(group)` removes the group, not children you added to the scene separately (for
   example by animating them one by one before grouping). Remove what you added: `self.remove(*group)`.
 - Do not build a live number by swapping submobjects in your own updater (stale glyphs) or with

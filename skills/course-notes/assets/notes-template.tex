@@ -7,7 +7,7 @@
 \usepackage{booktabs,tabularx,array,longtable}
 \usepackage[shortlabels]{enumitem}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,patterns,shapes.geometric,matrix}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,patterns,shapes.geometric,matrix,fit,backgrounds,angles,quotes,intersections}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage{xcolor}
@@ -73,6 +73,7 @@
   {\small <<MONTH YEAR>>\par}
 \end{titlepage}
 
+\setcounter{tocdepth}{1}% sections only; subsections make the contents run for pages
 \tableofcontents
 \clearpage
 

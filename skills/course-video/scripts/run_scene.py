@@ -37,6 +37,9 @@ def main() -> int:
     config.verbosity = "WARNING"
     config.write_to_movie = True
     config.format = "mp4"
+    # Manim's partial-movie cache advances the scene clock by exact run times but replays whole
+    # frames, so a cached re-render drifts from the narration. Always render fresh.
+    config.disable_caching = True
     try:
         spec = importlib.util.spec_from_file_location(scene_path.stem, scene_path)
         module = importlib.util.module_from_spec(spec)

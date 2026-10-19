@@ -28,7 +28,8 @@ A short is done when every item holds.
 
 10. **The main object dominates the stage.** Use `STAGE.fit(...)` or `stage_plane(...)`; a small
     diagram floating in the middle of a big empty frame fails.
-11. **Readable text.** Nothing below `MIN_FONT_SIZE`. Simplify or split a busy beat instead of shrinking.
+11. **Readable text.** Nothing below `MIN_FONT_SIZE`. Superscripts and subscripts render at ~70 %, so
+    give formulas with exponents a size bump. Simplify or split a busy beat instead of shrinking.
 12. **No overlaps, no clipping.** Text never overlaps text, never leaves the safe area, never
     sits in the caption band. Lines, arrows and curves never cut through words (use `plate()`).
 13. **Real typesetting.** Maths through `tex()`: fractions, subscripts, matrices, Greek. No `x_1`,
@@ -44,7 +45,8 @@ A short is done when every item holds.
     `render.py` flags beats whose animation runs much longer than the narration (silent gaps).
 17. **No dead zones.** Nothing longer than ~4 s without a meaningful change, except a deliberate
     reading hold. The automatic scan flags 6 s as a warning and 10 s as an error.
-18. **Length follows the idea.** Usually 30–75 s. Do not pad a small idea or cram a big one; split it.
+18. **Length follows the idea.** Usually 30–75 s; a dense idea (the four subspaces) can reach ~90 s.
+    Do not pad a small idea or cram a big one; past ~90 s, split it into two shorts.
 
 ## Transitions
 

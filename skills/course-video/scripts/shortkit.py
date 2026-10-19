@@ -570,6 +570,75 @@ def vec(plane: CoordinateSystem, coords, color: str = BLUE_K, start=(0, 0), widt
                  max_tip_length_to_length_ratio=0.18, max_stroke_width_to_length_ratio=12)
 
 
+def background(mob: Mobject) -> Mobject:
+    """Mark scenery (a translucent plane, a shaded region) so the layout checker ignores it."""
+    for m in mob.get_family():
+        m._sk_background = True
+    return mob
+
+
+def clipped_line(plane: CoordinateSystem, point, direction, color: str = MUTED, width: float = 4) -> Line:
+    """The full line through ``point`` along ``direction``, clipped to the plane's x/y ranges."""
+    (x0, x1), (y0, y1) = plane.x_range[:2], plane.y_range[:2]
+    px, py = point
+    dx, dy = direction
+    ts = []
+    for lo, hi, p0, d in ((x0, x1, px, dx), (y0, y1, py, dy)):
+        if abs(d) > 1e-12:
+            ts += [(lo - p0) / d, (hi - p0) / d]
+    t_lo = max(min(ts[i], ts[i + 1]) for i in range(0, len(ts), 2))
+    t_hi = min(max(ts[i], ts[i + 1]) for i in range(0, len(ts), 2))
+    a = plane.c2p(px + t_lo * dx, py + t_lo * dy)
+    b = plane.c2p(px + t_hi * dx, py + t_hi * dy)
+    return Line(a, b, color=color, stroke_width=width)
+
+
+def ortho(yaw: float = -35, pitch: float = 20, scale: float = 1.0, origin=ORIGIN):
+    """A 3D -> 2D orthographic projection for 9:16 scenes (ThreeDScene does not mix well with shortkit).
+
+    ``to2d = ortho(yaw=-35, pitch=20, scale=1.2, origin=STAGE.center)``; then
+    ``Polygon(*[to2d(p) for p in corners])``. Drive yaw/pitch from ValueTrackers inside
+    ``always_redraw`` to turn the view; keep labels as separate 2D text that follows to2d(point).
+    """
+    import math
+
+    cy, sy = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+    cp, sp = math.cos(math.radians(pitch)), math.sin(math.radians(pitch))
+    origin = np.array(origin, dtype=float)
+
+    def to2d(p):
+        x, y, z = (list(p) + [0, 0, 0])[:3]
+        xr, yr = cy * x - sy * y, sy * x + cy * y          # yaw about the vertical z axis
+        return origin + scale * np.array([xr, cp * z - sp * yr, 0.0])  # tilt toward the viewer
+
+    return to2d
+
+
+_ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+_TENS = "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
+
+
+def spoken(value) -> str:
+    """Number -> words for narration checks: spoken(89) == "eighty-nine", spoken(0.6) == "zero point six"."""
+    if isinstance(value, float) and not value.is_integer():
+        whole, frac = f"{value}".split(".")
+        return f"{spoken(int(whole))} point {' '.join(_ONES[int(d)] for d in frac)}"
+    n = int(value)
+    if n < 0:
+        return "minus " + spoken(-n)
+    if n < 20:
+        return _ONES[n]
+    if n < 100:
+        return _TENS[n // 10] + ("" if n % 10 == 0 else "-" + _ONES[n % 10])
+    if n < 1000:
+        rest = n % 100
+        return _ONES[n // 100] + " hundred" + ("" if rest == 0 else " " + spoken(rest))
+    if n < 1_000_000:
+        rest = n % 1000
+        return spoken(n // 1000) + " thousand" + ("" if rest == 0 else " " + spoken(rest))
+    return str(n)
+
+
 # --------------------------------------------------------------------------
 # The scene base class
 # --------------------------------------------------------------------------
@@ -604,6 +673,7 @@ class ShortScene(Scene):
         }
         if timing_issue:
             self._issue("warning", "timing", timing_issue)
+        self._check_shadowing(module)
         self._prefetch_tex(module)
 
     def tear_down(self):
@@ -678,6 +748,9 @@ class ShortScene(Scene):
         remaining = target + offset - self.beat_time()
         if remaining > 1.0 / _FPS:
             self.wait(remaining)
+        elif remaining < -0.5:
+            self._issue("warning", "late-cue", f"cue({word!r}) fired {-remaining:.1f}s after the word was spoken; "
+                        "shorten the animations before it")
 
     def _word_time(self, beat_id: str, word: str, nth: int, prefix: bool = False) -> float | None:
         want = _re.sub(r"[^a-z0-9]", "", word.lower())
@@ -709,15 +782,32 @@ class ShortScene(Scene):
         title is only registered and returned; animate it yourself (e.g. inside a bigger play).
         """
         mob = text(s, size=size, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
+        if "\n" in getattr(mob, "text", "") or mob.height > TITLE_ZONE.height:
+            self._issue("warning", "long-title", f"title {s!r} wraps or shrinks; shorten it to one line")
         TITLE_ZONE.fit(mob, buff=0.05, upscale=False)
         old, self._title_mob = self._title_mob, mob
         if not play:
             return mob
         if old is None:
-            self.play(FadeIn(mob, shift=DOWN * 0.15), *also, run_time=run_time)
+            anims = [FadeIn(mob, shift=DOWN * 0.15, run_time=run_time)]
         else:
-            self.play(FadeOut(old, shift=UP * 0.15), FadeIn(mob, shift=UP * 0.15), *also, run_time=run_time)
+            anims = [FadeOut(old, shift=UP * 0.15, run_time=run_time), FadeIn(mob, shift=UP * 0.15, run_time=run_time)]
+        self.play(*anims, *also)  # each animation keeps its own run_time
         return mob
+
+    def swap(self, old: Mobject, new: Mobject, run_time: float = 0.8, morph: bool = False) -> Mobject:
+        """Replace ``old`` with ``new`` in the same place without the two ever overlapping.
+
+        ``new`` is moved to ``old``'s position unless already placed elsewhere on purpose
+        (pass it pre-positioned). ``morph=True`` uses TransformMatchingShapes for equations
+        that share most glyphs; otherwise ``old`` fades out before ``new`` fades in.
+        """
+        if morph:
+            self.play(TransformMatchingShapes(old, new), run_time=run_time)
+        else:
+            self.play(FadeOut(old, shift=UP * 0.1), run_time=run_time / 2)
+            self.play(FadeIn(new, shift=UP * 0.1), run_time=run_time / 2)
+        return new
 
     def clear_stage(self, *keep: Mobject, run_time: float = 0.5) -> None:
         """Fade out everything except the title and ``keep``."""
@@ -790,8 +880,10 @@ class ShortScene(Scene):
             for b in texts[i + 1:]:
                 if frozenset((id(a.owner), id(b.owner))) in self._allowed_pairs:
                     continue
-                inter = _overlap_area(a.box, b.box)
-                smaller = min(_area(a.box), _area(b.box))
+                if _overlap_area(a.box, b.box) <= 0:
+                    continue
+                inter = sum(_overlap_area(x, y) for x in a.boxes for y in b.boxes)
+                smaller = min(a.area, b.area)
                 if smaller > 0 and inter / smaller > 0.06:
                     self._issue("error", "text-overlap",
                                 f"text boxes overlap by {100 * inter / smaller:.0f}%", [a.label, b.label])
@@ -833,6 +925,35 @@ class ShortScene(Scene):
         for m in self.mobjects:
             visit(m)
         return leaves
+
+    def _check_shadowing(self, module) -> None:
+        """Module-level names that replace Manim exports (LEFT, OUT, UP...) break Manim in odd places."""
+        import manim
+
+        try:
+            tree = _ast.parse(_inspect.getsource(module))
+        except (OSError, TypeError, SyntaxError):
+            return
+        names = set()
+
+        def collect(target) -> None:  # bare names and tuple unpacking only, not attribute/subscript targets
+            if isinstance(target, _ast.Name):
+                names.add(target.id)
+            elif isinstance(target, (_ast.Tuple, _ast.List)):
+                for elt in target.elts:
+                    collect(elt)
+
+        for node in tree.body:
+            if isinstance(node, _ast.Assign):
+                for t in node.targets:
+                    collect(t)
+            elif isinstance(node, (_ast.AnnAssign, _ast.AugAssign)):
+                collect(node.target)
+        clash = sorted(n for n in names if hasattr(manim, n) and n != "BEATS")
+        if clash:
+            msg = f"scene.py redefines Manim names {', '.join(clash)}; rename them (e.g. LEFT_NULL)"
+            print(f"[shortkit] ERROR: {msg}", file=_sys.stderr)
+            self._issue("error", "shadows-manim", msg)
 
     # ---- LaTeX prefetch -------------------------------------------------------
 
@@ -907,6 +1028,14 @@ class _TextItem:
     def box(self) -> tuple[float, float, float, float]:
         boxes = [_point_box(m) for m in self.members]
         return (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes))
+
+    @property
+    def boxes(self) -> list[tuple[float, float, float, float]]:
+        return [_point_box(m) for m in self.members]
+
+    @property
+    def area(self) -> float:
+        return sum(_area(b) for b in self.boxes)
 
     @property
     def width(self) -> float:

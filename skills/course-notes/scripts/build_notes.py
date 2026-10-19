@@ -131,11 +131,15 @@ def lint(files: list[Path], notes_dir: Path) -> tuple[list[dict], dict]:
         raw = f.read_text(errors="replace")
         text = strip_comments(raw)
         rel = str(f.relative_to(notes_dir))
+        in_picture = 0
         for i, line in enumerate(raw.splitlines(), 1):
             code = strip_comments(line)
+            in_picture += len(re.findall(r"\\begin\{(tikzpicture|axis)\}", code))
             if PLACEHOLDER_RE.search(code):
                 issues.append({"severity": "error", "kind": "placeholder", "where": f"{rel}:{i}", "detail": code.strip()[:120]})
-            if CODE_MATH_RE.search(code):
+            picture_line = in_picture > 0
+            in_picture -= len(re.findall(r"\\end\{(tikzpicture|axis)\}", code))
+            if CODE_MATH_RE.search(code) and not picture_line:  # pgfmath like sqrt(2) is fine in pictures
                 issues.append({"severity": "error", "kind": "code-style-math", "where": f"{rel}:{i}",
                                "detail": "use LaTeX (bmatrix, \\sqrt{}, x^{2}) instead of code notation: " + code.strip()[:100]})
             heading = re.match(r"\s*\\(part|(sub)*section)\*?\{(.*)\}", code)
@@ -154,7 +158,8 @@ def lint(files: list[Path], notes_dir: Path) -> tuple[list[dict], dict]:
             sentences[re.sub(r"\s+", " ", s.lower())] += 1
         if f.parent.name == "units":
             words = len(re.findall(r"[A-Za-z]{2,}", re.sub(r"\\[a-zA-Z]+", " ", text)))
-            figures = envs["tikzpicture"] + len(re.findall(r"\\includegraphics", text))  # axis lives inside tikzpicture
+            outside = re.sub(r"\\begin\{figure\}.*?\\end\{figure\}", "", text, flags=re.S)
+            figures = envs["figure"] + len(re.findall(r"\\begin\{tikzpicture\}|\\includegraphics", outside))
             results = sum(envs[k] for k in ("theorem", "proposition", "lemma", "corollary"))
             stat = {"file": rel, "words": words, "definitions": envs["definition"], "results": results,
                     "proofs": envs["proof"], "examples": envs["example"], "figures": figures,
@@ -196,7 +201,7 @@ def log_issues(log: str, units: set[str] | None = None) -> list[dict]:
     issues = []
     current, seen = "notes.tex", set()
     for line in log.splitlines():
-        opened = re.findall(r"\((?:\./)?(units/[\w-]+\.tex)", line)
+        opened = re.findall(r"\([^()\s]*?(units/[\w-]+\.tex)", line)
         if opened:
             current = opened[-1]
         m = re.search(r"Overfull \\hbox \((\d+(?:\.\d+)?)pt too wide\).*?lines (\d+)--(\d+)", line)
@@ -229,9 +234,11 @@ def pdf_checks(pdf: Path) -> tuple[list[dict], dict]:
     with pymupdf.open(pdf) as doc:
         pages = doc.page_count
         sparse = []
+        texts = [page.get_text() for page in doc]
+        front = max([i for i, t in enumerate(texts[:20]) if t.lstrip().startswith("Contents")] + [1])
         for i, page in enumerate(doc):
-            if i < 2:
-                continue  # title page and contents
+            if i <= front:
+                continue  # title page and table of contents
             words = len(page.get_text("words"))
             drawings = len(page.get_drawings())
             if words < 60 and drawings < 15:
@@ -269,12 +276,24 @@ def previews(pdf: Path, out: Path, pages: list[int]) -> list[str]:
             path = out / f"sheet-{s // per + 1:02d}.png"
             sheet.save(path)
             made.append(str(path))
+        labels = {doc[i].get_label(): i for i in range(doc.page_count) if doc[i].get_label()}
         for num in pages:
-            if 1 <= num <= doc.page_count:
+            index = labels.get(str(num), num - 1)  # printed page number when the PDF has page labels
+            if 0 <= index < doc.page_count:
                 path = out / f"page-{num:03d}.png"
-                doc[num - 1].get_pixmap(dpi=110).save(path)
+                doc[index].get_pixmap(dpi=110).save(path)
                 made.append(str(path))
     return made
+
+
+def section_pages(pdf: Path) -> list[str]:
+    """Printed start page of each \\section, in order, from the PDF outline."""
+    import pymupdf
+
+    with pymupdf.open(pdf) as doc:
+        level = 2 if any(lvl == 1 and "Part" in title for lvl, title, _ in doc.get_toc()) else 1
+        pages = [p for lvl, _, p in doc.get_toc() if lvl == level]
+        return [doc[p - 1].get_label() or str(p) for p in pages if 0 < p <= doc.page_count]
 
 
 def build_partial(notes_dir: Path, units: list[str], pages: list[int], no_preview: bool) -> int:
@@ -324,9 +343,11 @@ def build_partial(notes_dir: Path, units: list[str], pages: list[int], no_previe
     pdf_issues = [i for i in pdf_issues if i["kind"] != "sparse-page"]  # front/back matter of a partial build
     sheets = [] if no_preview else previews(pdf, out / "preview", pages)
     print(f"partial build {tag}: {pdf_stats['pages']} pages via {engine} -> {pdf}")
-    print("  unit   words  defs results proofs examples figures exercises/solutions")
-    for u in stats["units"]:
-        print(f"  {Path(u['file']).stem:<6} {u['words']:>5} {u['definitions']:>5} {u['results']:>7} {u['proofs']:>6} "
+    starts = section_pages(pdf)
+    print("  unit   page  words  defs results proofs examples figures exercises/solutions")
+    for k, u in enumerate(stats["units"]):
+        page = starts[k] if k < len(starts) else "?"
+        print(f"  {Path(u['file']).stem:<6} {page:>4} {u['words']:>6} {u['definitions']:>5} {u['results']:>7} {u['proofs']:>6} "
               f"{u['examples']:>8} {u['figures']:>7} {u['exercises']:>9}/{u['solutions']}")
     for i in issues + pdf_issues:
         print(f"  {i['severity'].upper():7} {i['kind']} [{i['where']}] {i['detail']}")
@@ -338,7 +359,8 @@ def build_partial(notes_dir: Path, units: list[str], pages: list[int], no_previe
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run", type=Path)
-    ap.add_argument("--pages", type=int, nargs="*", default=[], help="also render these pages at full size")
+    ap.add_argument("--pages", type=int, nargs="*", default=[],
+                    help="also render these printed page numbers at full size")
     ap.add_argument("--no-preview", action="store_true")
     ap.add_argument("--units", nargs="+", default=None,
                     help="compile only these unit ids (e.g. u03 u04) into notes/partial/; safe to run in parallel")

@@ -344,6 +344,8 @@ def render(short_dir: Path, quality: str = "preview", engine: str | None = None,
     encode(raw, video, quality, trace, timing, short_dir, ass)
 
     info = audit.probe(video)
+    raw_info = audit.probe(raw)
+    drift = raw_info["duration"] - float(trace.get("duration", raw_info["duration"]))
     motion = audit.motion_scan(raw)  # the picture alone: changing captions must not hide a frozen frame
     issues = [dict(i, source="layout") for i in trace.get("issues", [])]
     for beat in trace.get("beats", []):
@@ -351,6 +353,9 @@ def render(short_dir: Path, quality: str = "preview", engine: str | None = None,
             issues.append({"severity": "warning", "kind": "narration-gap", "beat": beat["id"], "source": "timing",
                            "detail": f"animations run {beat['overrun']}s past the narration; trim motion or extend the line"})
     issues += [dict(i, source="video") for i in audit.scan_issues(info, motion, quality)]
+    if abs(drift) > 0.15:
+        issues.append({"severity": "error", "kind": "clock-drift", "source": "video",
+                       "detail": f"rendered picture is {drift:+.2f}s off the scene clock; narration will be out of sync"})
     if timing.get("engine") != "none" and not info.get("has_audio"):
         issues.append({"severity": "error", "kind": "missing-audio", "source": "video",
                        "detail": "narration was synthesized but the MP4 has no audio stream"})

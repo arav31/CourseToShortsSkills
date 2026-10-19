@@ -31,6 +31,7 @@ S1 = (X[0] * COL1[0], X[0] * COL1[1])
 S2 = (X[1] * COL2[0], X[1] * COL2[1])
 B = (S1[0] + S2[0], S1[1] + S2[1])  # computed, never typed by hand
 C1, C2 = BLUE_K, ORANGE_K
+assert spoken(B[0]) in BEATS[4][1] and spoken(B[1]) in BEATS[4][1]  # narration says the computed point
 
 
 class Short(ShortScene):
@@ -93,12 +94,22 @@ class Short(ShortScene):
             rows_plate = plate(rows)
             slot(rows_plate, below=eq_plate)  # the row arithmetic takes the result's place
             self.play(FadeOut(res, shift=UP * 0.1), FadeIn(rows_plate, shift=UP * 0.1), run_time=0.8)
-            self.play(Indicate(rows[0][-2:], color=GREEN_K), Indicate(rows[1][-2:], color=GREEN_K),
-                      Indicate(dot, color=GREEN_K, scale_factor=1.6), run_time=1.2)
+            # each row's sum is one coordinate of the point the columns reached:
+            # the sums fly from the arithmetic to the point and spell out its coordinates
+            coord = tex(rf"({B[0]},\,{B[1]})", color=GREEN_K, size=Size.LABEL)  # glyphs: ( 8 , 7 )
+            coord.next_to(dot, RIGHT, buff=0.2)
+            frame = VGroup(coord[0], coord[2], coord[4])
+            self.cue(spoken(B[0]))
+            self.play(FadeIn(frame), TransformFromCopy(rows[0][-1], coord[1]), run_time=1.0)
+            self.cue(spoken(B[1]))
+            self.play(TransformFromCopy(rows[1][-1], coord[3]), Indicate(dot, color=GREEN_K, scale_factor=1.6),
+                      run_time=1.0)
+            self.remove(frame, *coord)  # animating slices leaves loose pieces; keep one clean object
+            self.add(coord)
 
         with self.beat("takeaway"):
             final = plate(tex(r"A\,x = x_1\,\cB{a_1} + x_2\,\cO{a_2}", size=Size.HEADLINE + 4), opacity=0.95)
             slot(final)
-            self.play(FadeOut(rows_plate), FadeOut(eq_plate), run_time=0.5)
+            self.play(FadeOut(rows_plate), FadeOut(eq_plate), FadeOut(coord), run_time=0.5)
             self.play(FadeIn(final, shift=DOWN * 0.15), run_time=0.9)
             self.play(Circumscribe(final, color=GREEN_K, buff=0.08), run_time=1.2)

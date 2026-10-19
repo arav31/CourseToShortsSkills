@@ -73,6 +73,13 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
 - **Chemistry:** atoms that keep their identity as they move from reactants to products; counts per
   element staying fixed.
 
+## 3D ideas on a 9:16 frame
+
+Planes in R^3, a nullspace "floor", a vector standing off a plane: draw them with `ortho()`
+(an orthographic projection driven by yaw/pitch ValueTrackers) rather than `ThreeDScene`. Tilt the
+view edge-on to show a right angle, then shrink it to make room for the next picture. Keep labels
+as 2D text that follows projected points, so they stay readable.
+
 ## Layout planning
 
 The frame is 9 x 16 units. Zones (from shortkit):

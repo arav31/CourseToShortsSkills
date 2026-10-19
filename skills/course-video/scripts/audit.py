@@ -62,7 +62,7 @@ def grab_frame(video: Path, t: float, out: Path, width: int | None = None) -> Pa
 
 
 def contact_sheets(video: Path, out_dir: Path, every: float | None = None,
-                   cols: int = 4, rows: int = 3, tile_w: int = 270, prefix: str = "sheet") -> list[Path]:
+                   cols: int = 3, rows: int = 3, tile_w: int = 360, prefix: str = "sheet") -> list[Path]:
     """Write timestamped contact sheets (cols x rows tiles each). Returns paths."""
     from PIL import Image, ImageDraw, ImageFont
 

@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 VENV = Path(os.environ.get("COURSE_SHORTS_VENV", Path.home() / ".course-shorts" / "venv"))
-REQUIREMENTS = ["manim>=0.18", "pymupdf>=1.24", "edge-tts>=7.0", "Pillow>=10"]
+REQUIREMENTS = ["manim>=0.18", "pymupdf>=1.24", "edge-tts>=7.0", "Pillow>=10", "sympy>=1.12"]
 OPTIONAL = ["piper-tts>=1.2"]
 EXTRA_PATHS = ["/Library/TeX/texbin", "/opt/homebrew/bin", "/usr/local/bin"]
 

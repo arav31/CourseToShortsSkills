@@ -4,5 +4,6 @@ manim>=0.18
 pymupdf>=1.24
 edge-tts>=7.0
 Pillow>=10
+sympy>=1.12      # exact checks of worked examples
 # Optional fully offline narration:
 # piper-tts>=1.2

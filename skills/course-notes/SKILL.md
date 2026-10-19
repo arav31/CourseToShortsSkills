@@ -47,7 +47,8 @@ $PY "$SKILL_DIR/scripts/build_notes.py" runs/<course> --units u07 u08   # only t
 ```
 
 A `--units` build compiles the shared preamble with just those units into
-`notes/partial/<ids>/`, lints only those files, and leaves the full report alone, so several
+`notes/partial/<ids>/` (a hash is appended for long lists), prints each unit's start page and
+stats, lints only those files, and leaves the full report alone, so several
 agents can build in parallel without clobbering each other. If you can run subagents, set up
 `notes.tex` (preamble, macros, title page, all `\input` lines) first, then hand out units in
 parallel (each gets: run dir, unit ids, this skill's name). Unit writers must not edit
