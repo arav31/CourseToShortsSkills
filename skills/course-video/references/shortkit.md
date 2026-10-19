@@ -29,9 +29,15 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
   hides or is crossed by an arrow/line/curve, or a shape reaches into the caption band.
   It inspects the actual geometry on screen at the end of the beat, so it cannot see
   problems that exist only mid-transition; that is what looking at frames is for.
-- `self.title(s)` sets/swaps the compact title. Call it inside the first beat.
+- `self.title(s, *also)` sets/swaps the compact title, playing `also` animations with it so the
+  first frame already shows the real object: `self.title("Bayes in a crowd", FadeIn(grid))`.
+  `play=False` only registers it. Call it inside the first beat.
+- `self.cue("word", nth=0, offset=0.0)` waits until the narration reaches that word in the current
+  beat (real word timings with edge-tts, an even-pace estimate otherwise), so motion lands on the
+  spoken word. `self.beat_time()` is the time since the beat started.
 - `self.clear_stage(*keep)` fades out everything except the title and `keep`.
-- `self.allow_overlap(a, b)` declares an intentional text overlap (rarely needed).
+- `self.allow_overlap(a, b)` declares an intentional overlap between two texts or a text and a
+  shape (rarely needed; `highlight()` outlines are already exempt).
 - `self.show_zones()` draws zone outlines while debugging (remove before final).
 - Class attributes: `captions = True` (reserve the caption band), `tail_seconds = 0.6`.
 
@@ -65,7 +71,23 @@ Unmarked glyphs are white. Example: `tex(r"\cB{x_1}\,a_1 + \cB{x_2}\,a_2 = \cG{b
 Palette constants: `BG, INK, MUTED, GRID, BLUE_K, YELLOW_K, GREEN_K, RED_K, PURPLE_K, ORANGE_K`
 and the semantic aliases `INPUT, RULE, RESULT, ALERT`.
 
+## Spoken numbers
+
+`BEATS` must be a literal, but numbers must be computed. Compute in Python, then assert that the
+narration says the same thing, so an edit to one cannot silently contradict the other:
+
+```python
+FP = round(0.09 * 990)                      # 89
+assert "eighty-nine" in BEATS[3][1] and FP == 89
+```
+
 ## Manim gotchas worth knowing
+
+- `tex()` glyphs come out in reading order of the typeset formula (for `\frac`: numerator, bar,
+  denominator), so `eq[0:5]` selects the first five glyphs. Slices are fine to animate, but they
+  are new groups: after `TransformFromCopy(a, eq[3:6])`, remove the loose copies and `self.add(eq)`.
+- Stroke widths are in Manim units where 1 = 0.01 scene units; on a 9-unit-wide frame the
+  defaults look thick, and `vec()` already uses a phone-friendly width.
 
 - Do not use `MathTex`/`Tex` directly: they need a `latex` binary that may be absent. Use `tex()`.
 - `tex()` returns glyph-level SVG parts. To morph equations use `TransformMatchingShapes(a, b)`

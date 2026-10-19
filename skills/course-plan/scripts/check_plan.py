@@ -61,6 +61,19 @@ def example_fingerprint(ex: dict) -> tuple[str, frozenset[str]]:
     return hashlib.sha1(norm.encode()).hexdigest(), numbers
 
 
+def source_exists(run: Path, src: str) -> bool:
+    """Exact path, or the same stable id (sources/<id>-...) after a re-ingest renamed the slug."""
+    if (run / src).exists():
+        return True
+    m = re.match(r"sources/([0-9a-f]{6})-", src)
+    return bool(m and list((run / "sources").glob(f"{m.group(1)}-*.txt")))
+
+
+def concrete(blob: str) -> bool:
+    stripped = re.sub(r"\b(step|part|case|stage)\s*\d+\b|^\s*\d+[.)]\s", " ", blob, flags=re.I | re.M)
+    return bool(CONCRETE_RE.search(stripped))
+
+
 class Report:
     def __init__(self) -> None:
         self.errors: list[str] = []
@@ -102,7 +115,7 @@ def check_outline(run: Path, outline: dict, rep: Report) -> list[str]:
         if not sources:
             rep.warn(where, "no sources listed; every unit should point at the files it came from")
         for src in sources:
-            if not (run / str(src)).exists():
+            if not source_exists(run, str(src)):
                 rep.err(where, f"source file {src} does not exist")
     return ids
 
@@ -143,7 +156,7 @@ def check_plan(plan: dict, unit_ids: list[str], rep: Report) -> None:
         if not title:
             rep.err(where, "missing title")
         elif len(title) > 60:
-            rep.warn(where, f"title is {len(title)} chars; keep it under 60 so it fits the title band")
+            rep.err(where, f"title is {len(title)} chars; keep it to 60 so it fits the title band")
         units = short.get("units") or []
         if not units:
             rep.err(where, "list the outline unit ids it teaches in 'units'")
@@ -158,7 +171,7 @@ def check_plan(plan: dict, unit_ids: list[str], rep: Report) -> None:
         if words(hook) < 5:
             rep.err(where, "hook missing or too thin; open with the question or tension")
         elif words(hook) > 30:
-            rep.warn(where, "hook is long; the first line must land in about 3 seconds")
+            rep.err(where, f"hook is {words(hook)} words; the first line must land in about 3 seconds (max 30)")
         claim = str(short.get("claim", ""))
         if words(claim) < 6:
             rep.err(where, "claim missing; state the one idea the video makes obvious")
@@ -183,7 +196,7 @@ def check_plan(plan: dict, unit_ids: list[str], rep: Report) -> None:
         if not str(ex.get("result", "")).strip():
             rep.err(where, "worked_example.result is empty")
         blob = text_of(ex)
-        if not CONCRETE_RE.search(blob):
+        if not concrete(blob):
             rep.err(where, "worked example has no concrete values, symbols or objects")
         if PLACEHOLDERS.search(blob) or PLACEHOLDERS.search(text_of(short)):
             rep.err(where, "contains placeholder language")
@@ -194,18 +207,23 @@ def check_plan(plan: dict, unit_ids: list[str], rep: Report) -> None:
             rep.err(where, f"worked example is identical to {prints[fp]}")
         prints.setdefault(fp, sid)
         for other_id, other_nums in number_sets:
-            if len(nums) >= 4 and nums == other_nums:
-                rep.err(where, f"worked example reuses exactly the numbers of {other_id}; make it fresh")
+            union = nums | other_nums
+            if len(nums) >= 4 and len(other_nums) >= 4 and len(nums & other_nums) / len(union) >= 0.8:
+                rep.err(where, f"worked example reuses the numbers of {other_id}; make it fresh")
         number_sets.append((sid, nums))
         seen_ids.append(sid)
 
     skipped = {str(s.get("unit")): s for s in plan.get("skipped_units") or [] if isinstance(s, dict)}
     for uid, s in skipped.items():
+        if unit_ids and uid not in unit_ids:
+            rep.err(f"skipped unit {uid}", "is not in outline.json")
         if words(s.get("reason", "")) < 4:
-            rep.warn(f"skipped unit {uid}", "give a reason (e.g. 'proof-only; covered in notes')")
-    for uid in unit_ids:
-        if uid not in covered and uid not in skipped:
-            rep.warn(f"unit {uid}", "no short covers it and it is not in skipped_units")
+            rep.err(f"skipped unit {uid}", "give a reason (e.g. 'exam review; covered in notes only')")
+        if uid in covered:
+            rep.warn(f"skipped unit {uid}", "is also covered by a short; remove it from skipped_units")
+    missing = [uid for uid in unit_ids if uid not in covered and uid not in skipped]
+    if missing:
+        rep.err("coverage", f"units neither covered by a short nor listed in skipped_units: {', '.join(missing)}")
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -93,8 +93,30 @@ def test_boilerplate_lines_repeated_across_pages_are_removed():
     assert all(it["text"].startswith("Unique content") for it in items)
 
 
+def test_garbled_pdf_text_is_detected():
+    assert ingest.looks_garbled("ÐÑÒÓ ÔÕÖ ×ØÙ ÚÛÜ " * 50)
+    assert ingest.looks_garbled(" ".join(["qzx vbnm wrtp lkjh"] * 40))
+    assert not ingest.looks_garbled("We find the nullspace of the matrix and then the rank is two. " * 20)
+    assert not ingest.looks_garbled("我们有一个4乘4的矩阵，那么第一个问题就是要计算这个矩阵 A的行列式。" * 20)
+
+
+def test_nav_sequence_and_filename_titles():
+    html = b"""<html><head><title>Course</title></head><body><nav>
+    <a href="/courses/c/pages/syllabus/">Syllabus</a><a href="/courses/c/s1/">The Geometry of Linear Equations</a>
+    <a href="/courses/c/s2/">Elimination with Matrices</a><a href="/courses/c/s3/">Inverses</a>
+    <a href="/courses/c/s4/">A = LU</a></nav><p>Body text.</p></body></html>"""
+    _, _, _, _, nav = ingest.parse_html_full(html, "text/html", "https://ocw.mit.edu/courses/c/")
+    assert [a for _, a in nav][:3] == ["Syllabus", "The Geometry of Linear Equations", "Elimination with Matrices"]
+    assert ingest.filename_like("MIT18_06SCF11_Ses2.12sum.pdf") and not ingest.filename_like("Session summary")
+    assert ingest.clean_anchor("MIT18_06SCF11_Ses2.12sum.pdf: Download File") == "MIT18_06SCF11_Ses2.12sum"
+
+
 @pytest.mark.parametrize("url, kind", [
     ("https://x/courses/c/pages/syllabus/", "syllabus"),
+    ("https://x/courses/c/resources/solving-ax-0-pivot-variables-special-solutions/", "page"),
+    ("https://x/courses/c/final_ex.pdf", "exam"),
+    ("https://x/courses/c/final_exs.pdf", "solution"),
+    ("https://x/courses/c/resources/exam-1-review/", "review"),
     ("https://x/courses/c/MIT18_06SCF11_Ses1.3prob.pdf", "assignment"),
     ("https://x/courses/c/MIT18_06SCF11_ex1s.pdf", "solution"),
     ("https://x/courses/c/MIT18_06SCF11_ex1.pdf", "exam"),

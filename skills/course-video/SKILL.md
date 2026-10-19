@@ -41,7 +41,7 @@ $PY "$SKILL_DIR/scripts/render.py" <short_dir>            # 540x960 preview, voi
 
 It prints a beat timeline, automatic issues (layout errors from the scene, silent gaps,
 static stretches, blank frames) and contact-sheet paths. Then **open every
-`review/sheet-*.png` and look**. The automatic checks only find geometry problems; you have
+`review/preview-*.png` contact sheet and look**. The automatic checks only find geometry problems; you have
 to judge whether the picture teaches. For a closer look at a moment or a transition:
 
 ```bash
@@ -78,4 +78,4 @@ meanings, same title style, similar pacing.
 ## Output
 
 `<short_dir>/<NN>-<slug>.mp4` (final), `preview.mp4`, `<name>.srt`, `render_report.json`,
-`review/sheet-*.png`, `review.json`, `timing.json`, `audio/`, `build/` (Manim cache, deletable).
+`review/preview-*.png`, `review/final-*.png`, `review/frames/`, `review.json`, `timing.json`, `audio/`, `build/` (Manim cache, deletable).

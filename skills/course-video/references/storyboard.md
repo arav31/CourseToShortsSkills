@@ -57,7 +57,8 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
   `ValueTracker`; a dot moving along a curve with its velocity arrow; Taylor polynomials
   hugging a curve one term at a time.
 - **Probability/statistics:** probability mass as blocks that flow along a tree; a 2x2 area
-  diagram for Bayes; histograms built by dropping samples; a Markov chain whose state
+  diagram for Bayes when the probabilities are moderate, and a population of dots (natural
+  frequencies: "of 1000 people, 10 are sick...") when one probability is tiny; histograms built by dropping samples; a Markov chain whose state
   distribution bars update step by step.
 - **Algorithms/data structures:** arrays as rows of labelled cells; pointers as small triangles;
   a queue strip beside the graph for BFS; distances written into nodes and updated on

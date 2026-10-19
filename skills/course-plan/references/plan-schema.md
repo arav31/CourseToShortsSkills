@@ -1,92 +1,104 @@
 # outline.json and short_plan.json
 
 Both live in the run directory (`runs/<course-slug>/`). `check_plan.py` validates them.
+The examples below use an algorithms course; your files describe your course.
 
 ## outline.json — the course as taught
 
-The course's own structure (lectures, sessions, chapters, weeks) in course order. It is
-the coverage contract for the notes: every unit gets a notes chapter.
+The course's own sequence (lectures, sessions, chapters, weeks) in course order. It is the
+coverage contract for the notes: every unit gets a notes section.
 
 ```json
 {
   "course": {
-    "title": "Linear Algebra",
-    "code": "18.06SC",
+    "title": "Introduction to Algorithms",
+    "code": "6.006",
     "institution": "MIT OpenCourseWare",
-    "instructor": "Gilbert Strang",
-    "url": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/",
-    "level": "first university course; assumes high-school algebra",
-    "field_quote": {"text": "...", "author": "..."}
+    "instructor": "Erik Demaine, Jason Ku, Justin Solomon",
+    "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/",
+    "level": "second-year undergraduate; assumes discrete maths and Python",
+    "term": "Spring 2020",
+    "parts": ["Data structures", "Graphs", "Dynamic programming"]
   },
   "units": [
     {
-      "id": "u01",
-      "title": "The geometry of linear equations",
-      "summary": "Row picture vs column picture of Ax = b; a solution is a combination of the columns that reaches b.",
-      "key_ideas": ["row picture", "column picture", "linear combination", "matrix-vector product"],
-      "sources": ["sources/014-lecture-1-the-geometry-of-linear-equations.txt"]
+      "id": "u09",
+      "session": "Lecture 9",
+      "part": "Graphs",
+      "title": "Breadth-First Search",
+      "summary": "BFS explores a graph in layers of equal distance from the source using a FIFO queue; it computes unweighted shortest-path distances and a parent tree in O(V + E).",
+      "key_ideas": ["frontier / queue", "layers", "shortest-path tree", "O(V+E)"],
+      "sources": ["sources/3fa91c-lecture-9-breadth-first-search.txt", "sources/b27d04-lecture-9-notes.txt"]
     }
-  ]
+  ],
+  "assessments": [{"title": "Quiz 1", "sources": ["sources/9c1e2a-quiz-1-solutions.txt"]}]
 }
 ```
 
-- `id`: `u01`, `u02`, ... in course order. Group lectures into units only when the
-  course itself does; a 34-lecture course can have 34 units.
+- `id`: `u01`, `u02`, ... in course order.
+- What is a unit: every teaching session in the course sequence (`sources/INDEX.md` lists the
+  site's navigation order when the site has one). Exam-review sessions and exams that appear in
+  the sequence may be units too: the notes turn them into solved practice sets, and the shorts
+  plan lists them under `skipped_units`. If you would rather not give them notes sections,
+  put them in `assessments` instead.
 - `summary`: what the unit actually teaches, in one or two sentences, in your words.
-- `sources`: run-relative paths of the files you read for it. Every unit needs at least one.
-- `field_quote` (optional): a short quotation by a pioneer of the field for the notes'
-  title page. Only use a quote you are confident is real and correctly attributed; omit it otherwise.
+- `sources`: run-relative paths of the files you read for it; at least one per unit. File names
+  start with a stable id (`3fa91c-...`) that survives re-ingesting.
+- Optional, free-form: `course.term`, `course.textbook`, `course.parts`, `course.field_quote`
+  (`{"text", "author"}`: only a quotation you are sure is real and correctly attributed),
+  `unit.session`, `unit.part`, `unit.key_ideas`, top-level `assessments`. Other stages ignore
+  what they do not need.
 
 ## short_plan.json — the video series
 
 ```json
 {
-  "course_title": "Linear Algebra",
+  "course_title": "Introduction to Algorithms",
   "series": {
-    "title": "Linear Algebra, one picture at a time",
-    "audience": "curious beginners; no prior linear algebra",
-    "hashtags": ["#linearalgebra", "#math", "#manim", "#stem"]
+    "title": "Algorithms you can see",
+    "audience": "programmers who have never taken an algorithms course",
+    "hashtags": ["#algorithms", "#computerscience", "#manim", "#coding"]
   },
   "shorts": [
     {
-      "id": "s01",
-      "slug": "ax-mixes-columns",
-      "title": "A x mixes the columns",
-      "units": ["u01"],
-      "prerequisites": [],
-      "hook": "Multiplying a matrix by a vector looks like arithmetic. Here's the picture hiding inside it.",
-      "claim": "A x is the combination x1 a1 + x2 a2 of the columns of A.",
+      "id": "s04",
+      "slug": "bfs-grows-in-layers",
+      "title": "BFS grows in layers",
+      "units": ["u09"],
+      "prerequisites": ["s03"],
+      "hook": "How does a GPS-style search know the fewest hops without trying every path?",
+      "claim": "BFS visits vertices in order of distance because the queue holds layer k before layer k+1.",
       "worked_example": {
-        "setup": "A has columns a1 = (2, 1) and a2 = (1, 3); x = (4, 2).",
+        "setup": "Graph with edges s-a, s-b, a-c, b-c, b-e, c-d; start at s; neighbours in alphabetical order.",
         "steps": [
-          "Scale the columns: 4 a1 = (8, 4) and 2 a2 = (2, 6).",
-          "Add tip to tail: (8, 4) + (2, 6) = (10, 10).",
-          "Row check: 2*4 + 1*2 = 10 and 1*4 + 3*2 = 10."
+          "Dequeue s: discover a and b at distance 1. Queue: a, b.",
+          "Dequeue a: discover c at distance 2. Dequeue b: c is already seen; discover e at distance 2.",
+          "Dequeue c: discover d at distance 3. Dequeue e, then d: nothing new."
         ],
-        "result": "A x = (10, 10), reached by mixing the columns."
+        "result": "Distances s=0, a=1, b=1, c=2, e=2, d=3; visit order s, a, b, c, e, d."
       },
-      "visual": "One number plane. The column arrows a1 and a2 grow from the origin, stretch to 4 a1 and 2 a2, then chain tip to tail to land on (10, 10). The same two arrows persist through every step.",
-      "misconception": "A x is not a mysterious row-by-row recipe; the row rule is just bookkeeping for the column picture.",
+      "visual": "One 6-node graph above a queue strip. Each dequeue lights a node, its new neighbours slide into the queue and are coloured by layer, and parent edges thicken into the BFS tree.",
+      "misconception": "BFS does not find shortest paths in weighted graphs; it counts edges, not weights.",
       "practice": {
-        "question": "With the same A, which x lands on (3, 4)?",
-        "answer": "x = (1, 1), since a1 + a2 = (3, 4)."
+        "question": "Add edge a-d. What is d's distance now?",
+        "answer": "2, via s-a-d."
       },
       "reel_caption": "Optional hand-written Instagram caption. If absent, one is composed from hook, claim and practice."
     }
   ],
   "skipped_units": [
-    {"unit": "u17", "reason": "Exam review session; no new idea to animate (covered in notes)."}
+    {"unit": "u12", "reason": "Quiz 1 review session; covered as solved problems in the notes."}
   ]
 }
 ```
 
-Field rules (enforced by `check_plan.py` unless marked advisory):
+Field rules (errors from `check_plan.py` unless marked advisory):
 
 | field | rule |
 |---|---|
 | `id` | `s01`, `s02`, ... in teaching order |
 | `slug` | kebab-case, unique; the video folder is `shorts/<NN>-<slug>/` |
-| `title` | ≤ 60 characters (it must fit the on-screen title band) |
+| `title` | ≤ 60 characters (on screen, shorten further if needed so it stays one line) |
 | `units` | outline unit ids this short teaches |
 | `prerequisites` | ids of *earlier* shorts only |
 | `hook` | 5–30 words; the question or tension, landing within ~3 seconds |
@@ -95,4 +107,4 @@ Field rules (enforced by `check_plan.py` unless marked advisory):
 | `visual` | names the persistent on-screen objects and the motion that carries the argument |
 | `misconception` | advisory: the trap this short defuses |
 | `practice` | advisory: one question with its answer (for captions/notes, not shown as a quiz in the video) |
-| `skipped_units` | every unit not covered by a short needs an entry with a reason |
+| `skipped_units` | every outline unit not covered by a short, each with a reason; only real unit ids |

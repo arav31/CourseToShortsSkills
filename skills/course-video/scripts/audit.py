@@ -62,7 +62,7 @@ def grab_frame(video: Path, t: float, out: Path, width: int | None = None) -> Pa
 
 
 def contact_sheets(video: Path, out_dir: Path, every: float | None = None,
-                   cols: int = 4, rows: int = 3, tile_w: int = 270) -> list[Path]:
+                   cols: int = 4, rows: int = 3, tile_w: int = 270, prefix: str = "sheet") -> list[Path]:
     """Write timestamped contact sheets (cols x rows tiles each). Returns paths."""
     from PIL import Image, ImageDraw, ImageFont
 
@@ -76,7 +76,7 @@ def contact_sheets(video: Path, out_dir: Path, every: float | None = None,
     if times and duration - times[-1] > 0.4:
         times.append(round(max(0.0, duration - 0.15), 2))
     out_dir.mkdir(parents=True, exist_ok=True)
-    for old in out_dir.glob("sheet-*.png"):
+    for old in out_dir.glob(f"{prefix}-*.png"):
         old.unlink()
     font = _font(22)
     label_h = 30
@@ -97,7 +97,7 @@ def contact_sheets(video: Path, out_dir: Path, every: float | None = None,
                 y = 6 + (j // cols) * (th + label_h + 6)
                 draw.text((x + 4, y + 3), f"{ts:6.2f}s", fill=(255, 220, 90), font=font)
                 sheet.paste(img, (x, y + label_h))
-            path = out_dir / f"sheet-{s // per + 1:02d}.png"
+            path = out_dir / f"{prefix}-{s // per + 1:02d}.png"
             sheet.save(path)
             sheets.append(path)
     return sheets
@@ -218,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         for path in contact_sheets(args.video, out, args.every):
             print(path)
     elif args.cmd == "frames":
-        out = args.out or args.video.parent / "review"
+        out = args.out or args.video.parent / "review" / "frames"
         out.mkdir(parents=True, exist_ok=True)
         for t in args.at:
             print(grab_frame(args.video, t, out / f"frame-{t:07.2f}s.png"))

@@ -58,10 +58,32 @@ def test_missing_source_file_fails(plan_run):
     assert any("does not exist" in e for e in result["errors"])
 
 
-def test_uncovered_unit_is_a_warning_then_strict_error(plan_run):
+def test_uncovered_unit_must_be_skipped_with_reason(plan_run):
     edit_plan(plan_run, lambda p: p["shorts"].pop())
     code, result = run_check(plan_run)
-    assert code == 0
-    assert any("unit u02" in w for w in result["warnings"])
-    code, _ = run_check(plan_run, "--strict")
     assert code == 1
+    assert any("u02" in e and "coverage" in e for e in result["errors"])
+    edit_plan(plan_run, lambda p: p.__setitem__("skipped_units", [{"unit": "u02", "reason": "elimination is notes-only here"}]))
+    code, result = run_check(plan_run)
+    assert code == 0, result["errors"]
+
+
+def test_skipped_unknown_unit_and_long_title_fail(plan_run):
+    def bad(plan):
+        plan["skipped_units"] = [{"unit": "u99", "reason": "does not exist in the outline"}]
+        plan["shorts"][0]["title"] = "x" * 61
+    edit_plan(plan_run, bad)
+    code, result = run_check(plan_run)
+    assert code == 1
+    assert any("u99" in e for e in result["errors"]) and any("60" in e for e in result["errors"])
+
+
+def test_step_numbers_alone_are_not_concrete(plan_run):
+    def filler(plan):
+        plan["shorts"][0]["worked_example"] = {"setup": "Look at the idea.",
+                                               "steps": ["Step 1: think about it.", "Step 2: apply the rule."],
+                                               "result": "Step 3: conclude."}
+    edit_plan(plan_run, filler)
+    code, result = run_check(plan_run)
+    assert code == 1
+    assert any("no concrete values" in e for e in result["errors"])

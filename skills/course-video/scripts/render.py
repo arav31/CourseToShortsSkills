@@ -9,7 +9,7 @@ Outputs, all inside <short_dir>:
     preview.mp4 or <short_dir name>.mp4   the video (final quality uses the dir name)
     <name>.srt                             captions with real timings
     render_report.json                     beats, layout issues, motion scan, hash
-    review/sheet-NN.png                    contact sheets to look at
+    review/<quality>-NN.png                contact sheets to look at (preview-01.png, final-01.png, ...)
     build/                                 Manim media + logs (safe to delete)
 
 Narration: by default the timing.json from a previous run is reused when the
@@ -317,7 +317,7 @@ def render(short_dir: Path, quality: str = "preview", engine: str | None = None,
     encode(raw, video, quality, trace, timing, short_dir, ass)
 
     info = audit.probe(video)
-    motion = audit.motion_scan(video)
+    motion = audit.motion_scan(raw)  # the picture alone: changing captions must not hide a frozen frame
     issues = [dict(i, source="layout") for i in trace.get("issues", [])]
     for beat in trace.get("beats", []):
         if beat.get("overrun", 0) > 1.5 and timing.get("engine") != "none":
@@ -327,7 +327,7 @@ def render(short_dir: Path, quality: str = "preview", engine: str | None = None,
     if timing.get("engine") != "none" and not info.get("has_audio"):
         issues.append({"severity": "error", "kind": "missing-audio", "source": "video",
                        "detail": "narration was synthesized but the MP4 has no audio stream"})
-    sheets = audit.contact_sheets(video, short_dir / "review")
+    sheets = audit.contact_sheets(video, short_dir / "review", prefix=quality)
     errors = [i for i in issues if i["severity"] == "error"]
     report = {
         "quality": quality, "video": video.name, "sha256": audit.sha256(video),

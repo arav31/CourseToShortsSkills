@@ -7,17 +7,19 @@ these files, so any stage can be re-run or handed to another agent.
 runs/<course-slug>/
   source_pack.json          index of collected sources + warnings           (course-plan: ingest.py)
   sources/
-    INDEX.md                readable table of sources
-    NNN-<slug>.txt          one page/PDF/transcript as text, with a header
+    INDEX.md                course sequence + readable table of sources
+    <id>-<slug>.txt         one page/PDF/transcript as text, with a header; <id> is stable
   outline.json              the course's units in order                    (course-plan: you)
   short_plan.json           the video series                               (course-plan: you)
   plan_check.json           result of check_plan.py, bound to the plan hash (course-plan)
+  checks/examples.py        the Python that verifies every worked-example number (course-plan: you)
   notes/
     notes.tex               preamble, title page, notation, \input of units (course-notes: you)
     units/uNN.tex           one section per outline unit                   (course-notes: you)
     notes.pdf               compiled PDF                                   (build_notes.py)
     notes_report.json       engine, page count, lint issues, source hash   (build_notes.py)
     preview/sheet-NN.png    page contact sheets for review                 (build_notes.py)
+    partial/<ids>/          per-unit builds from --units (parallel-safe)    (build_notes.py)
   shorts/
     NN-<slug>/              NN = position in short_plan.json (01, 02, ...)
       storyboard.md         claim, objects, layout, beats                  (course-video: you)
@@ -27,7 +29,7 @@ runs/<course-slug>/
       NN-<slug>.mp4         1080x1920 final render                         (render.py --quality final)
       NN-<slug>.srt         captions                                       (render.py)
       render_report.json    beats, issues, motion scan, hash               (render.py)
-      review/sheet-NN.png   contact sheets                                 (render.py / audit.py)
+      review/preview-NN.png, review/final-NN.png   contact sheets         (render.py)
       review.json           approval bound to the MP4 hash                 (audit.py approve)
       build/                Manim media and logs (deletable)
   reels_queue.json          ordered posting queue                          (course-reels)

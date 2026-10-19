@@ -92,3 +92,16 @@ def test_render_end_to_end_reports_layout_and_writes_outputs(tmp_path):
     assert report["contact_sheets"] and (short / report["contact_sheets"][0]).exists()
     saved = json.loads((short / "render_report.json").read_text())
     assert saved["sha256"] == report["sha256"]
+
+
+@pytest.mark.skipif(not (HAS_MANIM and HAS_TEX), reason="needs manim and a TeX engine")
+def test_tex_rules_become_filled_bars(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHORTKIT_CACHE", str(tmp_path / "cache"))
+    import importlib
+
+    import shortkit
+    importlib.reload(shortkit)
+    eq = shortkit.tex(r"\frac{1}{2} + \sqrt{3}")
+    bars = [m for m in eq.family_members_with_points()
+            if isinstance(m, shortkit.Rectangle) and m.get_fill_opacity() > 0.9 and m.width > 3 * m.height]
+    assert len(bars) == 2, "fraction bar and square-root bar must be visible filled rules"

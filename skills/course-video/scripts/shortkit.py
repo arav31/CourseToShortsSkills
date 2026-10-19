@@ -371,12 +371,33 @@ class TexSVG(SVGMobject):
     def __init__(self, src: str, size: float = Size.BODY, color: str | None = None,
                  math: bool = True, **kwargs):
         (svg,) = _compile_tex([_tex_body(src, math)])
-        super().__init__(str(svg), height=None, stroke_width=0, should_center=True, **kwargs)
+        super().__init__(str(svg), height=None, should_center=True, **kwargs)
+        _solidify_rules(self)
         self.scale(size * TEX_PT_SCALE)
         if color is not None:
             self.set_fill(color, opacity=1.0)
         self.tex_source = src
         _mark_text(self, size, src)
+
+
+def _solidify_rules(root: Mobject) -> None:
+    """TeX rules (fraction bars, sqrt and overline bars, table rules) arrive as stroked,
+    zero-area paths. Replace them with filled rectangles so they scale and recolour with glyphs."""
+    for parent in root.get_family():
+        for i, sm in enumerate(list(parent.submobjects)):
+            if not isinstance(sm, VMobject) or not len(sm.points):
+                continue
+            if sm.get_fill_opacity() > 0.01 or sm.get_stroke_opacity() < 0.01:
+                continue
+            thickness = float(sm.get_stroke_width()) or 0.4  # in points at this stage (1 unit = 1 pt)
+            if sm.height < 1e-3:
+                rule = Rectangle(width=max(sm.width, thickness), height=thickness)
+            elif sm.width < 1e-3:
+                rule = Rectangle(width=thickness, height=max(sm.height, thickness))
+            else:
+                continue
+            rule.set_fill(sm.get_stroke_color(), opacity=1.0).set_stroke(width=0).move_to(sm.get_center())
+            parent.submobjects[i] = rule
 
 
 def tex(src: str, size: float = Size.BODY, color: str | None = None, math: bool = True) -> TexSVG:
@@ -434,7 +455,9 @@ def label(s: str, size: float = Size.LABEL, color: str = INK, math: bool = False
 
 def highlight(mob: Mobject, color: str = YELLOW_K, buff: float = 0.1) -> SurroundingRectangle:
     """An outline (never a filled sweep) that points at something without hiding it."""
-    return SurroundingRectangle(mob, color=color, buff=buff, stroke_width=5, corner_radius=0.06)
+    rect = SurroundingRectangle(mob, color=color, buff=buff, stroke_width=5, corner_radius=0.06)
+    rect._sk_pointer = True  # meant to surround text; not an overlap
+    return rect
 
 
 def stage_plane(x_range=(-1, 5, 1), y_range=(-1, 5, 1), zone: Zone = STAGE,
@@ -481,7 +504,8 @@ class ShortScene(Scene):
         self._beats = _beatlib.normalize_beats(getattr(module, "BEATS", None),
                                                f"{type(self).__name__}.BEATS")
         self._beat_ids = [b["id"] for b in self._beats]
-        self._durations, timing_issue = _load_timing(self._beats)
+        self._durations, timing_issue, self._words, self._spoken = _load_timing(self._beats)
+        self._beat_start = 0.0
         self._used: list[str] = []
         self._active_beat: str | None = None
         self._title_mob: Mobject | None = None
@@ -530,6 +554,7 @@ class ShortScene(Scene):
         self._used.append(beat_id)
         self._active_beat = beat_id
         start = self._now()
+        self._beat_start = start
         yield
         animated = self._now() - start
         self._check_layout(beat_id)
@@ -547,17 +572,59 @@ class ShortScene(Scene):
     def _now(self) -> float:
         return float(self.renderer.time)
 
+    def beat_time(self) -> float:
+        """Seconds since the current beat started."""
+        return self._now() - self._beat_start if self._active_beat else 0.0
+
+    def cue(self, word: str, nth: int = 0, offset: float = 0.0) -> None:
+        """Wait until the narration of the current beat reaches ``word`` (its nth occurrence).
+
+        Uses the word timings from edge-tts when available, otherwise an even-pace estimate,
+        so ``self.cue("tail"); self.play(...)`` lands the motion on the spoken word.
+        """
+        if not self._active_beat:
+            raise RuntimeError("cue() only works inside `with self.beat(...)`")
+        target = self._word_time(self._active_beat, word, nth)
+        if target is None:
+            self._issue("warning", "cue", f"word {word!r} not found in beat {self._active_beat!r}")
+            return
+        remaining = target + offset - self.beat_time()
+        if remaining > 1.0 / _FPS:
+            self.wait(remaining)
+
+    def _word_time(self, beat_id: str, word: str, nth: int) -> float | None:
+        want = _re.sub(r"[^a-z0-9]", "", word.lower())
+        timed = self._words.get(beat_id)
+        if timed:
+            hits = [t for t, _, w in timed if _re.sub(r"[^a-z0-9]", "", str(w).lower()).startswith(want)]
+            return float(hits[nth]) if len(hits) > nth else None
+        text_ = next(b["text"] for b in self._beats if b["id"] == beat_id)
+        tokens = text_.split()
+        hits = [i for i, tok in enumerate(tokens) if _re.sub(r"[^a-z0-9]", "", tok.lower()).startswith(want)]
+        if len(hits) <= nth:
+            return None
+        spoken = self._spoken.get(beat_id, self._durations[beat_id])
+        return spoken * hits[nth] / max(len(tokens), 1)
+
     # ---- conveniences --------------------------------------------------------
 
-    def title(self, s: str, size: float = Size.TITLE, color: str = INK, run_time: float = 0.6) -> Mobject:
-        """Set (or swap) the compact title in TITLE_ZONE."""
+    def title(self, s: str, *also: Animation, size: float = Size.TITLE, color: str = INK,
+              run_time: float = 0.6, play: bool = True) -> Mobject:
+        """Set (or swap) the compact title in TITLE_ZONE.
+
+        Extra animations in ``also`` play together with it, so the opening shot can show the
+        real object at once: ``self.title("Bayes", FadeIn(grid))``. With ``play=False`` the
+        title is only registered and returned; animate it yourself (e.g. inside a bigger play).
+        """
         mob = text(s, size=size, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
         TITLE_ZONE.fit(mob, buff=0.05, upscale=False)
-        if self._title_mob is None:
-            self.play(FadeIn(mob, shift=DOWN * 0.15), run_time=run_time)
+        old, self._title_mob = self._title_mob, mob
+        if not play:
+            return mob
+        if old is None:
+            self.play(FadeIn(mob, shift=DOWN * 0.15), *also, run_time=run_time)
         else:
-            self.play(FadeOut(self._title_mob, shift=UP * 0.15), FadeIn(mob, shift=UP * 0.15), run_time=run_time)
-        self._title_mob = mob
+            self.play(FadeOut(old, shift=UP * 0.15), FadeIn(mob, shift=UP * 0.15), *also, run_time=run_time)
         return mob
 
     def clear_stage(self, *keep: Mobject, run_time: float = 0.5) -> None:
@@ -570,8 +637,12 @@ class ShortScene(Scene):
             self.play(*[FadeOut(m) for m in gone], run_time=run_time)
 
     def allow_overlap(self, a: Mobject, b: Mobject) -> None:
-        """Declare an intentional text overlap (e.g. a label sitting on its own plate)."""
-        self._allowed_pairs.add(frozenset((id(getattr(a, "_sk_owner", a)), id(getattr(b, "_sk_owner", b)))))
+        """Declare an intentional overlap between two texts, or between a text and a shape."""
+        keys_a = {id(getattr(a, "_sk_owner", a))} | {id(m) for m in a.get_family()}
+        keys_b = {id(getattr(b, "_sk_owner", b))} | {id(m) for m in b.get_family()}
+        for ka in keys_a:
+            for kb in keys_b:
+                self._allowed_pairs.add(frozenset((ka, kb)))
 
     def show_zones(self) -> None:
         """Debug aid: draw dashed zone outlines (do not leave in final renders)."""
@@ -637,7 +708,8 @@ class ShortScene(Scene):
         for t in texts:
             box = t.box
             inner = (box[0] + 0.06, box[1] + 0.06, box[2] - 0.06, box[3] - 0.06)
-            hits = [g for g in shapes if _path_enters(g, inner)]
+            hits = [g for g in shapes if frozenset((id(t.owner), id(g))) not in self._allowed_pairs
+                    and _path_enters(g, inner)]
             if hits:
                 verb = "hides" if getattr(t.owner, "_sk_inner", None) is not None else "is crossed by"
                 self._issue("warning", "text-covers-geometry",
@@ -658,7 +730,8 @@ class ShortScene(Scene):
             if id(m) in seen or id(m) in text_ids or getattr(m, "_sk_owner", None) is not None:
                 return
             seen.add(id(m))
-            if getattr(m, "_sk_background", False) or isinstance(m, (NumberPlane, Axes) + _TEXT_TYPES):
+            if (getattr(m, "_sk_background", False) or getattr(m, "_sk_pointer", False)
+                    or isinstance(m, (NumberPlane, Axes, SurroundingRectangle) + _TEXT_TYPES)):
                 return
             if isinstance(m, VMobject) and len(m.points) and _self_visible(m, threshold=0.3):
                 leaves.append(m)
@@ -706,11 +779,14 @@ class ShortScene(Scene):
 # --------------------------------------------------------------------------
 
 
-def _load_timing(beats: list[dict[str, str]]) -> tuple[dict[str, float], str | None]:
+def _load_timing(beats: list[dict[str, str]]):
+    """Return (durations, issue, word timings, spoken seconds) per beat id."""
     durations = {b["id"]: _beatlib.estimate_seconds(b["text"]) for b in beats}
+    words: dict[str, list] = {}
+    spoken: dict[str, float] = {}
     path = _os.environ.get("SHORTKIT_TIMING")
     if not path or not _Path(path).exists():
-        return durations, None
+        return durations, None, words, spoken
     data = _json.loads(_Path(path).read_text(encoding="utf-8"))
     stale = []
     by_id = {b["id"]: b for b in data.get("beats", [])}
@@ -718,10 +794,14 @@ def _load_timing(beats: list[dict[str, str]]) -> tuple[dict[str, float], str | N
         entry = by_id.get(b["id"])
         if entry and " ".join(str(entry.get("text", "")).split()) == b["text"]:
             durations[b["id"]] = float(entry["duration"])
+            if entry.get("words"):
+                words[b["id"]] = entry["words"]
+            if entry.get("audio_seconds"):
+                spoken[b["id"]] = float(entry["audio_seconds"])
         else:
             stale.append(b["id"])
     issue = f"timing.json is stale for beats {', '.join(stale)}; using estimates" if stale else None
-    return durations, issue
+    return durations, issue, words, spoken
 
 
 class _TextItem:
