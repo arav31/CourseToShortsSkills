@@ -1,0 +1,147 @@
+1
+00:00:00,100 --> 00:00:02,487
+Plain recursion needs 2.7
+
+2
+00:00:02,487 --> 00:00:03,388
+million calls for the
+
+3
+00:00:03,388 --> 00:00:04,950
+thirtieth Fibonacci number,
+
+4
+00:00:04,950 --> 00:00:06,188
+but only thirty-one
+
+5
+00:00:06,188 --> 00:00:07,500
+different answers.
+
+6
+00:00:07,500 --> 00:00:08,513
+Where does the waste go?
+
+7
+00:00:09,158 --> 00:00:11,471
+Here is Fibonacci of five.
+
+8
+00:00:11,471 --> 00:00:12,821
+Each call splits in two,
+
+9
+00:00:13,221 --> 00:00:15,333
+down to one or zero:
+
+10
+00:00:15,333 --> 00:00:16,408
+fifteen calls.
+
+11
+00:00:16,987 --> 00:00:18,400
+Most are repeats:
+
+12
+00:00:18,400 --> 00:00:20,387
+F of three runs twice,
+
+13
+00:00:20,387 --> 00:00:22,113
+F of two three times,
+
+14
+00:00:22,113 --> 00:00:23,800
+F of one five times,
+
+15
+00:00:23,800 --> 00:00:25,712
+F of zero three times.
+
+16
+00:00:26,300 --> 00:00:27,563
+Only six are different.
+
+17
+00:00:27,563 --> 00:00:29,500
+Sort the calls into columns,
+
+18
+00:00:29,500 --> 00:00:32,338
+merge each column into one cell,
+
+19
+00:00:32,338 --> 00:00:33,612
+and fourteen tree edges
+
+20
+00:00:33,612 --> 00:00:35,813
+pile onto eight dependencies.
+
+21
+00:00:36,433 --> 00:00:37,858
+Every arrow points right,
+
+22
+00:00:37,858 --> 00:00:39,621
+so fill left to right.
+
+23
+00:00:39,621 --> 00:00:41,483
+Zero and one are given;
+
+24
+00:00:41,483 --> 00:00:42,608
+each next cell adds
+
+25
+00:00:42,608 --> 00:00:45,895
+the two before it: one, then two,
+
+26
+00:00:45,895 --> 00:00:47,996
+then three, then five.
+
+27
+00:00:48,600 --> 00:00:50,212
+Six subproblems instead
+
+28
+00:00:50,212 --> 00:00:51,775
+of fifteen calls.
+
+29
+00:00:51,775 --> 00:00:52,700
+And for thirty:
+
+30
+00:00:53,088 --> 00:00:55,050
+thirty-one subproblems instead of
+
+31
+00:00:55,050 --> 00:00:56,787
+2.7 million calls.
+
+32
+00:00:57,367 --> 00:00:59,067
+That's dynamic programming:
+
+33
+00:00:59,067 --> 00:01:01,229
+recurse, but re-use.
+
+34
+00:01:01,229 --> 00:01:03,004
+Time equals subproblems times
+
+35
+00:01:03,004 --> 00:01:04,355
+work per subproblem:
+
+36
+00:01:04,842 --> 00:01:07,642
+here n plus one, times constant,
+
+37
+00:01:07,642 --> 00:01:08,417
+so order n.

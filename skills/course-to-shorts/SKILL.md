@@ -60,7 +60,8 @@ $PY "$SKILL_DIR/scripts/run_status.py" runs/<course-slug> --gate   # exit 1 unti
 Publish-ready means: the plan check passes for the current plan; the notes compiled with a real
 TeX engine with no errors and every outline unit has a chapter; every planned short has a
 final render with no errors and an approval bound to that exact MP4. Stale reports count as
-missing. Report the gate result honestly; list any blockers you could not resolve.
+missing. When the user asked for shorts only (no notes), gate with `--gate --shorts-only`:
+the notes stage is still reported but does not block. Report the gate result honestly; list any blockers you could not resolve.
 
 ## 5. Publish: course-reels (only when asked)
 

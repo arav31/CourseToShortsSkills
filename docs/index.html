@@ -124,6 +124,28 @@
   </section>
 
   <section>
+    <h2>A second field: MIT 6.006 Introduction to Algorithms</h2>
+    <p class="sub">The same skills on a different subject, from
+      <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/">MIT OpenCourseWare 6.006</a>:
+      the agent crawled 166 sources, outlined all 21 lectures, and planned a three-short demo of the graph and
+      dynamic-programming arc, each built on an example whose numbers a script recomputes by brute force.</p>
+    <div class="shorts">
+      <div class="short">
+        <video src="media/6006-01-bfs.mp4" poster="media/6006-01-bfs.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Lecture 9</span><h3>BFS grows level by level</h3><p>The lecture's own exercise, solved level set by level set: each level is the unvisited neighbours of the last.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/6006-02-dijkstra.mp4" poster="media/6006-02-dijkstra.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Lecture 13</span><h3>Dijkstra trusts the smallest</h3><p>Estimates fall as roads are relaxed; the smallest one left is always final. 6 minutes beats the direct 10.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/6006-03-dp.mp4" poster="media/6006-03-dp.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Lecture 15</span><h3>Recurse, but re-use</h3><p>Fifteen calls collapse into six subproblems: the Fibonacci call tree folds into a DAG.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <h2>Five skills</h2>
     <p class="sub">The agent does the teaching (choosing ideas, worked examples, proofs, storyboards, Manim code, and judging the result).
       Small scripts do everything mechanical and checkable.</p>
@@ -152,8 +174,10 @@ codex plugin add course-to-shorts@course-to-shorts</pre></div>
   </section>
 
   <footer>
-    Example content is derived from MIT OpenCourseWare 18.06SC (Gilbert Strang), licensed
+    Example content is derived from MIT OpenCourseWare 18.06SC, <i>Linear Algebra</i> (Gilbert Strang, Fall 2011), and
+    6.006, <i>Introduction to Algorithms</i> (Erik Demaine, Jason Ku and Justin Solomon, Spring 2020), licensed
     <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>; the notes and videos are shared under the same licence.
+    MIT OpenCourseWare does not endorse them.
     Voices: Microsoft Edge neural TTS. Animations: <a href="https://www.manim.community/">Manim Community</a>.
   </footer>
 </div>

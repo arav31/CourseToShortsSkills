@@ -1,0 +1,177 @@
+{
+  "course_title": "Introduction to Algorithms",
+  "series": {
+    "title": "Algorithms, frame by frame",
+    "audience": "programmers who have never taken an algorithms course",
+    "hashtags": [
+      "#algorithms",
+      "#computerscience",
+      "#coding",
+      "#manim",
+      "#learntocode"
+    ]
+  },
+  "shorts": [
+    {
+      "id": "s01",
+      "slug": "bfs-level-by-level",
+      "title": "BFS grows level by level",
+      "units": [
+        "u09"
+      ],
+      "prerequisites": [],
+      "hook": "How far is every vertex from s, and can any not be reached at all? One sweep answers both.",
+      "claim": "Breadth-first search builds level L_i from the unvisited neighbours of level L_(i-1), so a vertex's level is exactly its distance from s.",
+      "worked_example": {
+        "setup": "Lecture 9's Example 3: undirected graph on s, a, b, c, d, e, f, g with Adj(s) = [a, c], Adj(a) = [s, b], Adj(b) = [a], Adj(c) = [s, d, e], Adj(d) = [c, e, f], Adj(e) = [c, d, f], Adj(f) = [d, e], Adj(g) = []. Start at s.",
+        "steps": [
+          "L0 = {s}.",
+          "L1 = unvisited neighbours of s = {a, c}; parents P(a) = P(c) = s.",
+          "L2: from a we find b; from c we find d and e. L2 = {b, d, e}; P(b) = a, P(d) = P(e) = c.",
+          "L3: b adds nothing; from d we find f; e only sees vertices already placed. L3 = {f}, P(f) = d.",
+          "L4 is empty, so stop; g was never reached: its distance is infinity."
+        ],
+        "result": "Distances s 0; a, c 1; b, d, e 2; f 3; g infinity. 8 vertices, 8 edges, 16 adjacency checks in total (each edge once from each end). Every edge joins equal or adjacent levels (only d-e stays inside a level), and brute-force search over all simple paths gives the same distances."
+      },
+      "visual": "The 8-vertex graph from the lecture fills the top of the stage; a column of level rows L0..L3 sits below. For each level, the previous level's vertices light up, edges to unvisited neighbours flash yellow, and those neighbours take that level's colour and drop as chips into row L_i while their parent edges thicken into the BFS tree. g stays grey with infinity. At the end the vertices slide into rows by level, so the drawing turns into its layered form and every edge visibly spans at most one level.",
+      "misconception": "Depth-first search reaches the same vertices, but its paths need not be shortest; only the level-by-level order guarantees the fewest edges.",
+      "practice": {
+        "question": "Add the edge s-f. What is f's distance now, and does any other vertex change level?",
+        "answer": "f moves to level 1; nothing else changes (d and e still sit at 2 through c)."
+      }
+    },
+    {
+      "id": "s02",
+      "slug": "dijkstra-smallest-first",
+      "title": "Dijkstra trusts the smallest",
+      "units": [
+        "u13"
+      ],
+      "prerequisites": [
+        "s01"
+      ],
+      "hook": "The direct road to work takes ten minutes. Is there a faster route, and how can you be sure?",
+      "claim": "With non-negative weights, the unfinished vertex with the smallest estimate can never be improved, so Dijkstra finalizes it and relaxes its edges.",
+      "worked_example": {
+        "setup": "Undirected road map with minutes: Home-Cafe 2, Home-Park 5, Home-Work 10, Cafe-Park 1, Cafe-Shop 6, Park-Shop 2, Park-Work 6, Shop-Work 1. Source Home; all estimates start at infinity except Home = 0.",
+        "steps": [
+          "Remove Home (0): relax to Cafe 2, Park 5, Work 10.",
+          "Remove Cafe (2): Park improves 5 to 3 (2 + 1); Shop gets 8 (2 + 6).",
+          "Remove Park (3): Shop improves 8 to 5 (3 + 2); Work improves 10 to 9 (3 + 6).",
+          "Remove Shop (5): Work improves 9 to 6 (5 + 1).",
+          "Remove Work (6): done; parents give the route Home, Cafe, Park, Shop, Work."
+        ],
+        "result": "Final distances Home 0, Cafe 2, Park 3, Shop 5, Work 6; removal order Home, Cafe, Park, Shop, Work; 8 relaxations (every check toward an unfinished place lowered its estimate), 4 of them lowering an estimate that was already finite. Listing every simple Home-to-Work route confirms 6 minutes (2 + 1 + 2 + 1) is the unique minimum; the direct road is 10."
+      },
+      "visual": "A five-place road map (Home, Cafe, Park, Shop, Work) with minute weights on the roads; each place shows its current estimate in a circle, starting at infinity. Below, a priority-queue strip keeps the unfinished places sorted by estimate. Each round the leftmost entry pops out and turns green (final), its roads flash yellow one by one, and any estimate that drops slides its queue entry left. A boundary around the finished set shows why the popped minimum is safe: every way out of it already costs at least that much.",
+      "misconception": "A vertex's first estimate is not its answer (Work starts at 10 but ends at 6); it is final only when it is the smallest left, and a negative edge would break even that.",
+      "practice": {
+        "question": "If Cafe-Park took 4 minutes instead of 1, what would the fastest time to Work be, and by which route?",
+        "answer": "8 minutes: Home, Park, Shop, Work (5 + 2 + 1)."
+      }
+    },
+    {
+      "id": "s03",
+      "slug": "dp-recurse-but-reuse",
+      "title": "Recurse, but re-use",
+      "units": [
+        "u15"
+      ],
+      "prerequisites": [
+        "s02"
+      ],
+      "hook": "Plain recursion for the 30th Fibonacci number makes 2.7 million calls. It only needs 31 answers. Where does the waste go?",
+      "claim": "Dynamic programming solves each distinct subproblem once: the exponential tree of recursive calls collapses into a DAG of n + 1 subproblems.",
+      "worked_example": {
+        "setup": "fib(n) = fib(n-1) + fib(n-2) with base cases fib(0) = 0, fib(1) = 1 (the lecture's code); compute fib(5).",
+        "steps": [
+          "Plain recursion: calls(n) = calls(n-1) + calls(n-2) + 1 with calls(0) = calls(1) = 1, so fib(5) makes 15 calls.",
+          "In the call tree, F(3) appears twice, F(2) three times, F(1) five times and F(0) three times: only 6 different subproblems F(0)..F(5).",
+          "Merge equal calls: the 14 tree edges become 8 dependency edges F(k) -> F(k-1), F(k-2) for k = 2..5 (fewer than 2n = 10).",
+          "Solve in topological order (increasing k): 0, 1, 1, 2, 3, 5, one addition each for k = 2..5."
+        ],
+        "result": "fib(5) = 5 with 6 subproblems and 4 additions instead of 15 calls. For n = 30: 2,692,537 calls (2 F(31) - 1) versus 31 subproblems and 29 additions; fib(30) = 832,040."
+      },
+      "visual": "The full call tree of fib(5): 15 nodes coloured by subproblem, so the repeated F(3), F(2), F(1), F(0) nodes share colours. Then every node slides down into one memo row F(0)..F(5); duplicates merge into a single cell and the tree's edges pile onto the 8 arcs of the subproblem DAG. The row fills left to right, each cell drawing its two arcs as it adds, while a call counter (15) faces a subproblem counter (6), then jumps to n = 30.",
+      "misconception": "Dynamic programming is not a Fibonacci trick: it is any recursion whose subproblems overlap, organised so each distinct subproblem is solved once.",
+      "practice": {
+        "question": "How many calls does plain recursive fib(6) make, and how many subproblems does the memo need?",
+        "answer": "25 calls; 7 subproblems, F(0) to F(6)."
+      }
+    }
+  ],
+  "skipped_units": [
+    {
+      "unit": "u01",
+      "reason": "Not in this 3-short demo; a full series could show birthday matching proved correct by induction."
+    },
+    {
+      "unit": "u02",
+      "reason": "Not in this 3-short demo; a full series could show dynamic-array doubling with amortized O(1) appends."
+    },
+    {
+      "unit": "u03",
+      "reason": "Not in this 3-short demo; a full series could show merge sort's recursion tree splitting and merging."
+    },
+    {
+      "unit": "u04",
+      "reason": "Not in this 3-short demo; a full series could show keys hashed into chains of a table."
+    },
+    {
+      "unit": "u05",
+      "reason": "Not in this 3-short demo; a full series could show radix sort passing digits through stable counting sort."
+    },
+    {
+      "unit": "u06",
+      "reason": "Not in this 3-short demo; a full series could show traversal order and successor search in a binary tree."
+    },
+    {
+      "unit": "u07",
+      "reason": "Not in this 3-short demo; a full series could show an AVL rotation that keeps traversal order."
+    },
+    {
+      "unit": "u08",
+      "reason": "Not in this 3-short demo; a full series could show heapify-down in a heap stored as an array."
+    },
+    {
+      "unit": "u10",
+      "reason": "Not in this 3-short demo; a full series could show DFS finishing order turning into a topological sort."
+    },
+    {
+      "unit": "u11",
+      "reason": "Relaxation appears inside the Dijkstra short; DAG relaxation itself is left for a full series."
+    },
+    {
+      "unit": "u12",
+      "reason": "Not in this 3-short demo; a full series could show a negative cycle and Bellman-Ford's layered graph."
+    },
+    {
+      "unit": "u14",
+      "reason": "Not in this 3-short demo; a full series could show Johnson's reweighting making every edge non-negative."
+    },
+    {
+      "unit": "u16",
+      "reason": "Not in this 3-short demo; a full series could fill the longest-common-subsequence table cell by cell."
+    },
+    {
+      "unit": "u17",
+      "reason": "Not in this 3-short demo; a full series could show arithmetic parenthesization choosing the best split."
+    },
+    {
+      "unit": "u18",
+      "reason": "Not in this 3-short demo; a full series could contrast subset sum's table size with the input's bit length."
+    },
+    {
+      "unit": "u19",
+      "reason": "Mostly definitions of P, NP, EXP and reductions; better taught in the notes than as a short."
+    },
+    {
+      "unit": "u20",
+      "reason": "Course review lecture; it introduces no new algorithm."
+    },
+    {
+      "unit": "u21",
+      "reason": "Research tour (origami and folding); no course algorithm to animate."
+    }
+  ]
+}

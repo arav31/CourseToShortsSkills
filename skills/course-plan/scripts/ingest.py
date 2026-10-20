@@ -50,14 +50,18 @@ HTML_EXT = {".html", ".htm"}
 # (kind, regex) on "<file name> <title>", lower-cased; first match wins.
 KIND_PATTERNS = [
     ("solution", r"_ex\d*s\.pdf|[_-]sol(n|ns|utions?)?\.pdf|\b(problem|exam|quiz|homework) solutions?\b|"
-                 r"^solutions?\b| solutions? (to|for)\b|answer key"),
+                 r"\b(problem (set|session)|recitation|quiz|exam|homework|pset)s? \d+[a-z]? solutions?\b|"
+                 r"^solutions?\b| solutions? (to|for) (the )?(problems?|exercises?|exams?|quiz|homework|psets?|"
+                 r"assignments?|recitation)\b|answer key"),
     ("review", r"\b(exam|final|course|midterm|quiz)( \d+)? review\b|\breview session\b"),
     ("exam", r"_ex\d*\.pdf|\b(exam|quiz|midterm)\b"),
-    ("assignment", r"prob\.pdf|_ps\d+\.pdf|\b(problem set|psets?|homework|assignments?|exercises?)\b"),
+    ("assignment", r"prob\.pdf|_ps\d+\.pdf|\b(problem sets?|problem sessions?|practice problems|psets?|homework|"
+                   r"assignments?|exercises?)\b"),
     ("recitation", r"\brecitation\b"),
     ("syllabus", r"\bsyllabus\b|\bcourse info\b"),
     ("calendar", r"\bcalendar\b|\bschedule\b"),
-    ("lecture-notes", r"sum\.pdf|\b(lecture notes|lecture summary|session summary|summary|slides|handouts?|notes)\b"),
+    ("lecture-notes", r"sum\.pdf|[_-]lec(ture)?_?\d+[a-z]*\.pdf|"
+                      r"\b(lecture notes|lecture summary|session summary|summary|slides|handouts?|notes)\b"),
     ("reading", r"\b(readings?|textbook|chapter)\b"),
 ]
 KIND_ORDER = ["syllabus", "calendar", "lecture-notes", "transcript", "recitation", "reading", "assignment",
@@ -257,6 +261,11 @@ def first_heading(text: str) -> str:
 # ---------------------------------------------------------------- helpers
 
 
+def natural_key(text: str) -> list:
+    """Sort key that orders embedded numbers numerically: "Lecture 2" < "Lecture 10"."""
+    return [(0, int(tok), "") if tok.isdigit() else (1, 0, tok) for tok in re.split(r"(\d+)", text.lower()) if tok]
+
+
 def slugify(text: str, fallback: str = "item") -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:60] or fallback
 
@@ -389,7 +398,7 @@ def crawl(root: str, col: Collector, max_pages: int, max_pdfs: int, delay: float
 
     seen = {final, root}
     queue = sorted({ln for ln in links if allowed(ln)}, key=link_score, reverse=True)
-    pages = pdfs = 0
+    pages = pdfs = last_report = 0
     while queue and (pages < max_pages or pdfs < max_pdfs):
         url = queue.pop(0)
         if url in seen:
@@ -399,6 +408,10 @@ def crawl(root: str, col: Collector, max_pages: int, max_pdfs: int, delay: float
         if (is_pdf_link and pdfs >= max_pdfs) or (not is_pdf_link and pages >= max_pages):
             continue
         time.sleep(delay)
+        fetched = pages + pdfs
+        if fetched and fetched % 25 == 0 and fetched != last_report:
+            last_report = fetched
+            print(f"  crawled {pages} pages, {pdfs} PDFs; {len(queue)} links queued", file=sys.stderr, flush=True)
         try:
             raw, ctype, final = fetch(url)
         except Exception as exc:  # keep crawling past broken links
@@ -554,7 +567,8 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
         "warnings": col.warnings,
     }
     order = {k: i for i, k in enumerate(KIND_ORDER)}
-    rows = sorted(materials, key=lambda m: (order.get(m["kind"], 99), m["context"] or "", m["title"]))
+    rows = sorted(materials, key=lambda m: (order.get(m["kind"], 99), natural_key(m["context"] or ""),
+                                           natural_key(m["title"])))
     index = [f"# Sources for {pack['course']['title']}", "",
              f"{len(materials)} files, {total:,} characters."]
     if col.sequence:

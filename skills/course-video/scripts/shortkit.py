@@ -53,6 +53,7 @@ import subprocess as _subprocess
 import sys as _sys
 import tempfile as _tempfile
 import textwrap as _textwrap
+import time as _time
 import weakref as _weakref
 from dataclasses import dataclass as _dataclass
 from pathlib import Path as _Path
@@ -68,7 +69,7 @@ import beatlib as _beatlib  # noqa: E402
 # Render settings
 # --------------------------------------------------------------------------
 
-SHORTKIT_VERSION = "2.3"
+SHORTKIT_VERSION = "2.4"
 QUALITY = _os.environ.get("SHORTKIT_QUALITY", "preview")
 _PRESETS = {"preview": (540, 960, 15), "final": (1080, 1920, 30)}
 _PX_W, _PX_H, _FPS = _PRESETS.get(QUALITY, _PRESETS["preview"])
@@ -95,6 +96,10 @@ ORANGE_K = "#FF9F43"
 INPUT, RULE, RESULT, ALERT = BLUE_K, YELLOW_K, GREEN_K, RED_K
 
 config.background_color = BG
+# Text() caches its SVGs under config.media_dir; render.py points that at the short's build/ folder.
+# When a scene file or helper imports shortkit on its own, keep them out of the working directory.
+if str(config.media_dir) in {"./media", "media"}:
+    config.media_dir = str(_Path(_os.environ.get("SHORTKIT_CACHE", _Path.home() / ".cache" / "shortkit")) / "media")
 
 
 def _pick_font() -> str:
@@ -125,6 +130,8 @@ class Size:
 
 
 MIN_FONT_SIZE = 28
+STAGE_FILL_MIN = 0.65     # a beat whose picture spans less of the stage height counts as "small"
+STAGE_FILL_SHARE = 0.4    # warn when small beats add up to this share of the video
 
 # --------------------------------------------------------------------------
 # Zones
@@ -317,6 +324,10 @@ class TexError(RuntimeError):
     pass
 
 
+_TRANSIENT_TEX = _re.compile(r"\.(cls|sty|tfm|fd|def|cfg|clo|enc|map|pfb)[`'\"]? (was )?not found|failed to (open|download)|"
+                             r"i/o error|timed out|resource temporarily unavailable", _re.I)
+
+
 def _tex_engine() -> list[str]:
     extra = ["/Library/TeX/texbin", "/opt/homebrew/bin", "/usr/local/bin"]
     path = _os.pathsep.join([_os.environ.get("PATH", "")] + extra)
@@ -362,13 +373,20 @@ def _run_tex(todo: dict[str, str]) -> None:
             cmd = engine + ["-X", "compile", "--untrusted", "--outdir", tmp, str(src)]
         else:
             cmd = engine + ["-interaction=nonstopmode", "-halt-on-error", f"-output-directory={tmp}", str(src)]
-        proc = _subprocess.run(cmd, cwd=tmp, capture_output=True, text=True, timeout=180)
         pdf = _Path(tmp) / "expr.pdf"
-        if proc.returncode != 0 or not pdf.exists():
+        for attempt in range(3):
+            proc = _subprocess.run(cmd, cwd=tmp, capture_output=True, text=True, timeout=180)
+            if proc.returncode == 0 and pdf.exists():
+                break
             log = (proc.stdout or "") + (proc.stderr or "")
             log_file = _Path(tmp) / "expr.log"
             if log_file.exists():
                 log += log_file.read_text(errors="replace")
+            # Parallel renders share tectonic's bundle cache; a run can briefly miss a file
+            # ("article.cls not found") while another fills it. Retry those, not real LaTeX errors.
+            if attempt < 2 and _TRANSIENT_TEX.search(log):
+                _time.sleep(1.5 * (attempt + 1))
+                continue
             errors = [ln for ln in log.splitlines() if ln.startswith("!") or "error:" in ln.lower()]
             shown = "\n".join(errors[:6]) or log[-1200:]
             exprs = "\n".join(f"  {b}" for b in todo.values())
@@ -513,6 +531,9 @@ class LiveText(VGroup):
             else:
                 new.move_to(old.get_center())
             new.set_opacity(old.get_fill_opacity())
+            # Manim fixes the list of mobjects to redraw when a play() starts, so a replaced child
+            # would keep drawing under the new value until that play ends. Hide it instead.
+            old.set_fill(opacity=0).set_stroke(opacity=0)
         self.submobjects = [new]
         self._last = value
         _mark_text(self, self._size, f"live:{value}")
@@ -717,6 +738,7 @@ class ShortScene(Scene):
         missing = [b for b in self._beat_ids if b not in self._used]
         if missing:
             self._issue("error", "unused-beats", f"BEATS never played: {', '.join(missing)}")
+        self._check_stage_fill()
         if self.tail_seconds > 0:
             self.wait(self.tail_seconds)
         self._trace["duration"] = round(self._now(), 3)
@@ -752,6 +774,7 @@ class ShortScene(Scene):
         yield
         animated = self._now() - start
         self._check_layout(beat_id)
+        fill = self._stage_fill()
         target = self._durations[beat_id] + pad
         if target - animated > 1.0 / _FPS:
             self.wait(target - animated)
@@ -759,7 +782,7 @@ class ShortScene(Scene):
         self._trace["beats"].append({
             "id": beat_id, "start": round(start, 3), "end": round(end, 3),
             "narration": round(self._durations[beat_id], 3), "animated": round(animated, 3),
-            "overrun": round(max(0.0, animated - target), 3),
+            "overrun": round(max(0.0, animated - target), 3), "stage_fill": round(fill, 2),
         })
         self._active_beat = None
 
@@ -823,8 +846,11 @@ class ShortScene(Scene):
         real object at once: ``self.title("Bayes", FadeIn(grid))``. With ``play=False`` the
         title is only registered and returned; animate it yourself (e.g. inside a bigger play).
         """
-        mob = text(s, size=size, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
-        if "\n" in getattr(mob, "text", "") or mob.height > TITLE_ZONE.height:
+        for trial in (size, size - 4, size - 8):  # a slightly smaller title beats a wrapped one
+            mob = text(s, size=trial, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
+            if "\n" not in getattr(mob, "text", "") and mob.height <= TITLE_ZONE.height:
+                break
+        else:
             self._issue("warning", "long-title", f"title {s!r} wraps or shrinks; shorten it to one line")
         TITLE_ZONE.fit(mob, buff=0.05, upscale=False)
         old, self._title_mob = self._title_mob, mob
@@ -947,6 +973,35 @@ class ShortScene(Scene):
                                 "a shape extends into the caption band; captions will cover it", [_describe(g)])
                     break
 
+    def _stage_fill(self) -> float:
+        """Fraction of STAGE's height spanned by what is on screen (title and scenery excluded)."""
+        skip = {id(m) for m in self._title_mob.get_family()} if self._title_mob is not None else set()
+        lo = hi = None
+        for top in self.mobjects:
+            for m in top.get_family():
+                if (id(m) in skip or getattr(m, "_sk_background", False) or not len(m.points)
+                        or not _self_visible(m)):
+                    continue
+                box = _point_box(m)
+                y0, y1 = max(box[1], STAGE.bottom), min(box[3], STAGE.top)
+                if y1 > y0:
+                    lo = y0 if lo is None else min(lo, y0)
+                    hi = y1 if hi is None else max(hi, y1)
+        return 0.0 if lo is None else (hi - lo) / STAGE.height
+
+    def _check_stage_fill(self) -> None:
+        """Quality bar #10: warn when the picture leaves much of the stage empty for a long stretch."""
+        beats = self._trace["beats"]
+        total = sum(b["end"] - b["start"] for b in beats)
+        low = [b for b in beats if b.get("stage_fill", 1.0) < STAGE_FILL_MIN]
+        seconds = sum(b["end"] - b["start"] for b in low)
+        if total > 0 and seconds >= STAGE_FILL_SHARE * total:
+            worst = min(low, key=lambda b: b["stage_fill"])
+            self._issue("warning", "small-diagram",
+                        f"the picture spans under {STAGE_FILL_MIN:.0%} of the stage height for {seconds:.0f}s "
+                        f"({', '.join(b['id'] for b in low)}; {worst['id']} only {worst['stage_fill']:.0%}); "
+                        "enlarge the main object so it dominates the stage")
+
     def _geometry_leaves(self, text_ids: set[int]) -> list[VMobject]:
         """Visible non-text paths (arrows, lines, curves, dots), excluding grids and backgrounds."""
         leaves: list[VMobject] = []
@@ -1050,7 +1105,7 @@ def _load_timing(beats: list[dict[str, str]]):
         if entry and " ".join(str(entry.get("text", "")).split()) == b["text"]:
             durations[b["id"]] = float(entry["duration"])
             if entry.get("words"):
-                words[b["id"]] = entry["words"]
+                words[b["id"]] = _beatlib.split_word_timings(entry["words"])  # older timing.json files
             if entry.get("audio_seconds"):
                 spoken[b["id"]] = float(entry["audio_seconds"])
         else:

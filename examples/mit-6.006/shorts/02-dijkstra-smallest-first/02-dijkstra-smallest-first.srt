@@ -1,0 +1,159 @@
+1
+00:00:00,100 --> 00:00:01,500
+The direct road from home
+
+2
+00:00:01,500 --> 00:00:03,438
+to work takes ten minutes.
+
+3
+00:00:03,438 --> 00:00:05,062
+Is there a faster way,
+
+4
+00:00:05,062 --> 00:00:06,063
+and how would you know?
+
+5
+00:00:06,654 --> 00:00:08,154
+Dijkstra keeps a guess
+
+6
+00:00:08,154 --> 00:00:11,217
+for each place: zero for home,
+
+7
+00:00:11,217 --> 00:00:12,917
+infinity for the rest,
+
+8
+00:00:12,917 --> 00:00:15,242
+in a queue sorted smallest first.
+
+9
+00:00:15,867 --> 00:00:17,729
+Take the smallest, home,
+
+10
+00:00:17,729 --> 00:00:18,780
+and lock it in.
+
+11
+00:00:18,780 --> 00:00:20,405
+Then relax its roads:
+
+12
+00:00:20,405 --> 00:00:22,792
+cafe gets two, park five,
+
+13
+00:00:22,792 --> 00:00:23,542
+work ten.
+
+14
+00:00:24,187 --> 00:00:25,912
+Next is cafe, at two.
+
+15
+00:00:25,912 --> 00:00:27,075
+Through cafe,
+
+16
+00:00:27,075 --> 00:00:28,800
+park drops from five to three,
+
+17
+00:00:28,800 --> 00:00:29,938
+and shop gets eight.
+
+18
+00:00:30,533 --> 00:00:31,958
+Why trust park's three?
+
+19
+00:00:31,958 --> 00:00:33,083
+Any other route has to
+
+20
+00:00:33,083 --> 00:00:35,295
+leave the finished places somewhere,
+
+21
+00:00:35,295 --> 00:00:36,545
+and every exit already
+
+22
+00:00:36,545 --> 00:00:38,358
+costs three or more.
+
+23
+00:00:38,358 --> 00:00:39,970
+Roads only add minutes.
+
+24
+00:00:40,600 --> 00:00:42,038
+So park is locked in.
+
+25
+00:00:42,038 --> 00:00:44,263
+Its road back to cafe gives four,
+
+26
+00:00:44,263 --> 00:00:45,400
+worse than two,
+
+27
+00:00:45,400 --> 00:00:47,100
+but shop drops to five,
+
+28
+00:00:47,100 --> 00:00:47,962
+and work to nine.
+
+29
+00:00:48,567 --> 00:00:50,630
+Shop is next, at five,
+
+30
+00:00:50,630 --> 00:00:52,242
+and work drops to six.
+
+31
+00:00:52,242 --> 00:00:53,479
+Then work comes out last.
+
+32
+00:00:54,067 --> 00:00:55,054
+Now walk back from work
+
+33
+00:00:55,054 --> 00:00:57,630
+to whoever set each guess: shop,
+
+34
+00:00:57,630 --> 00:00:59,417
+park, cafe, home.
+
+35
+00:00:59,417 --> 00:01:00,854
+Six minutes, not ten.
+
+36
+00:01:01,480 --> 00:01:02,392
+That's Dijkstra:
+
+37
+00:01:02,754 --> 00:01:04,117
+lock in the smallest guess,
+
+38
+00:01:04,117 --> 00:01:06,092
+relax its roads, repeat.
+
+39
+00:01:06,092 --> 00:01:08,130
+It only works because no
+
+40
+00:01:08,130 --> 00:01:10,130
+road takes negative minutes.

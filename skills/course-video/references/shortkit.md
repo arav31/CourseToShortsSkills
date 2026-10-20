@@ -27,10 +27,13 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 - After each beat the layout checker records errors for text outside `SAFE`, text in
   `CAPTION_ZONE`, overlapping text and text below `MIN_FONT_SIZE`, and warnings when text
   hides or is crossed by an arrow/line/curve, or a shape reaches into the caption band.
+  It also records how much of the stage height the picture spans (`stage_fill` in the report) and
+  warns (`small-diagram`) when the picture stays small for much of the video.
   It inspects the actual geometry on screen at the end of the beat, so it cannot see
   problems that exist only mid-transition; that is what looking at frames is for.
-- `self.title(s, *also)` sets/swaps the compact title, playing `also` animations with it so the
-  first frame already shows the real object: `self.title("Bayes in a crowd", FadeIn(grid))`.
+- `self.title(s, *also)` sets/swaps the compact title (stepping its size down to 40 before it would
+  wrap), playing `also` animations with it so the first frame already shows the real object:
+  `self.title("Bayes in a crowd", FadeIn(grid))`.
   `play=False` only registers it. Call it inside the first beat.
 - `self.cue("word", nth=0, offset=0.0, prefix=False)` waits until the narration reaches that whole word in the current
   beat (real word timings with edge-tts, an even-pace estimate otherwise), so motion lands on the
@@ -103,6 +106,13 @@ assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
 
 ## Changelog (SHORTKIT_VERSION)
 
+- 2.4: each beat records `stage_fill` (the share of STAGE's height the picture spans, title excluded);
+  a `small-diagram` warning fires when beats under 65 % add up to 40 % of the video. `live_text` no
+  longer shows the old and new value on top of each other while a `play()` runs; `tex()` retries
+  transient TeX failures (parallel renders sharing tectonic's cache); `text()` used outside
+  `render.py` caches under ~/.cache/shortkit instead of writing `media/` into the working directory.
+  Titles step down to 44 or 40 before wrapping; `cue()` and captions split TTS boundaries that cover
+  two words ("So park").
 - 2.3: plates draw above diagrams and below their own text regardless of transform order;
   `label(math=True)` keeps LaTeX colours unless `color=` is given.
 - 2.2: `TransformMatchingShapes`/`save_state` no longer slow down (ownership kept outside mobjects);
@@ -131,10 +141,22 @@ assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
 - `self.remove(group)` removes the group, not children you added to the scene separately (for
   example by animating them one by one before grouping). Remove what you added: `self.remove(*group)`.
 - Do not build a live number by swapping submobjects in your own updater (stale glyphs) or with
-  `DecimalNumber`/`MathTex` (they need a `latex` binary); use `live_text()`.
-- `path_arc` is measured counter-clockwise: positive arcs bend left of the direction of travel.
+  `DecimalNumber`/`MathTex` (they need a `latex` binary); use `live_text()`. Manim fixes the list of
+  objects it redraws when a `play()` starts, so anything you replace mid-play keeps drawing until
+  the play ends: hide what you replace, or swap between plays. `live_text` rebuilds at its own size,
+  so pass `size=` rather than scaling it.
+- Merging many objects (15 tree nodes into 6 cells): move them in two readable steps (into
+  columns, then into cells), raise the moving group's z-index so glyphs never interleave, and fade
+  the labels of the copies that merge away.
+- `path_arc` is measured counter-clockwise: positive arcs bend to the right of the direction of travel
+  (moving left to right, a positive arc dips below the straight line).
   Check flight paths of moving labels in frames; flip the sign if they cross other objects.
 - `cue("word", nth=1)` counts occurrences from zero.
+- `FadeIn`, `Create` and the transforms draw their object on top while they run and leave it on top: an
+  opaque box faded in during the same `play` as a `TransformFromCopy` into its text hides that text. Give
+  boxes a lower `z_index` than their contents.
+- The palette constants (`BLUE_K`, `BG`, ...) are hex strings. Wrap them for colour maths:
+  `interpolate_color(ManimColor(BG), ManimColor(GREEN_K), 0.5)`.
 - Stroke widths are in Manim units where 1 = 0.01 scene units; on a 9-unit-wide frame the
   defaults look thick, and `vec()` already uses a phone-friendly width.
 

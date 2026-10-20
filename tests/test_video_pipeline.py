@@ -89,6 +89,9 @@ def test_render_end_to_end_reports_layout_and_writes_outputs(tmp_path):
     overlaps = [i for i in report["issues"] if i["kind"] == "text-overlap"]
     assert overlaps and overlaps[0]["beat"] == "hook", report["issues"]
     assert not [i for i in overlaps if i["beat"] == "fix"]
+    # two small labels in the middle of the stage: the picture is far too small for a 9:16 frame
+    assert all(0 < b["stage_fill"] < 0.65 for b in report["beats"])
+    assert [i for i in report["issues"] if i["kind"] == "small-diagram"]
     assert report["contact_sheets"] and (short / report["contact_sheets"][0]).exists()
     saved = json.loads((short / "render_report.json").read_text())
     assert saved["sha256"] == report["sha256"]
@@ -132,3 +135,35 @@ def test_copying_text_does_not_explode(tmp_path, monkeypatch):
         eq = eq.copy()
     assert time.time() - start < 5, "copies grew: glyphs must not reference their owner"
     assert shortkit._owner_of(eq) is None  # copies are not registered; the checker treats them as raw text
+
+
+@pytest.mark.skipif(not HAS_MANIM, reason="needs manim")
+def test_live_text_hides_the_value_it_replaces():
+    """Manim keeps drawing the children it saw when a play() began; a replaced value must go invisible."""
+    import shortkit
+
+    tracker = shortkit.ValueTracker(3)
+    counter = shortkit.live_text(lambda: f"{tracker.get_value():.0f}")
+    before = counter.submobjects[0]
+    tracker.set_value(12)
+    counter.update()
+    assert counter.submobjects[0] is not before and counter.submobjects[0].text == "12"
+    assert before.get_fill_opacity() == 0 and counter.submobjects[0].get_fill_opacity() > 0.9
+
+
+@pytest.mark.skipif(not HAS_MANIM, reason="needs manim")
+def test_transient_tex_failures_are_told_apart_from_latex_errors():
+    import shortkit
+
+    assert shortkit._TRANSIENT_TEX.search("error: file `article.cls` not found")
+    assert shortkit._TRANSIENT_TEX.search("failed to download bundle file")
+    assert not shortkit._TRANSIENT_TEX.search("! Undefined control sequence.")
+    assert not shortkit._TRANSIENT_TEX.search("! Missing $ inserted.")
+
+
+def test_multi_word_tts_boundaries_are_split():
+    words = [[0.0, 0.4, "So park"], [0.4, 0.7, "drops"], [0.7, 1.3, "from five"]]
+    split = beatlib.split_word_timings(words)
+    assert [w for _, _, w in split] == ["So", "park", "drops", "from", "five"]
+    assert split[0][0] == 0.0 and split[1][1] == 0.4 and split[1][0] == round(0.4 * 2 / 6, 3)
+    assert beatlib.split_word_timings(None) is None

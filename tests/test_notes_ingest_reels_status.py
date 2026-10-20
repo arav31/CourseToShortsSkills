@@ -126,6 +126,26 @@ def test_classify(url, kind):
     assert ingest.classify(url, "") == kind
 
 
+@pytest.mark.parametrize("url, title, kind", [
+    # MIT 6.006 (Spring 2020) names lecture-note PDFs <hash>_MIT6_006S20_lec9.pdf
+    ("https://x/courses/c/196a95_MIT6_006S20_lec9.pdf", "Lecture 9: Breadth-First Search", "lecture-notes"),
+    ("https://x/courses/c/ab12_MIT6_006S20_ps1.pdf", "Problem Session 1: Introduction to Algorithms", "assignment"),
+    ("https://x/courses/c/ab12_MIT6_006S20_ps1_sol.pdf", "Problem Session 1 Solutions: Introduction to Algorithms",
+     "solution"),
+    ("https://x/courses/c/pages/practice-problems/", "Practice Problems", "assignment"),
+    ("https://x/courses/c/resources/complete-solution-to-ax-b/", "Complete Solution to Ax = b", "page"),
+    ("https://x/courses/c/sol.pdf", "Solutions to the exercises", "solution"),
+])
+def test_classify_with_titles(url, title, kind):
+    assert ingest.classify(url, title) == kind
+
+
+def test_index_sorts_numbers_naturally():
+    titles = ["Lecture 10: DFS", "Lecture 2: Data Structures", "Lecture 1: Introduction"]
+    assert sorted(titles, key=ingest.natural_key) == ["Lecture 1: Introduction", "Lecture 2: Data Structures",
+                                                      "Lecture 10: DFS"]
+
+
 def test_local_folder_ingest(tmp_path):
     src = tmp_path / "course"
     src.mkdir()
@@ -198,6 +218,22 @@ def test_status_gate_tracks_staleness(plan_run):
     # editing the plan makes the plan check stale
     (plan_run / "short_plan.json").write_text((plan_run / "short_plan.json").read_text() + "\n")
     assert run_status.status(plan_run)["stages"]["plan"]["state"] == "unchecked"
+
+
+def test_shorts_only_gate_ignores_missing_notes(plan_run):
+    import check_plan
+
+    check_plan.main([str(plan_run)])
+    plan = json.loads((plan_run / "short_plan.json").read_text())
+    rendered_short(plan_run, plan, 1)
+    rendered_short(plan_run, plan, 2)
+    write_json(plan_run / "source_pack.json", {"stats": {"materials": 2, "total_chars": 60}, "warnings": []})
+    full = run_status.status(plan_run)
+    assert not full["publish_ready"] and any(b.startswith("notes:") for b in full["blockers"])
+    only = run_status.status(plan_run, shorts_only=True)
+    assert only["publish_ready"] and only["stages"]["notes"]["state"] == "missing"
+    assert run_status.main([str(plan_run), "--gate", "--shorts-only"]) == 0
+    assert run_status.main([str(plan_run), "--gate"]) == 1
 
 
 @pytest.mark.skipif(not (HAS_TEX and HAS_PYMUPDF), reason="needs a TeX engine and pymupdf")

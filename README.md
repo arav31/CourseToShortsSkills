@@ -32,6 +32,16 @@
 
 <p align="center"><sub>…and <a href="docs/media/linear-algebra-notes.pdf">221 pages of notes</a> for the same course: 41 sections, 155 theorems with proofs, 152 worked examples, 76 figures, 172 solved exercises. Sources, plan and scenes are in <a href="examples/">examples/</a>.</sub></p>
 
+<table>
+<tr>
+<td align="center" width="20%"><a href="docs/media/6006-01-bfs.mp4"><img src="docs/media/6006-01-bfs.gif" width="170" alt="BFS level by level"></a><br><sub><b>BFS grows level by level</b></sub></td>
+<td align="center" width="20%"><a href="docs/media/6006-02-dijkstra.mp4"><img src="docs/media/6006-02-dijkstra.gif" width="170" alt="Dijkstra"></a><br><sub><b>Dijkstra trusts the smallest</b></sub></td>
+<td align="center" width="20%"><a href="docs/media/6006-03-dp.mp4"><img src="docs/media/6006-03-dp.gif" width="170" alt="Dynamic programming"></a><br><sub><b>Recurse, but re-use</b></sub></td>
+</tr>
+</table>
+
+<p align="center"><sub>A second field: three shorts from <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/">MIT 6.006 Introduction to Algorithms</a>, planned from all 21 lectures (<a href="examples/mit-6.006/">plan and scenes</a>; about 70 s each).</sub></p>
+
 A set of five [Agent Skills](https://agentskills.io) for Claude Code and Codex. Point your agent at a
 course (MIT OpenCourseWare or any course site, a syllabus, lecture PDFs, a folder of notes) and it:
 
@@ -161,6 +171,10 @@ and a one-line request, with no extra coaching, and reported every point of fric
 - **6 notes writers** wrote the 41 units in parallel (about 7 each) with parallel-safe unit builds.
 - **5 video makers** each storyboarded, coded, narrated, rendered, reviewed and approved one short.
 - **1 standalone test** made the Bayes short from a single sentence, with no course behind it.
+- **A second course**, MIT 6.006 Introduction to Algorithms: one agent crawled it (166 sources) and planned
+  all 21 lectures; three agents made the BFS, Dijkstra and dynamic-programming shorts in parallel. It
+  surfaced ingest misclassifications, a lecture order hidden behind a menu-only navigation, and a
+  publish gate that could not pass a shorts-only run; all three are fixed.
 
 Their reports found real bugs that were fixed while they worked, for example: fraction bars that
 rendered invisibly, narration drifting from the picture on cached re-renders, a deep-copy blow-up
@@ -186,5 +200,6 @@ and publishing adapters for other platforms.
 ## Licence of the examples
 
 The example notes, videos and scenes in `examples/` and `docs/media/` are derived from MIT
-OpenCourseWare 18.06SC (Gilbert Strang) and shared under
+OpenCourseWare 18.06SC, *Linear Algebra* (Gilbert Strang, Fall 2011), and MIT OpenCourseWare 6.006,
+*Introduction to Algorithms* (Erik Demaine, Jason Ku and Justin Solomon, Spring 2020), and shared under
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). MIT OpenCourseWare does not endorse them.

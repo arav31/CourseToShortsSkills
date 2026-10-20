@@ -35,7 +35,7 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
 | accumulate | `ValueTracker` + `always_redraw` area/curve, `live_text()` for the running value |
 | compare | place two versions side by side, or `ghost = obj.copy().set_opacity(0.25)` |
 | trace / scan | `MoveAlongPath` of a dot, `Create` of a path, a cursor `Triangle` moving along cells |
-| point at | `highlight(obj)` outline, `Indicate` (once), `Circumscribe` (once); never a filled sweep |
+| point at | `FadeIn(highlight(obj))` outline, `Indicate` (once); never a filled sweep. Outlines that are *drawn* (`Create`, `Circumscribe`) look like stray brackets and ticks in the middle frames |
 
 ## Beats and narration
 
@@ -62,7 +62,7 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
   frequencies: "of 1000 people, 10 are sick...") when one probability is tiny; histograms built by dropping samples; a Markov chain whose state
   distribution bars update step by step.
 - **Algorithms/data structures:** arrays as rows of labelled cells; pointers as small triangles;
-  a queue strip beside the graph for BFS; distances written into nodes and updated on
+  a queue or level-set strip beside the graph for BFS; distances written into nodes and updated on
   relaxation; recursion trees that collapse into a memo table; splits and merges for merge sort.
 - **Discrete maths / abstract algebra:** Cayley tables that fill in; cosets as coloured blocks
   tiling the group; a square that actually rotates for D4; homomorphisms as arrows between
@@ -99,3 +99,7 @@ y = -4.9 └───────────────┘     Keep it empty.
 
 Decide where equations live before coding: a corner of the diagram that stays empty, a
 band from `STAGE.rows(1, 3)`, or a side column from `STAGE.cols(2, 1)`.
+
+Size the main object for the whole stage from the first beats. Containers that fill up during the
+video (queue cells, level rows, memo tables, axes) can be drawn empty up front, so the frame is
+never a small picture over a blank stage; `render.py` reports each beat's `stage_fill`.
