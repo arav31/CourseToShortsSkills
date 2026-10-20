@@ -4,7 +4,7 @@ Everything here was produced by agents following the skills in this repository, 
 requests, and then reviewed. The rendered media (MP4s, GIFs, the compiled notes PDF) live in
 [`../docs/media`](../docs/media) and on the [showcase page](https://arav31.github.io/CourseToShortsSkills/).
 
-## `mit-18.06sc/`: one course, start to finish
+## Linear Algebra (`mit-18.06sc/`)
 
 Request: *"Turn MIT's Linear Algebra course https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/
 into a plan: I want complete notes for the whole course, and a demo series of 5 explainer shorts
@@ -29,7 +29,7 @@ cp -r examples/mit-18.06sc/shorts/05-svd-circle-to-ellipse /tmp/svd
 python skills/course-video/scripts/render.py /tmp/svd --quality final
 ```
 
-## `mit-6.006/`: a second field, algorithms
+## Algorithms (`mit-6.006/`)
 
 Request: *"Use the course-to-shorts skills to make a second showcase course from a different field:
 MIT 6.006 Introduction to Algorithms. Plan the whole course, then make a 3-short demo (BFS layers,
@@ -52,7 +52,7 @@ verified examples); three agents made the shorts in parallel with `course-video`
 reviewed every contact sheet, sent fixes back, approved the final renders and ran the gate
 (`run_status.py --gate --shorts-only`).
 
-## `standalone-bayes/`: one concept, no course
+## Bayes' theorem, standalone (`standalone-bayes/`)
 
 Request: *"Make me a narrated vertical explainer short on Bayes' theorem, using the classic
 medical-test example: 1% prevalence, 90% sensitivity, 9% false positives. Why is a positive result
