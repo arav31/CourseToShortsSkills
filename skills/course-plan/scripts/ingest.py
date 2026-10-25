@@ -225,6 +225,8 @@ def pdf_text(raw: bytes) -> tuple[str, int]:
     with pymupdf.open(stream=raw, filetype="pdf") as doc:
         pages = doc.page_count
         chunks = [doc[i].get_text("text") for i in range(min(pages, MAX_PDF_PAGES))]
+    # control characters (ligature/maths glyphs) make grep treat the file as binary
+    chunks = [re.sub(r"[\x00-\x08\x0b\x0e-\x1f\x7f]", "", c) for c in chunks]
     return "\n\f\n".join(strip_running_lines(chunks)), pages
 
 

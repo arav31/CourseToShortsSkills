@@ -106,7 +106,7 @@ Field rules (errors from `check_plan.py` unless marked advisory):
 |---|---|
 | `id` | `s01`, `s02`, ... in teaching order |
 | `slug` | kebab-case, unique; the video folder is `shorts/<NN>-<slug>/` |
-| `title` | ≤ 60 characters (on screen, shorten further if needed so it stays one line) |
+| `title` | ≤ 60 characters; the on-screen title band holds about 26 bold characters at full size, so keep the shown title near that |
 | `units` | outline unit ids this short teaches; optional `primary_unit` names the one whose notes carry the full worked example (default: the first) |
 | `prerequisites` | ids of *earlier* shorts only |
 | `hook` | 5–30 words; the question or tension, landing within ~3 seconds |

@@ -101,7 +101,7 @@ narration says the same thing, so an edit to one cannot silently contradict the 
 
 ```python
 FP = round(0.09 * 990)                      # 89
-assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
+assert spoken(FP) in BEATS[3][1].lower()    # "eighty-nine"; spoken() is lowercase
 ```
 
 ## Changelog (SHORTKIT_VERSION)

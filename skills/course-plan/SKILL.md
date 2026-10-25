@@ -52,7 +52,8 @@ A paper is a one-document course: its sections are the units.
 - **Outline:** one unit per section (subsections as units or as `key_ideas`); leave out
   references and acknowledgements. Use the paper fields in [references/plan-schema.md](references/plan-schema.md).
 - **Shorts:** pick the paper's core mechanism and build a small worked example the paper itself may
-  not contain. Papers contain slips: verify every formula against the maths, not the prose.
+  not contain. Papers contain slips: verify every formula against the maths, not the prose. PDF
+  text loses maths (minus signs, fractions split across lines): check formulas on the rendered page.
 - **Credit and copying:** name the paper and its authors in the narration or on screen (set
   `series.attribution`), explain in your own words, and never reproduce the paper's figures or text.
 - Paper runs are usually shorts-only: gate them with `run_status.py --gate --shorts-only`.
