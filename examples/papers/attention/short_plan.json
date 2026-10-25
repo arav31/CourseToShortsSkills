@@ -1,0 +1,50 @@
+{
+  "course_title": "Attention Is All You Need",
+  "series": {
+    "title": "Papers you can see",
+    "audience": "curious beginners who know what a dot product and an average are",
+    "hashtags": ["#transformers", "#attention", "#machinelearning", "#manim", "#AI"]
+  },
+  "shorts": [
+    {
+      "id": "s01",
+      "slug": "attention-is-a-weighted-average",
+      "title": "Attention is a weighted average",
+      "units": ["u04"],
+      "prerequisites": [],
+      "hook": "When a Transformer reads the word sat, how does it decide which other words matter?",
+      "claim": "Scaled dot-product attention scores each key against the query, softmaxes the scaled scores into weights that sum to one, and outputs the weighted average of the values.",
+      "worked_example": {
+        "setup": "Sentence 'the cat sat', d_k = 2. Query of 'sat' q = (1, 2). Keys: the (1, 0), cat (1, 1), sat (0, 1). Values: the (4, 0), cat (4, 4), sat (0, 4).",
+        "steps": [
+          "Dot products q·k: the 1, cat 3, sat 2.",
+          "Divide by sqrt(2) ≈ 1.41: 0.71, 2.12, 1.41.",
+          "Softmax: weights 0.14, 0.58, 0.28 (they sum to 1).",
+          "Output = 0.14·(4, 0) + 0.58·(4, 4) + 0.28·(0, 4) ≈ (2.9, 3.4)."
+        ],
+        "result": "'sat' attends mostly to 'cat' (weight 0.58); its output (2.9, 3.4) lies inside the triangle of value points, nearest cat's value (4, 4). Without the scaling the weights would be 0.09, 0.67, 0.24, sharper."
+      },
+      "visual": "Top: three token cards (the, cat, sat) with their key arrows on a small plane next to the query arrow of 'sat'. Score numbers rise out of the dot products into three bars that shrink by sqrt(2) and then become softmax weight bars summing to one. Bottom: a value plane with the three value points; a green output dot slides from the centre to the weighted average as each weight is applied, ending pulled toward cat.",
+      "misconception": "Attention does not pick one word; it blends all values, and every weight is positive and the weights sum to one.",
+      "practice": {
+        "question": "Double the query to (2, 4). What happens to the weight on cat?",
+        "answer": "Scores double to 2, 6, 4, so the softmax sharpens: weights about 0.05, 0.77, 0.19."
+      }
+    }
+  ],
+  "skipped_units": [
+    {"unit": "u01", "reason": "Motivation only; the one requested short focuses on the core mechanism."},
+    {"unit": "u02", "reason": "Related-work context; no mechanism of its own to animate in a single short."},
+    {"unit": "u03", "reason": "Architecture overview; out of scope for the single requested short."},
+    {"unit": "u05", "reason": "Multi-head attention builds on s01; out of scope for one short (good follow-up)."},
+    {"unit": "u06", "reason": "Uses of attention and masking; out of scope for one short (good follow-up)."},
+    {"unit": "u07", "reason": "Feed-forward sublayer is standard and not the paper's core idea."},
+    {"unit": "u08", "reason": "Embedding details; not the core idea requested."},
+    {"unit": "u09", "reason": "Positional encoding; out of scope for one short (good follow-up)."},
+    {"unit": "u10", "reason": "Complexity comparison table; out of scope for one short."},
+    {"unit": "u11", "reason": "Training setup and hyperparameters; nothing conceptual to animate."},
+    {"unit": "u12", "reason": "Benchmark results and ablations; numbers from the paper, not a mechanism."},
+    {"unit": "u13", "reason": "Results on a second task; no new mechanism."},
+    {"unit": "u14", "reason": "Conclusion restates the paper; no new idea to animate."}
+  ]
+}

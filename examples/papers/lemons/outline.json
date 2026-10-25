@@ -1,0 +1,49 @@
+{
+  "course": {
+    "title": "The Market for \"Lemons\": Quality Uncertainty and the Market Mechanism",
+    "code": "QJE 84(3):488-500",
+    "institution": "The Quarterly Journal of Economics (1970)",
+    "instructor": "George A. Akerlof",
+    "url": "https://doi.org/10.2307/1879431",
+    "level": "research paper; read here for a curious beginner with no economics background",
+    "term": "August 1970",
+    "parts": ["The used-car model", "Applications", "Institutions"]
+  },
+  "units": [
+    {
+      "id": "u01", "session": "Section I", "part": "The used-car model",
+      "title": "Introduction",
+      "summary": "Sets the question: when buyers judge goods by a market-wide average quality, each seller gains from offering worse goods, so average quality and the size of the market both shrink, and private and social returns diverge.",
+      "key_ideas": ["quality uncertainty", "judging by a market statistic", "private vs social returns"],
+      "sources": ["sources/23291a-the-market-for-lemons-quality-uncertainty-and-the-market-mec.txt"]
+    },
+    {
+      "id": "u02", "session": "Section II", "part": "The used-car model",
+      "title": "The model with automobiles as an example",
+      "summary": "Owners learn whether their car is good or a lemon but buyers cannot tell, so all used cars sell at one price; good cars are withdrawn (a version of Gresham's law). With quality spread evenly between 0 and 2, sellers valuing quality x and buyers 3x/2, the cars offered at price p average p/2, worth only 3p/4 to buyers, so no trade happens at any price even though every trade would benefit both sides; with symmetric information all cars trade.",
+      "key_ideas": ["asymmetric information", "average quality falls with price", "market unravelling", "symmetric-information benchmark", "lost gains from trade"],
+      "sources": ["sources/23291a-the-market-for-lemons-quality-uncertainty-and-the-market-mec.txt"]
+    },
+    {
+      "id": "u03", "session": "Section III", "part": "Applications",
+      "title": "Examples and applications",
+      "summary": "Applies the lemons principle beyond cars: health insurance for people over 65 (higher premiums attract the sickest applicants), hiring and group statistics, the cost of dishonesty as honest trade being driven out, and high interest rates and managing agencies in credit markets of developing countries.",
+      "key_ideas": ["adverse selection in insurance", "statistical discrimination", "cost of dishonesty", "credit markets"],
+      "sources": ["sources/23291a-the-market-for-lemons-quality-uncertainty-and-the-market-mec.txt"]
+    },
+    {
+      "id": "u04", "session": "Section IV", "part": "Institutions",
+      "title": "Counteracting institutions",
+      "summary": "Institutions that reduce quality uncertainty and so restore trade: guarantees (risk moves to the seller), brand names that let buyers punish bad quality, chains, and licensing or certification such as degrees.",
+      "key_ideas": ["guarantees", "brand names", "chains", "licensing and certification"],
+      "sources": ["sources/23291a-the-market-for-lemons-quality-uncertainty-and-the-market-mec.txt"]
+    },
+    {
+      "id": "u05", "session": "Section V", "part": "Institutions",
+      "title": "Conclusion",
+      "summary": "Trust and informal guarantees are preconditions for trade; the difficulty of telling good quality from bad may explain many economic institutions and is an aspect of uncertainty the standard Arrow-Debreu treatment leaves out.",
+      "key_ideas": ["trust", "generalised Gresham's law"],
+      "sources": ["sources/23291a-the-market-for-lemons-quality-uncertainty-and-the-market-mec.txt"]
+    }
+  ]
+}

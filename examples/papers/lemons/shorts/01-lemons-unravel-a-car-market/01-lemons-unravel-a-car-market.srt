@@ -1,0 +1,175 @@
+1
+00:00:00,138 --> 00:00:02,300
+Four owners are selling used cars,
+
+2
+00:00:02,300 --> 00:00:04,425
+and every buyer values each car
+
+3
+00:00:04,425 --> 00:00:06,138
+more than its owner does.
+
+4
+00:00:06,138 --> 00:00:06,575
+So why do the
+
+5
+00:00:06,575 --> 00:00:07,975
+good cars never sell?
+
+6
+00:00:08,575 --> 00:00:11,562
+George Akerlof's 1970 paper,
+
+7
+00:00:11,562 --> 00:00:12,725
+The Market for Lemons,
+
+8
+00:00:12,725 --> 00:00:13,987
+found the catch.
+
+9
+00:00:13,987 --> 00:00:14,737
+Owners know what their
+
+10
+00:00:14,737 --> 00:00:15,925
+car is worth,
+
+11
+00:00:15,925 --> 00:00:17,050
+but buyers can't tell
+
+12
+00:00:17,050 --> 00:00:17,988
+the cars apart.
+
+13
+00:00:18,600 --> 00:00:21,100
+So buyers pay for the average car.
+
+14
+00:00:21,100 --> 00:00:21,913
+The average is
+
+15
+00:00:21,913 --> 00:00:23,225
+eight thousand dollars,
+
+16
+00:00:23,225 --> 00:00:24,425
+and a buyer will pay one
+
+17
+00:00:24,425 --> 00:00:25,688
+and a half times that:
+
+18
+00:00:25,688 --> 00:00:26,588
+twelve thousand.
+
+19
+00:00:27,200 --> 00:00:28,187
+But the best car is worth
+
+20
+00:00:28,187 --> 00:00:30,587
+fourteen thousand to its owner.
+
+21
+00:00:30,587 --> 00:00:32,175
+At twelve, she keeps it.
+
+22
+00:00:33,054 --> 00:00:33,905
+Now the average of what's
+
+23
+00:00:33,905 --> 00:00:35,755
+left is six thousand,
+
+24
+00:00:35,755 --> 00:00:37,480
+so the offer drops to nine,
+
+25
+00:00:37,480 --> 00:00:38,192
+and the ten thousand
+
+26
+00:00:38,192 --> 00:00:39,429
+dollar car leaves too.
+
+27
+00:00:40,020 --> 00:00:41,995
+Average four, offer six.
+
+28
+00:00:41,995 --> 00:00:42,733
+The seven thousand
+
+29
+00:00:42,733 --> 00:00:43,895
+dollar car goes.
+
+30
+00:00:44,500 --> 00:00:45,513
+Only the one thousand
+
+31
+00:00:45,513 --> 00:00:47,350
+dollar lemon is left.
+
+32
+00:00:47,350 --> 00:00:49,538
+Buyers offer fifteen hundred,
+
+33
+00:00:49,538 --> 00:00:51,775
+and it is the only car that sells.
+
+34
+00:00:52,367 --> 00:00:54,292
+If buyers could see quality,
+
+35
+00:00:54,292 --> 00:00:56,042
+all four cars would sell,
+
+36
+00:00:56,042 --> 00:00:57,317
+for sixteen thousand
+
+37
+00:00:57,317 --> 00:00:58,692
+dollars of gains.
+
+38
+00:00:58,692 --> 00:00:59,942
+Hidden quality leaves
+
+39
+00:00:59,942 --> 00:01:01,067
+just five hundred.
+
+40
+00:01:01,680 --> 00:01:03,230
+That's adverse selection.
+
+41
+00:01:03,230 --> 00:01:04,017
+The price can only
+
+42
+00:01:04,017 --> 00:01:05,242
+follow the average,
+
+43
+00:01:05,242 --> 00:01:06,717
+so the bad cars drive the
+
+44
+00:01:06,717 --> 00:01:08,117
+good ones out of the market.

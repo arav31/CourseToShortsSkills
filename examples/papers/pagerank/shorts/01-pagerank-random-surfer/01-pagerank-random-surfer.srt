@@ -1,0 +1,171 @@
+1
+00:00:00,087 --> 00:00:03,000
+In 1998, Brin and Page ranked the
+
+2
+00:00:03,000 --> 00:00:05,400
+web with one imaginary surfer
+
+3
+00:00:05,400 --> 00:00:07,200
+who clicks links forever.
+
+4
+00:00:07,200 --> 00:00:08,175
+Where does that surfer
+
+5
+00:00:08,175 --> 00:00:09,075
+spend its time?
+
+6
+00:00:09,667 --> 00:00:12,080
+Take four pages and five links.
+
+7
+00:00:12,080 --> 00:00:13,942
+C has three links coming in.
+
+8
+00:00:13,942 --> 00:00:15,142
+A has only one.
+
+9
+00:00:15,708 --> 00:00:17,020
+On each page,
+
+10
+00:00:17,020 --> 00:00:18,095
+the surfer clicks one of
+
+11
+00:00:18,095 --> 00:00:19,383
+its links at random.
+
+12
+00:00:19,383 --> 00:00:21,058
+But fifteen percent of the time,
+
+13
+00:00:21,058 --> 00:00:22,283
+they get bored and jump
+
+14
+00:00:22,283 --> 00:00:23,458
+to any page at all.
+
+15
+00:00:24,054 --> 00:00:25,179
+Now swap the one
+
+16
+00:00:25,179 --> 00:00:26,630
+surfer for a crowd,
+
+17
+00:00:26,630 --> 00:00:28,367
+with a quarter of it on each page.
+
+18
+00:00:28,954 --> 00:00:29,742
+Each tick,
+
+19
+00:00:29,742 --> 00:00:31,179
+eighty-five percent of every
+
+20
+00:00:31,179 --> 00:00:32,942
+crowd follows the links,
+
+21
+00:00:32,942 --> 00:00:34,555
+split evenly.
+
+22
+00:00:34,555 --> 00:00:36,380
+The other fifteen percent scatter
+
+23
+00:00:36,380 --> 00:00:38,079
+over all four pages.
+
+24
+00:00:38,667 --> 00:00:39,717
+After one tick,
+
+25
+00:00:39,717 --> 00:00:41,517
+C holds fifty-seven percent:
+
+26
+00:00:41,929 --> 00:00:43,267
+half of A's crowd,
+
+27
+00:00:43,267 --> 00:00:45,392
+plus everyone from B and D.
+
+28
+00:00:45,967 --> 00:00:46,992
+Keep ticking.
+
+29
+00:00:46,992 --> 00:00:49,679
+The shares swing, then settle:
+
+30
+00:00:49,679 --> 00:00:51,755
+A thirty-seven, B twenty,
+
+31
+00:00:51,755 --> 00:00:54,279
+C thirty-nine, D four percent.
+
+32
+00:00:54,279 --> 00:00:55,730
+Those shares are PageRank.
+
+33
+00:00:56,333 --> 00:00:57,171
+Look at A.
+
+34
+00:00:57,171 --> 00:00:58,633
+It has one link in,
+
+35
+00:00:58,983 --> 00:01:00,470
+yet almost ties C,
+
+36
+00:01:00,470 --> 00:01:02,220
+because that link comes from C,
+
+37
+00:01:02,583 --> 00:01:03,996
+the busiest page,
+
+38
+00:01:03,996 --> 00:01:05,445
+and C sends A everyone.
+
+39
+00:01:06,033 --> 00:01:08,696
+D has no links in, so it only ever
+
+40
+00:01:08,696 --> 00:01:09,995
+gets the random jumpers.
+
+41
+00:01:10,587 --> 00:01:12,337
+So a link is a vote,
+
+42
+00:01:12,337 --> 00:01:13,938
+worth the voter's own rank,
+
+43
+00:01:13,938 --> 00:01:15,812
+split among all its links.

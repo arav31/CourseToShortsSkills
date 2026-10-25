@@ -1,0 +1,44 @@
+{
+  "course_title": "The Anatomy of a Large-Scale Hypertextual Web Search Engine",
+  "series": {
+    "title": "Papers you can see: Brin & Page 1998",
+    "audience": "curious beginners with no maths beyond percentages",
+    "hashtags": ["#pagerank", "#google", "#computerscience", "#manim", "#papers"]
+  },
+  "shorts": [
+    {
+      "id": "s01",
+      "slug": "pagerank-random-surfer",
+      "title": "PageRank: the random surfer",
+      "units": ["u02"],
+      "prerequisites": [],
+      "hook": "Brin and Page ranked the whole web with one imaginary person who clicks links forever. Where does that person spend their time?",
+      "claim": "A page's PageRank is the long-run share of time a random surfer spends on it, so one link from a busy page can beat many links from quiet ones.",
+      "worked_example": {
+        "setup": "Four pages A, B, C, D with links A->B, A->C, B->C, C->A, D->C. Damping d = 0.85: each step the surfer follows a random link on the current page with probability 0.85, or jumps to any of the 4 pages with probability 0.15 (so every page gets 0.15/4 = 3.75% of each step for free). Start with 25% on every page.",
+        "steps": [
+          "Step 1, C: it receives half of A's 25%, all of B's 25% and all of D's 25%, so 0.85 x 62.5% + 3.75% = 56.875%, about 57%.",
+          "Step 1, all pages: A = 0.85 x 25% + 3.75% = 25%, B = 0.85 x 12.5% + 3.75% = 14.375%, C = 56.875%, D = 3.75%; the four still add to 100%.",
+          "Repeating the same update, the shares swing (A after steps 1 to 8: 25, 52, 29, 39, 39, 35, 38, 37 percent) and settle by about step 12 to A 37.3%, B 19.6%, C 39.4%, D 3.75%.",
+          "Check: exact solution of the linear equations gives A = 659/1769, B = 27713/141520, C = 2789/7076, D = 3/80; a simulated surfer taking 1,000,000 random steps visits A 37.2%, B 19.6%, C 39.4%, D 3.75% of the time."
+        ],
+        "result": "PageRank (rounded) A 37%, B 20%, C 39%, D 4%. A has a single incoming link yet ranks almost level with C, which has three, because A's one link comes from C, the busiest page, and C sends A everything. D has no incoming links and keeps only the 3.75% from random jumps."
+      },
+      "visual": "One 4-node link graph (A, B, C, D with five arrows) fills the upper stage; under it a bar chart with one bar per page and a percent label. A glowing surfer dot hops along arrows and occasionally teleports while visit counters grow; then the bars switch to the probability-flow view: each page's share splits along its out-arrows as small blobs, 15% rains down evenly, the bars update step by step and visibly settle at 37, 20, 39, 4. A highlight compares A's single incoming arrow from C with C's three incoming arrows.",
+      "misconception": "PageRank is not a count of incoming links: A has one incoming link and C has three, yet they end up almost tied, because a link passes on the linking page's own rank divided by its number of out-links.",
+      "practice": {
+        "question": "If D also got a link from C (so C links to A and D), would A's rank go up or down, and why?",
+        "answer": "Down: C would split its share between A and D, so A receives only half of C's rank instead of all of it."
+      }
+    }
+  ],
+  "skipped_units": [
+    {"unit": "u01", "reason": "Motivation and design goals; context only, no mechanism to animate in this one-short demo."},
+    {"unit": "u03", "reason": "Related-work survey of earlier engines and IR; no single checkable mechanism."},
+    {"unit": "u04", "reason": "System architecture (crawler, indexer, barrels, inverted index); a good future short but out of scope for the single requested PageRank short."},
+    {"unit": "u05", "reason": "Measurements and storage tables from 1998 hardware; numbers to report, not an idea to animate."},
+    {"unit": "u06", "reason": "Conclusions and future-work list; summary material only."},
+    {"unit": "u07", "reason": "Appendix argument about advertising incentives; an opinion essay, no mechanism."},
+    {"unit": "u08", "reason": "Appendix on scalability estimates; back-of-envelope projections, outside the requested PageRank topic."}
+  ]
+}

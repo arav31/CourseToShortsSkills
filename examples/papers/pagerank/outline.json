@@ -1,0 +1,144 @@
+{
+  "course": {
+    "title": "The Anatomy of a Large-Scale Hypertextual Web Search Engine",
+    "code": "Brin & Page 1998",
+    "institution": "Stanford University, Computer Science Department (paper, WWW7 conference, 1998)",
+    "instructor": "Sergey Brin and Lawrence Page (authors)",
+    "url": "http://infolab.stanford.edu/~backrub/google.html",
+    "level": "research paper; the PageRank part needs only fractions and percentages",
+    "term": "1998",
+    "parts": [
+      "Motivation",
+      "Ranking ideas",
+      "System design",
+      "Evaluation and outlook",
+      "Appendices"
+    ]
+  },
+  "units": [
+    {
+      "id": "u01",
+      "session": "Section 1",
+      "part": "Motivation",
+      "title": "Introduction",
+      "summary": "Argues that web search in the late 1990s returned too many low-quality keyword matches, that hand-built directories could not keep up with the web's growth, and sets the goals of high-precision results and an open academic platform for large-scale search research.",
+      "key_ideas": [
+        "web growth 1994-2000",
+        "precision over recall",
+        "search as an academic research platform"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u02",
+      "session": "Section 2",
+      "part": "Ranking ideas",
+      "title": "System Features: PageRank and Anchor Text",
+      "summary": "Introduces PageRank, a citation-style importance score where a link counts more if it comes from an important page with few outgoing links, computed iteratively and explained as the long-run share of time a randomly clicking surfer, who occasionally jumps to a random page, spends on each page; also uses link anchor text as a description of the target page and records word positions and font details.",
+      "key_ideas": [
+        "PageRank recursion",
+        "damping factor d = 0.85",
+        "random surfer model",
+        "anchor text propagation",
+        "proximity and visual presentation"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u03",
+      "session": "Section 3",
+      "part": "Ranking ideas",
+      "title": "Related Work",
+      "summary": "Places the system against earlier web crawlers and search engines and classical information retrieval, explaining why techniques tuned on small, homogeneous, curated collections break down on the heterogeneous, uncontrolled and adversarial web.",
+      "key_ideas": [
+        "TREC-style IR vs the web",
+        "heterogeneous documents",
+        "commercial manipulation of rankings"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u04",
+      "session": "Section 4",
+      "part": "System design",
+      "title": "System Anatomy",
+      "summary": "Describes the architecture end to end: distributed crawlers feed a compressed repository, an indexer turns pages into hit lists stored in barrels as a forward index, a sorter builds the inverted index, and the searcher combines type-weighted hit counts, word proximity and PageRank into a final ranking.",
+      "key_ideas": [
+        "crawler/indexer/sorter pipeline",
+        "repository, lexicon, hit lists",
+        "forward vs inverted index",
+        "ranking from hit types, proximity and PageRank"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u05",
+      "session": "Section 5",
+      "part": "Evaluation and outlook",
+      "title": "Results and Performance",
+      "summary": "Reports a sample query result list, the storage needed for roughly 24 million pages, crawl and indexing throughput, and query response times, arguing the design is already practical at that scale.",
+      "key_ideas": [
+        "sample results",
+        "storage breakdown",
+        "crawl/index/query timings"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u06",
+      "session": "Section 6",
+      "part": "Evaluation and outlook",
+      "title": "Conclusions and Future Work",
+      "summary": "Summarizes the contributions (link-based quality ranking, anchor text, proximity) and lists future directions such as smarter crawl scheduling, query caching, user feedback, personalized ranking and making the system a shared research tool.",
+      "key_ideas": [
+        "future work list",
+        "high-quality search",
+        "scalable architecture",
+        "research tool"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u07",
+      "session": "Appendix A",
+      "part": "Appendices",
+      "title": "Advertising and Mixed Motives",
+      "summary": "Argues that advertising-funded search engines have incentives that conflict with users' interest in the best results, and that a transparent academic search engine is therefore valuable.",
+      "key_ideas": [
+        "advertising bias",
+        "transparency"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    },
+    {
+      "id": "u08",
+      "session": "Appendix B",
+      "part": "Appendices",
+      "title": "Scalability",
+      "summary": "Argues the system can grow to about 100 million pages before operating-system limits bite, and that centralized text indexing will keep getting cheaper with hardware doublings, while distributed indexing is elegant but costly to administer.",
+      "key_ideas": [
+        "~100 million page target",
+        "OS limits",
+        "Moore's-law argument for centralized indexing",
+        "distributed indexing trade-off"
+      ],
+      "sources": [
+        "sources/5ca228-the-anatomy-of-a-search-engine.txt"
+      ]
+    }
+  ]
+}

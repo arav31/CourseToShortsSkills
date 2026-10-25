@@ -1,0 +1,171 @@
+1
+00:00:00,113 --> 00:00:01,163
+How many yes or no
+
+2
+00:00:01,163 --> 00:00:02,737
+questions does it take,
+
+3
+00:00:02,737 --> 00:00:03,737
+on average,
+
+4
+00:00:03,737 --> 00:00:05,025
+to guess a hidden letter?
+
+5
+00:00:05,633 --> 00:00:07,471
+In his 1948 paper,
+
+6
+00:00:07,471 --> 00:00:08,770
+A Mathematical Theory
+
+7
+00:00:08,770 --> 00:00:09,983
+of Communication,
+
+8
+00:00:09,983 --> 00:00:12,258
+Claude Shannon uses this source:
+
+9
+00:00:12,258 --> 00:00:14,695
+A half the time, B a quarter,
+
+10
+00:00:14,695 --> 00:00:16,820
+C and D an eighth each.
+
+11
+00:00:17,420 --> 00:00:18,095
+Ask about the
+
+12
+00:00:18,095 --> 00:00:20,021
+likeliest letter first.
+
+13
+00:00:20,021 --> 00:00:20,933
+Is it A?
+
+14
+00:00:20,933 --> 00:00:21,908
+Half the time,
+
+15
+00:00:21,908 --> 00:00:23,308
+one question is enough.
+
+16
+00:00:23,900 --> 00:00:25,450
+If not: is it B?
+
+17
+00:00:25,450 --> 00:00:26,675
+Then: is it C?
+
+18
+00:00:26,675 --> 00:00:28,350
+B takes two questions;
+
+19
+00:00:28,350 --> 00:00:30,100
+C and D take three.
+
+20
+00:00:30,700 --> 00:00:32,650
+Weight each count by its chance:
+
+21
+00:00:32,650 --> 00:00:33,950
+a half times one,
+
+22
+00:00:33,950 --> 00:00:35,100
+a quarter times two,
+
+23
+00:00:35,500 --> 00:00:37,837
+an eighth times three, twice.
+
+24
+00:00:37,837 --> 00:00:39,275
+One point seven five.
+
+25
+00:00:39,887 --> 00:00:41,588
+A letter with chance one over two
+
+26
+00:00:41,588 --> 00:00:43,800
+to the k takes k questions:
+
+27
+00:00:43,800 --> 00:00:45,975
+log base two of one over p,
+
+28
+00:00:45,975 --> 00:00:46,950
+its surprise.
+
+29
+00:00:47,554 --> 00:00:48,567
+The average surprise
+
+30
+00:00:48,567 --> 00:00:51,217
+is Shannon's entropy, H.
+
+31
+00:00:51,217 --> 00:00:53,205
+Here, one point seven five bits.
+
+32
+00:00:53,787 --> 00:00:56,800
+Write yes as zero and no as one,
+
+33
+00:00:56,800 --> 00:00:58,162
+and the questions become a code:
+
+34
+00:00:58,575 --> 00:01:01,625
+zero, one zero, one one zero,
+
+35
+00:01:01,625 --> 00:01:02,500
+one one one.
+
+36
+00:01:03,163 --> 00:01:05,375
+Four A's, two B's,
+
+37
+00:01:05,375 --> 00:01:08,200
+a C and a D take fourteen bits.
+
+38
+00:01:08,200 --> 00:01:09,425
+Two questions per letter
+
+39
+00:01:09,425 --> 00:01:10,650
+would take sixteen.
+
+40
+00:01:11,271 --> 00:01:13,396
+Fourteen bits over eight letters is
+
+41
+00:01:13,396 --> 00:01:15,745
+one point seven five per letter:
+
+42
+00:01:15,745 --> 00:01:17,596
+the entropy, the average number of
+
+43
+00:01:17,596 --> 00:01:19,295
+yes or no questions.
