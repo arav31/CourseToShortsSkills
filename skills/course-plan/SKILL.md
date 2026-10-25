@@ -1,6 +1,6 @@
 ---
 name: course-plan
-description: Ingest a course's materials (an MIT OpenCourseWare or other course website, syllabus, lecture PDFs, transcripts, or a local folder) into readable text sources, then write the course outline and an ordered plan of short explainer videos, each with a concrete, verified worked example. Use when starting from a course link or files, or when someone wants a course outline, syllabus breakdown, curriculum, or list of shorts/reels for a course.
+description: Ingest a course's materials (an MIT OpenCourseWare or other course website, syllabus, lecture PDFs, transcripts, or a local folder) or a single research paper (arXiv link, PDF, or article page) into readable text sources, then write the course outline and an ordered plan of short explainer videos, each with a concrete, verified worked example. Use when starting from a course link or files, or when someone wants a course outline, syllabus breakdown, curriculum, or list of shorts/reels for a course.
 ---
 
 # Course Plan
@@ -37,6 +37,25 @@ and a failed re-run leaves the previous sources in place. Then:
   the user which ones (solution files often restate the questions).
 - Only course material counts. Menu items, licence text or "Instructor Insights" pages
   are never topics.
+
+## Papers and other single documents
+
+A paper is a one-document course: its sections are the units.
+
+- **Find a legitimate copy.** Prefer arXiv, the publisher's open-access version, or an author or
+  university-hosted copy. Record where it came from and under what terms in `outline.course`
+  (`license`); if only paywalled copies exist, tell the user and ground the outline in what you can
+  cite openly.
+- **Ingest without crawling:** `$PY "$SKILL_DIR/scripts/ingest.py" "<arXiv/PDF/article URL>" --single --run runs/paper-<slug>`.
+  arXiv links get the official title and authors; `sources/INDEX.md` lists the detected **paper
+  sections** in order. Unreachable sites print an archived-copy URL to try.
+- **Outline:** one unit per section (subsections as units or as `key_ideas`); leave out
+  references and acknowledgements. Use the paper fields in [references/plan-schema.md](references/plan-schema.md).
+- **Shorts:** pick the paper's core mechanism and build a small worked example the paper itself may
+  not contain. Papers contain slips: verify every formula against the maths, not the prose.
+- **Credit and copying:** name the paper and its authors in the narration or on screen (set
+  `series.attribution`), explain in your own words, and never reproduce the paper's figures or text.
+- Paper runs are usually shorts-only: gate them with `run_status.py --gate --shorts-only`.
 
 ## 2. Outline → `outline.json`
 

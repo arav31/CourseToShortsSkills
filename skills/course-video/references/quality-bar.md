@@ -56,6 +56,11 @@ A short is done when every item holds.
 20. **Swaps do not collide.** When objects exchange places, route them on separate paths or fade
     one out first. Labelled objects passing through each other is an overlap.
 
+## Sources
+
+21a. **Credit what you explain.** For a paper, name it and its authors on screen or in narration;
+    explain in your own words and redraw everything rather than reproducing the paper's figures.
+
 ## Narration
 
 21. Spoken English, as a good teacher would say it: "A times x", "two by two", "x sub one".

@@ -49,6 +49,13 @@ coverage contract for the notes: every unit gets a notes section.
   `unit.session`, `unit.part`, `unit.key_ideas`, top-level `assessments`. Other stages ignore
   what they do not need.
 
+### Papers
+
+For a research paper the same files work; units are sections. Optional course fields for papers:
+`"type": "paper"`, `"authors": [...]`, `"venue"`, `"year"`, `"arxiv"` or `"doi"`, and `"license"`
+(where the copy came from and its terms). Leave out References, Acknowledgements and author
+biographies; an appendix is a unit only if a short or the notes use it.
+
 ## short_plan.json — the video series
 
 ```json
@@ -57,7 +64,8 @@ coverage contract for the notes: every unit gets a notes section.
   "series": {
     "title": "Algorithms you can see",
     "audience": "programmers who have never taken an algorithms course",
-    "hashtags": ["#algorithms", "#computerscience", "#manim", "#coding"]
+    "hashtags": ["#algorithms", "#computerscience", "#manim", "#coding"],
+    "attribution": "optional; for papers e.g. 'Vaswani et al., Attention Is All You Need (2017)'"
   },
   "shorts": [
     {

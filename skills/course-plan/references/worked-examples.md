@@ -19,6 +19,11 @@ walks it, the notes reuse it. Get it right in the plan and everything downstream
 - **Correct.** Compute every value (in your head and, for anything non-trivial, with a
   quick Python snippet). Wrong arithmetic in a published video is the most damaging error.
 
+Sources contain slips. Lecture recitations misread a board, and papers misprint formulas (the
+PageRank paper's printed formula sums to N rather than 1, and its prose swaps the roles of d and
+1 - d). Build examples from the mathematics, check them numerically, and say so in the short when
+you use the corrected form.
+
 For theoretical topics, the example is a small instance that makes the statement checkable:
 cosets of {0, 3} in Z6 (three blocks of two), a counterexample showing why a hypothesis is
 needed, a 3x3 grid DP filled in cell by cell, a 2-state Markov chain iterated three steps.

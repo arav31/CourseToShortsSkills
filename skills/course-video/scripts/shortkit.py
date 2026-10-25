@@ -676,11 +676,15 @@ _ONES = "zero one two three four five six seven eight nine ten eleven twelve thi
 _TENS = "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
 
 
-def spoken(value) -> str:
-    """Number -> words for narration checks: spoken(89) == "eighty-nine", spoken(0.6) == "zero point six"."""
+def spoken(value, leading_zero: bool = True) -> str:
+    """Number -> words for narration checks: spoken(89) == "eighty-nine", spoken(0.6) == "zero point six",
+    spoken(0.14, leading_zero=False) == "point one four"."""
     if isinstance(value, float) and not value.is_integer():
         whole, frac = f"{value}".split(".")
-        return f"{spoken(int(whole))} point {' '.join(_ONES[int(d)] for d in frac)}"
+        digits = " ".join(_ONES[int(d)] for d in frac)
+        if int(whole) == 0 and not leading_zero:
+            return f"point {digits}"
+        return f"{spoken(int(whole))} point {digits}"
     n = int(value)
     if n < 0:
         return "minus " + spoken(-n)

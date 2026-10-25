@@ -64,7 +64,7 @@ KIND_PATTERNS = [
                       r"\b(lecture notes|lecture summary|session summary|summary|slides|handouts?|notes)\b"),
     ("reading", r"\b(readings?|textbook|chapter)\b"),
 ]
-KIND_ORDER = ["syllabus", "calendar", "lecture-notes", "transcript", "recitation", "reading", "assignment",
+KIND_ORDER = ["paper", "syllabus", "calendar", "lecture-notes", "transcript", "recitation", "reading", "assignment",
               "solution", "review", "exam", "page", "overview"]
 LINK_HINTS = ("syllabus", "calendar", "unit", "session", "lecture", "notes", "reading", "resource", "problem",
               "assignment", "exam", "quiz", "transcript", "video", "recitation", "summary", "solution", "pages", ".pdf")
@@ -96,6 +96,8 @@ class _Extractor(HTMLParser):
         self.nav_depth = 0
         self.title = ""
         self.h1 = ""
+        self.headings: list[tuple[int, str]] = []
+        self._heading: list[str] | None = None
         self._in_title = False
         self._in_h1 = False
 
@@ -116,6 +118,9 @@ class _Extractor(HTMLParser):
             self.parts.append("\n")
         if tag in {"h1", "h2", "h3", "h4"} and not self.skip_depth:
             self.parts.append("#" * int(tag[1]) + " ")
+            self._heading = []
+        if tag == "sup" and not self.skip_depth:
+            self.parts.append("^")
 
     def handle_endtag(self, tag):
         if tag == "a" and self._anchor is not None:
@@ -132,6 +137,11 @@ class _Extractor(HTMLParser):
             self._in_title = False
         if tag == "h1":
             self._in_h1 = False
+        if tag in {"h1", "h2", "h3", "h4"} and self._heading is not None:
+            heading = " ".join(" ".join(self._heading).split())
+            if heading:
+                self.headings.append((int(tag[1]), heading))
+            self._heading = None
         if tag in self.BLOCK:
             self.parts.append("\n")
 
@@ -141,6 +151,8 @@ class _Extractor(HTMLParser):
         if self._in_title:
             self.title += data
             return
+        if self._heading is not None and not self.skip_depth:
+            self._heading.append(data)
         if self._in_h1 and not self.h1:
             self.h1 = " ".join(data.split())
         if not self.skip_depth:
@@ -213,7 +225,74 @@ def pdf_text(raw: bytes) -> tuple[str, int]:
     with pymupdf.open(stream=raw, filetype="pdf") as doc:
         pages = doc.page_count
         chunks = [doc[i].get_text("text") for i in range(min(pages, MAX_PDF_PAGES))]
-    return "\n\f\n".join(chunks), pages
+    return "\n\f\n".join(strip_running_lines(chunks)), pages
+
+
+def strip_running_lines(pages: list[str]) -> list[str]:
+    """Drop headers/footers repeated on most pages ("This content downloaded from ...", journal running heads)."""
+    if len(pages) < 3:
+        return pages
+    counts: collections.Counter[str] = collections.Counter()
+    for page in pages:
+        counts.update({re.sub(r"\d+", "#", ln.strip()) for ln in page.splitlines() if ln.strip()})
+    # 0.3: running heads often alternate between even and odd pages
+    common = {ln for ln, c in counts.items() if c >= max(3, 0.3 * len(pages)) and len(ln) > 3}
+    return ["\n".join(ln for ln in page.splitlines() if re.sub(r"\d+", "#", ln.strip()) not in common)
+            for page in pages]
+
+
+def pdf_outline(raw: bytes) -> tuple[str, list[str]]:
+    """(metadata title, section titles from the PDF's own outline) - both may be empty."""
+    import pymupdf
+
+    with pymupdf.open(stream=raw, filetype="pdf") as doc:
+        title = (doc.metadata or {}).get("title", "") or ""
+        toc = [t.strip() for lvl, t, _ in doc.get_toc() if lvl <= 2]
+    junk = re.compile(r"^(image|page|figure|table)\s*\d+$|contents|front matter|cover|vol\.|issue|^untitled", re.I)
+    toc = [t for t in toc if t and not junk.search(t)]
+    if len(toc) < 3:  # scanned reprints carry outlines like "image 1, image 2"; read the headings instead
+        toc = []
+    title = title.strip()
+    if len(title) < 6 or filename_like(title) or re.search(r"microsoft word|untitled|\.dvi", title, re.I):
+        title = ""
+    return title, toc
+
+
+SECTION_RE = re.compile(r"^(?:(\d{1,2}(?:\.\d{1,2}){0,2})\.?|([IVX]{1,5})\.|([A-H])\.)\s+([A-Z][^\n]{2,80})$")
+NAMED_SECTIONS = re.compile(r"^(abstract|introduction|background|related work|conclusions?|discussion|"
+                            r"acknowledge?ments?|references|appendix(?: [a-z])?)$", re.I)
+
+
+def detect_sections(text: str) -> list[str]:
+    """Section headings of a paper, in order: '3.2 Multi-Head Attention', 'II. The Model', 'References'."""
+    lines = [ln.strip() for ln in text.splitlines()]
+    joined, i = [], 0
+    while i < len(lines):  # "3.2.1" on one line and its heading on the next
+        if re.fullmatch(r"\d+(?:\.\d+){0,2}\.?|[IVX]{1,5}\.", lines[i]) and i + 1 < len(lines):
+            joined.append(f"{lines[i]} {lines[i + 1]}")
+            i += 2
+        else:
+            joined.append(lines[i])
+            i += 1
+    found: list[str] = []
+    for ln in joined:
+        m = SECTION_RE.match(ln)
+        heading = None
+        if (m and len(m.group(4).split()) <= 10 and not re.search(r"[=<>%,;:()\"“”\d]", m.group(4))
+                and not ln.endswith("-")):
+            heading = ln if not m.group(4).isupper() else ln.replace(m.group(4), m.group(4).capitalize())
+        elif NAMED_SECTIONS.match(ln):
+            heading = ln.title() if ln.isupper() else ln
+        if heading and heading not in found:
+            found.append(heading)
+    return found[:60]
+
+
+def looks_like_paper(url: str, text: str) -> bool:
+    if re.search(r"arxiv\.org|doi\.org|openreview\.net|/doi/|semanticscholar|ssrn\.com", url or "", re.I):
+        return True
+    head, tail = text[:6000].lower(), text[-60000:].lower()
+    return ("abstract" in head) and bool(re.search(r"\n\s*(references|bibliography)\s*\n", tail))
 
 
 def subtitle_text(raw: str) -> str:
@@ -248,14 +327,37 @@ def looks_garbled(text: str) -> bool:
     return sum(1 for w in words if w.lower() in COMMON_WORDS) / len(words) < 0.04
 
 
+NOT_A_TITLE = re.compile(r"permission|licen[cs]|arxiv:|preprint|copyright|all rights|downloaded from|jstor|"
+                         r"proceedings of|journal of|vol\.|issn|doi", re.I)
+
+
 def first_heading(text: str) -> str:
-    for line in text.splitlines()[:40]:
+    for line in text.splitlines()[:60]:
         line = " ".join(line.split())
         if (8 <= len(line) <= 90 and len(line.split()) >= 2 and not line.upper().startswith("MITOCW")
                 and "opencourseware" not in line.lower() and "http" not in line.lower()
+                and not NOT_A_TITLE.search(line)
                 and sum(ch.isalpha() for ch in line) / len(line) > 0.6):
             return line
     return ""
+
+
+def arxiv_meta(url: str) -> dict | None:
+    """For arxiv.org/abs|pdf links: the PDF URL plus title and authors from the abstract page."""
+    m = re.search(r"arxiv\.org/(?:abs|pdf)/([^?#\s]+?)(?:\.pdf)?/?$", url)
+    if not m:
+        return None
+    arxiv_id = m.group(1)
+    meta = {"arxiv": arxiv_id, "pdf": f"https://arxiv.org/pdf/{arxiv_id}", "title": "", "authors": []}
+    try:
+        raw, _, _ = fetch(f"https://arxiv.org/abs/{arxiv_id}")
+        html = raw.decode("utf-8", errors="replace")
+        t = re.search(r'<meta name="citation_title" content="([^"]+)"', html)
+        meta["title"] = t.group(1).strip() if t else ""
+        meta["authors"] = re.findall(r'<meta name="citation_author" content="([^"]+)"', html)
+    except Exception:
+        pass
+    return meta
 
 
 # ---------------------------------------------------------------- helpers
@@ -335,6 +437,7 @@ class Collector:
         self.items: list[dict] = []
         self.warnings: list[str] = []
         self.sequence: list[dict] = []
+        self.paper: dict | None = None  # set when the source is a single research paper
         self._hashes: set[str] = set()
 
     def add(self, kind: str, title: str, url: str | None, text: str, pages: int | None = None,
@@ -356,17 +459,59 @@ class Collector:
                            "pages": pages, "html": is_html, "context": context, "link": link or url, "name": name})
 
 
+def fetch_or_explain(url: str) -> tuple[bytes, str, str]:
+    try:
+        return fetch(url)
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        archived = f"https://web.archive.org/web/2024id_/{url}"
+        raise SystemExit(f"could not fetch {url}: {exc}\n"
+                         f"If the site is down, try an archived copy: {archived}")
+
+
+def ingest_single(url: str, col: Collector) -> str:
+    """One document (a paper as a PDF or a single web page): no crawling, sections from its headings."""
+    arxiv = arxiv_meta(url)
+    raw, ctype, final = fetch_or_explain(arxiv["pdf"] if arxiv else url)
+    if "pdf" in ctype.lower() or final.lower().endswith(".pdf") or arxiv:
+        text, pages = pdf_text(raw)
+        meta_title, toc = pdf_outline(raw)
+        title = (arxiv or {}).get("title") or meta_title or first_heading(text) or title_from_url(final)
+        sections = toc or detect_sections(text)
+    else:
+        p = _Extractor()
+        match = re.search(r"charset=([\w-]+)", ctype or "", re.I)
+        p.feed(raw.decode(match.group(1) if match else "utf-8", errors="replace"))
+        text, pages = p.text(), None
+        top = [h for lvl, h in p.headings if lvl == 1]
+        title = (top[0] if top else "") or " ".join(p.title.split()) or title_from_url(final)
+        levels = sorted({lvl for lvl, _ in p.headings if lvl > 1}) or [1]
+        sections = [h for lvl, h in p.headings if lvl in levels[:2] and h != title]
+    col.items.append({"kind": "paper", "title": title, "url": final, "text": text.strip(), "pages": pages,
+                      "html": False, "context": "", "link": url, "name": ""})
+    col.paper = {"authors": (arxiv or {}).get("authors", []), "arxiv": (arxiv or {}).get("arxiv")}
+    col.sequence = [{"title": t, "url": None} for t in sections]
+    return title
+
+
 def crawl(root: str, col: Collector, max_pages: int, max_pdfs: int, delay: float) -> str:
+    arxiv = arxiv_meta(root)
+    if arxiv:
+        root = arxiv["pdf"]
     prefix = course_prefix(root)
     netloc = urllib.parse.urlparse(root).netloc
     try:
         raw, ctype, final = fetch(root)
     except (urllib.error.URLError, TimeoutError) as exc:
         raise SystemExit(f"could not fetch {root}: {exc}")
-    if "pdf" in ctype.lower() or final.lower().endswith(".pdf"):
+    if "pdf" in ctype.lower() or final.lower().endswith(".pdf") or arxiv:
         text, pages = pdf_text(raw)
-        title = first_heading(text) or title_from_url(final)
-        col.add(classify(final, title, text), title, final, text, pages)
+        meta_title, toc = pdf_outline(raw)
+        title = (arxiv or {}).get("title") or meta_title or first_heading(text) or title_from_url(final)
+        paper = True  # a course is a site; a PDF given directly as the source is a single document
+        col.add("paper" if paper else classify(final, title, text), title, final, text, pages)
+        if paper:
+            col.paper = {"authors": (arxiv or {}).get("authors", []), "arxiv": (arxiv or {}).get("arxiv")}
+            col.sequence = [{"title": t, "url": None} for t in (toc or detect_sections(text))]
         return title
     text, links, course_title, anchors, nav = parse_html_full(raw, ctype, final)
     col.add("syllabus" if "syllabus" in text.lower()[:4000] else "overview", course_title or "Course home", final,
@@ -495,8 +640,15 @@ def ingest_local(path: Path, col: Collector) -> None:
                 if len(text.strip()) < 200:
                     col.warnings.append(f"PDF has no extractable text (scanned? needs OCR): {f}")
                     continue
-                title = f.stem.replace("_", " ")
-                col.add(classify(str(f), title, text), title, str(f), text, n)
+                raw_pdf = f.read_bytes()
+                meta_title, toc = pdf_outline(raw_pdf)
+                title = meta_title or first_heading(text) or f.stem.replace("_", " ")
+                if path.is_file() and looks_like_paper(str(f), text):
+                    col.add("paper", title, str(f), text, n)
+                    col.paper = {"authors": [], "arxiv": None}
+                    col.sequence = [{"title": t, "url": None} for t in (toc or detect_sections(text))]
+                else:
+                    col.add(classify(str(f), title, text), title, str(f), text, n)
             elif ext in HTML_EXT:
                 text, _, title, _ = parse_html(f.read_bytes(), "", f.as_uri())
                 col.add(classify(str(f), title, text), title or f.stem, str(f), text, is_html=True)
@@ -552,13 +704,17 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
     total = sum(m["chars"] for m in materials)
     if not materials:
         col.warnings.append("nothing usable was collected")
-    if not col.sequence and by_kind.get("syllabus", 0) + by_kind.get("calendar", 0) == 0:
+    if col.paper is not None:
+        if not col.sequence:
+            col.warnings.append("single paper, but no section headings were detected; build the outline from its text")
+    elif not col.sequence and by_kind.get("syllabus", 0) + by_kind.get("calendar", 0) == 0:
         col.warnings.append("no course navigation, syllabus or calendar found; build the outline from lecture titles")
-    if total < 20_000:
+    if total < 20_000 and col.paper is None:
         col.warnings.append(f"only {total} characters collected; notes need more source material "
                             "(add PDFs/folders or raise limits)")
     pack = {
         "course": {"title": title or "Course", "url": first_url, "sources": sources,
+                   "type": "paper" if col.paper is not None else "course", **(col.paper or {}),
                    "ingested_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")},
         "stats": {"materials": len(materials), "total_chars": total, "by_kind": dict(by_kind),
                   "boilerplate_lines_removed": removed},
@@ -572,7 +728,9 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
     index = [f"# Sources for {pack['course']['title']}", "",
              f"{len(materials)} files, {total:,} characters."]
     if col.sequence:
-        index += ["", "## Course sequence (from the site navigation, in order)", ""]
+        heading = ("## Paper sections (detected, in order)" if col.paper is not None
+                   else "## Course sequence (from the site navigation, in order)")
+        index += ["", heading, ""]
         index += [f"{i}. {s['title']}" for i, s in enumerate(col.sequence, 1)]
     index += ["", "## Files", "", "| id | kind | title | context | chars | file |", "|---|---|---|---|---|---|"]
     index += [f"| {m['id']} | {m['kind']} | {m['title'][:70]} | {(m['context'] or '')[:50]} | {m['chars']:,} | {m['file']} |"
@@ -596,6 +754,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-pdfs", type=int, default=400)
     ap.add_argument("--delay", type=float, default=0.1, help="seconds between requests")
     ap.add_argument("--title", default=None)
+    ap.add_argument("--single", action="store_true",
+                    help="each URL is one document (a paper or article): fetch it, do not crawl its site")
     args = ap.parse_args(argv)
 
     run: Path = args.run
@@ -605,7 +765,8 @@ def main(argv: list[str] | None = None) -> int:
     for source in args.sources:
         if re.match(r"https?://", source):
             first_url = first_url or source
-            found = crawl(source, col, args.max_pages, args.max_pdfs, args.delay)
+            found = (ingest_single(source, col) if args.single
+                     else crawl(source, col, args.max_pages, args.max_pdfs, args.delay))
             title = title or found
         else:
             path = Path(source).expanduser()
@@ -620,7 +781,7 @@ def main(argv: list[str] | None = None) -> int:
 
     order = {k: i for i, k in enumerate(KIND_ORDER)}
     print(f"{pack['course']['title']}: {pack['stats']['materials']} sources, {pack['stats']['total_chars']:,} chars, "
-          f"{len(pack['sequence'])} entries in the course sequence")
+          f"{len(pack['sequence'])} entries in the {'paper outline' if pack['course']['type'] == 'paper' else 'course sequence'}")
     for kind, count in sorted(pack["stats"]["by_kind"].items(), key=lambda kv: order.get(kv[0], 99)):
         print(f"  {kind:<14} {count}")
     for w in col.warnings[:15]:
