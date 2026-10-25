@@ -101,7 +101,7 @@ narration says the same thing, so an edit to one cannot silently contradict the 
 
 ```python
 FP = round(0.09 * 990)                      # 89
-assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
+assert spoken(FP) in BEATS[3][1].lower()    # "eighty-nine"; spoken() is lowercase
 ```
 
 ## Changelog (SHORTKIT_VERSION)
@@ -135,8 +135,16 @@ assert spoken(FP) in BEATS[3][1]            # "eighty-nine"
 - `tex()` glyphs come out in reading order of the typeset formula (for `\frac`: numerator, bar,
   denominator), so `eq[0:5]` selects the first five glyphs. Slices are fine to animate, but they
   are new groups: after `TransformFromCopy(a, eq[3:6])`, remove the loose copies and `self.add(eq)`.
+- `plate()` adds `buff=0.12` around its text, so plated lines stacked with `arrange(DOWN, buff=b)` overlap
+  unless `b > 0.24`; stack the text first and plate the whole stack, or use a larger gap.
+- Do not morph a filled shape into a `DashedLine` (or many boxes into one line): the in-between frames
+  are a striped mess. Shrink the shapes to marks, then draw the line.
+- `Indicate` on a node with a filled background floods it with colour and hides its label; use
+  `highlight()` or `Circumscribe` instead.
+- When two pictures compete for a 9:16 stage, merge them (fill levels inside the graph's nodes)
+  rather than stacking a graph above a chart; both halves come out too small.
 - Never name a module-level variable after a Manim export (`LEFT`, `OUT`, `UP`, `ORIGIN`,
-  `RIGHT`...): `from shortkit import *` puts them in your namespace, and replacing them breaks
+  `RIGHT`, and `OUT`, tempting for an ML "output"...): `from shortkit import *` puts them in your namespace, and replacing them breaks
   Manim internals far from your code. shortkit reports this as a `shadows-manim` error.
 - `self.remove(group)` removes the group, not children you added to the scene separately (for
   example by animating them one by one before grouping). Remove what you added: `self.remove(*group)`.

@@ -218,7 +218,7 @@ def check_plan(plan: dict, unit_ids: list[str], rep: Report) -> None:
         if unit_ids and uid not in unit_ids:
             rep.err(f"skipped unit {uid}", "is not in outline.json")
         if words(s.get("reason", "")) < 4:
-            rep.err(f"skipped unit {uid}", "give a reason (e.g. 'exam review; covered in notes only')")
+            rep.err(f"skipped unit {uid}", "give a reason of at least 4 words (e.g. 'results table only; nothing to animate')")
         if uid in covered:
             rep.warn(f"skipped unit {uid}", "is also covered by a short; remove it from skipped_units")
     missing = [uid for uid in unit_ids if uid not in covered and uid not in skipped]

@@ -49,6 +49,13 @@ coverage contract for the notes: every unit gets a notes section.
   `unit.session`, `unit.part`, `unit.key_ideas`, top-level `assessments`. Other stages ignore
   what they do not need.
 
+### Papers
+
+For a research paper the same files work; units are sections. Optional course fields for papers:
+`"type": "paper"`, `"authors": [...]`, `"venue"`, `"year"`, `"arxiv"` or `"doi"`, and `"license"`
+(where the copy came from and its terms). Leave out References, Acknowledgements and author
+biographies; an appendix is a unit only if a short or the notes use it.
+
 ## short_plan.json — the video series
 
 ```json
@@ -57,7 +64,8 @@ coverage contract for the notes: every unit gets a notes section.
   "series": {
     "title": "Algorithms you can see",
     "audience": "programmers who have never taken an algorithms course",
-    "hashtags": ["#algorithms", "#computerscience", "#manim", "#coding"]
+    "hashtags": ["#algorithms", "#computerscience", "#manim", "#coding"],
+    "attribution": "optional; for papers e.g. 'Vaswani et al., Attention Is All You Need (2017)'"
   },
   "shorts": [
     {
@@ -98,7 +106,7 @@ Field rules (errors from `check_plan.py` unless marked advisory):
 |---|---|
 | `id` | `s01`, `s02`, ... in teaching order |
 | `slug` | kebab-case, unique; the video folder is `shorts/<NN>-<slug>/` |
-| `title` | ≤ 60 characters (on screen, shorten further if needed so it stays one line) |
+| `title` | ≤ 60 characters; the on-screen title band holds about 26 bold characters at full size, so keep the shown title near that |
 | `units` | outline unit ids this short teaches; optional `primary_unit` names the one whose notes carry the full worked example (default: the first) |
 | `prerequisites` | ids of *earlier* shorts only |
 | `hook` | 5–30 words; the question or tension, landing within ~3 seconds |

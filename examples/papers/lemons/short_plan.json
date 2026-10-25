@@ -1,0 +1,42 @@
+{
+  "course_title": "The Market for \"Lemons\": Quality Uncertainty and the Market Mechanism (Akerlof, 1970)",
+  "series": {
+    "title": "Famous papers you can see",
+    "audience": "curious beginners with no economics background",
+    "hashtags": ["#economics", "#akerlof", "#adverseselection", "#manim"]
+  },
+  "shorts": [
+    {
+      "id": "s01",
+      "slug": "lemons-unravel-a-car-market",
+      "title": "How lemons empty a car market",
+      "units": ["u02", "u01"],
+      "primary_unit": "u02",
+      "prerequisites": [],
+      "hook": "Every buyer here values every car more than its owner does. So why do the good cars never sell?",
+      "claim": "When buyers cannot see quality they pay for the average car, so the best cars withdraw, the average falls, and the market unravels until only the lemon trades.",
+      "worked_example": {
+        "setup": "Four used cars whose owners value them at $1k, $7k, $10k and $14k. Any buyer would value each car at 1.5 times its owner's value, but buyers cannot tell the cars apart, so they offer 1.5 times the average value of the cars still for sale. An owner sells only if the offer is at least her value.",
+        "steps": [
+          "All four for sale: average (1+7+10+14)/4 = 8, offer 1.5 x 8 = 12. The $14k owner refuses and leaves.",
+          "Cars 1, 7, 10 remain: average 6, offer 9. The $10k owner leaves.",
+          "Cars 1 and 7 remain: average 4, offer 6. The $7k owner leaves.",
+          "Only the $1k car remains: average 1, offer 1.5, and it sells; the offer no longer changes, so this is the equilibrium."
+        ],
+        "result": "Only the worst car trades (at up to $1.5k). With quality visible all four would trade, with total gains of 0.5 x (1+7+10+14) = $16k; hidden quality leaves $0.5k. Checked in checks/examples.py."
+      },
+      "visual": "Four car cards in a row on a dollar-value axis, each with its owner's value; a yellow offer line drops from 12 to 9 to 6 to 1.5 as the average (a blue tick) is recomputed; at each round the car above the offer line slides off to a 'kept off market' shelf and turns grey, until one red lemon is left; a closing comparison bar shows $16k of possible gains vs $0.5k realised.",
+      "misconception": "The market does not fail because sellers are dishonest or buyers are stingy; every individual trade would make both sides better off. It fails because price can only respond to average quality.",
+      "practice": {
+        "question": "If buyers valued every car at 2 times its owner's value instead of 1.5, which cars would still sell in the first round, and where does the unravelling stop?",
+        "answer": "Offer 2 x 8 = 16, so all four sell in the first round and nothing unravels; the offer stays 16."
+      },
+      "reel_caption": "Why can't good used cars get a fair price? George Akerlof's 1970 paper 'The Market for Lemons' shows how hidden quality makes a market unravel. #economics #akerlof"
+    }
+  ],
+  "skipped_units": [
+    {"unit": "u03", "reason": "Applications (insurance, hiring, dishonesty, credit) reuse the same mechanism; the user asked for one short on the used-car market."},
+    {"unit": "u04", "reason": "Counteracting institutions (guarantees, brands, licensing) are a follow-up idea; mentioned in one closing line only, not its own short."},
+    {"unit": "u05", "reason": "Short verbal conclusion with no new mechanism to animate."}
+  ]
+}

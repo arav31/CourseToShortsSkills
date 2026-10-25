@@ -58,6 +58,26 @@ Request: *"Make me a narrated vertical explainer short on Bayes' theorem, using 
 medical-test example: 1% prevalence, 90% sensitivity, 9% false positives. Why is a positive result
 only about a 9% chance of having the disease?"*
 
+## Research papers (`papers/`)
+
+Request: *"Test the video format on turning research papers into explainer videos too: make a few
+samples based on popular AI, economics and maths papers."* One agent per paper ran `course-plan`
+on the paper alone (`ingest.py --single`), then `course-video` for one short; the coordinator
+reviewed every contact sheet and folded each run's friction back into the skills.
+
+| folder | paper | short |
+|---|---|---|
+| [`papers/lemons/`](papers/lemons) | George A. Akerlof, "The Market for 'Lemons': Quality Uncertainty and the Market Mechanism", *QJE* 84(3), 1970 ([doi](https://doi.org/10.2307/1879431)) | four cars, hidden quality: the market unravels until only the lemon trades |
+| [`papers/attention/`](papers/attention) | Vaswani et al., "Attention Is All You Need", NeurIPS 2017 ([arXiv:1706.03762](https://arxiv.org/abs/1706.03762)) | scaled dot-product attention on three words, worked to the output vector |
+| [`papers/pagerank/`](papers/pagerank) | Sergey Brin and Lawrence Page, "The Anatomy of a Large-Scale Hypertextual Web Search Engine", WWW7, 1998 ([Stanford copy](http://infolab.stanford.edu/~backrub/google.html)) | a four-page web and the random surfer, ticked to the steady state |
+| [`papers/shannon/`](papers/shannon) | Claude E. Shannon, "A Mathematical Theory of Communication", *Bell System Technical Journal* 27, 1948 | entropy as the average number of yes/no questions; the question tree is a prefix code |
+
+Each folder has the paper's `outline.json` (one unit per section), `short_plan.json`,
+`checks/examples.py` (recomputes every number in the short) and the short's `storyboard.md`,
+`scene.py` and captions. The papers' text is not included: the outlines point at the
+ingested sources, which you recreate with `ingest.py <paper URL> --single`. The videos explain the
+papers in their own words, use their own small examples, and reproduce no figures or text.
+
 ## Licence
 
 The `mit-18.06sc/` notes and videos are derived from MIT OpenCourseWare 18.06SC, *Linear Algebra*
@@ -65,3 +85,6 @@ The `mit-18.06sc/` notes and videos are derived from MIT OpenCourseWare 18.06SC,
 *Introduction to Algorithms* (Erik Demaine, Jason Ku and Justin Solomon, Spring 2020), both used under
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). The files in this folder
 and in `docs/media` are shared under the same licence. MIT OpenCourseWare does not endorse them.
+
+The `papers/` plans and videos are commentary on the cited papers, made for teaching; the papers
+remain their authors' and publishers' work, and their authors have not reviewed or endorsed these videos.

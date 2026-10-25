@@ -245,3 +245,41 @@ def test_partial_build_with_relative_path(tmp_path, monkeypatch):
     code = build_notes.main([tmp_path.name, "--units", "u01", "--no-preview"])
     assert code == 1, "a missing label inside the built unit must be reported"
     assert (tmp_path / "notes" / "partial" / "u01" / "_partial_u01.pdf").exists()
+
+
+# ---------------------------------------------------------------- papers
+
+
+def test_paper_sections_are_detected_and_footnotes_ignored():
+    text = "\n".join([
+        "The Market for Lemons", "Abstract", "We study markets.", "I. INTRODUCTION", "Some prose.",
+        "II. THE MODEL WITH AUTOMOBILES AS AN EXAMPLE", "A. The Automobiles Market", "3.2.1", "Scaled Dot-Product Attention",
+        "1. Arrow's fine article, \"Uncertainty and Medical Care\" (American Eco-", "490 Quarterly journal of economics",
+        "37 Y2 for ryots with no right of", "References",
+    ])
+    found = ingest.detect_sections(text)
+    assert found == ["Abstract", "I. Introduction", "II. The model with automobiles as an example",
+                     "A. The Automobiles Market", "3.2.1 Scaled Dot-Product Attention", "References"]
+
+
+def test_running_heads_and_licence_lines_are_not_content_or_titles():
+    words = ["apples", "bridges", "cosets", "dynamics", "entropy", "fields"]
+    pages = [f"{400 + i} Quarterly journal of economics\nBody text about {w}.\nThis content downloaded from 1.2.3.4"
+             for i, w in enumerate(words)]
+    cleaned = ingest.strip_running_lines(pages)
+    assert all("Quarterly" not in p and "downloaded" not in p and "Body text" in p for p in cleaned)
+    head = "Provided proper attribution is provided, Google hereby grants permission\nAttention Is All You Need\n"
+    assert ingest.first_heading(head) == "Attention Is All You Need"
+
+
+def test_single_html_document_mode(tmp_path, monkeypatch):
+    html = (b"<html><head><title>Short title</title></head><body><h1>The Anatomy of a Search Engine</h1>"
+            b"<h2>1. Introduction</h2><p>" + b"Search engines index the web. " * 30 + b"</p><h2>2. System Features</h2>"
+            b"<p>A googol is 10<sup>100</sup>.</p><h2>References</h2></body></html>")
+    monkeypatch.setattr(ingest, "fetch", lambda url, *a, **k: (html, "text/html", url))
+    run = tmp_path / "run"
+    assert ingest.main(["https://example.edu/~x/google.html", "--run", str(run), "--single"]) == 0
+    pack = json.loads((run / "source_pack.json").read_text())
+    assert pack["course"]["type"] == "paper" and pack["course"]["title"] == "The Anatomy of a Search Engine"
+    assert [s["title"] for s in pack["sequence"]] == ["1. Introduction", "2. System Features", "References"]
+    assert "10^100" in (run / pack["materials"][0]["file"]).read_text()

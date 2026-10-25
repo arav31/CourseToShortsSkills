@@ -1,0 +1,189 @@
+{
+  "course_title": "A Mathematical Theory of Communication",
+  "series": {
+    "title": "Shannon's information theory, one picture at a time",
+    "audience": "curious beginners who know fractions but no probability theory",
+    "hashtags": [
+      "#informationtheory",
+      "#entropy",
+      "#shannon",
+      "#math",
+      "#manim"
+    ]
+  },
+  "shorts": [
+    {
+      "id": "s01",
+      "slug": "entropy-counts-questions",
+      "title": "Entropy counts yes/no questions",
+      "units": [
+        "u07",
+        "u11"
+      ],
+      "primary_unit": "u07",
+      "prerequisites": [],
+      "hook": "How many yes/no questions does it take, on average, to guess a letter if some letters are more likely than others?",
+      "claim": "Entropy is the average number of well-chosen yes/no questions needed to identify the outcome: each outcome of probability p costs log2(1/p) questions, and H = sum of p log2(1/p).",
+      "worked_example": {
+        "setup": "A source sends one of four letters A, B, C, D with probabilities 1/2, 1/4, 1/8, 1/8 (the example in Section 10 of Shannon's paper). Ask 'Is it A?', then 'Is it B?', then 'Is it C?'.",
+        "steps": [
+          "A is settled after 1 question (half the time), B after 2 (a quarter of the time), C and D after 3 (an eighth of the time each).",
+          "Average: 1/2 x 1 + 1/4 x 2 + 1/8 x 3 + 1/8 x 3 = 1/2 + 1/2 + 3/8 + 3/8 = 7/4 = 1.75 questions.",
+          "Writing yes as 1 and no as 0 along the path gives the code A = 0, B = 10, C = 110, D = 111; no codeword starts another, so a stream decodes uniquely.",
+          "Each letter's question count equals log2(1/p): 1, 2, 3, 3; so the average is exactly the entropy H = 1.75 bits.",
+          "Check on a typical 8-letter message AAAABBCD: 4x1 + 2x2 + 3 + 3 = 14 bits, versus 16 bits for asking 'first half or second half?' twice for every letter."
+        ],
+        "result": "H = 1.75 bits per letter: 7/4 questions on average, beating the 2 questions of the fixed halving strategy; with four equally likely letters the entropy would be exactly 2 bits."
+      },
+      "visual": "A question tree on the left: root 'A?' splits to leaf A (big block, half the width of a probability bar) and node 'B?', which splits to leaf B and node 'C?' with leaves C and D. On the right, a probability bar of four coloured blocks (1/2, 1/4, 1/8, 1/8) whose blocks slide under their leaves; each leaf's depth counter (1, 2, 3, 3) multiplies its block, and the four products stack into a running total that reaches 1.75. Then the 8-letter message turns letter by letter into its codeword bits (14 cells) beside a 16-cell fixed-length strip.",
+      "misconception": "A bit is not just a 0 or 1 symbol on a wire: as a measure, it is the information in one fair yes/no answer, so an unlikely outcome carries more bits than a likely one.",
+      "practice": {
+        "question": "If A, B, C and D were all equally likely (1/4 each), how many yes/no questions would you need on average?",
+        "answer": "2: each letter has log2(4) = 2 bits of surprise, and the best tree asks two halving questions."
+      },
+      "reel_caption": "Claude Shannon, 'A Mathematical Theory of Communication' (1948): entropy is the average number of yes/no questions you need. Four letters with chances 1/2, 1/4, 1/8, 1/8 need only 1.75 on average. #informationtheory #entropy #shannon"
+    }
+  ],
+  "skipped_units": [
+    {
+      "unit": "u01",
+      "reason": "Sets up the model and the unit 'bit'; the short opens with the bit as one yes/no answer but its subject is entropy (Sections 6 and 10)."
+    },
+    {
+      "unit": "u02",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u03",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u04",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u05",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u06",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u08",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u09",
+      "reason": "Background for the entropy idea but not its mechanism; out of scope for the single requested short."
+    },
+    {
+      "unit": "u10",
+      "reason": "The coding theorem is the general version of what the short shows on one example; a separate short would need the typical-sequence argument."
+    },
+    {
+      "unit": "u12",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u13",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u14",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u15",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u16",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u17",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u18",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u19",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    },
+    {
+      "unit": "u20",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    },
+    {
+      "unit": "u21",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    },
+    {
+      "unit": "u22",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    },
+    {
+      "unit": "u23",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u24",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u25",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u26",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u27",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u28",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u29",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u30",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u31",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u32",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u33",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u34",
+      "reason": "Noisy or continuous channels (beyond source entropy); out of scope for the single requested beginner short on entropy."
+    },
+    {
+      "unit": "u35",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    },
+    {
+      "unit": "u36",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    },
+    {
+      "unit": "u37",
+      "reason": "Proof appendix; the user asked for one beginner short on entropy as average yes/no questions, so proofs are out of scope."
+    }
+  ]
+}

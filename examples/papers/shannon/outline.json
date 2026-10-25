@@ -1,0 +1,529 @@
+{
+  "course": {
+    "title": "A Mathematical Theory of Communication",
+    "code": "BSTJ 27 (1948)",
+    "institution": "Bell System Technical Journal (research paper)",
+    "instructor": "Claude E. Shannon",
+    "url": "https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf",
+    "level": "research paper; the short targets curious beginners with no probability background beyond fractions",
+    "term": "July and October 1948",
+    "parts": [
+      "Part I: Discrete noiseless systems",
+      "Part II: The discrete channel with noise",
+      "Part III: Mathematical preliminaries",
+      "Part IV: The continuous channel",
+      "Part V: The rate for a continuous source"
+    ]
+  },
+  "units": [
+    {
+      "id": "u01",
+      "session": "Introduction",
+      "title": "Introduction",
+      "summary": "Sets up a general model of communication (source, transmitter, channel, receiver, destination), argues that the information in a choice from a set should be measured by the logarithm of the number of possibilities, and names the base-2 unit the bit.",
+      "key_ideas": [
+        "communication system diagram",
+        "logarithmic measure",
+        "bit = binary digit"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ]
+    },
+    {
+      "id": "u02",
+      "session": "Section 1",
+      "title": "The discrete noiseless channel",
+      "summary": "Defines the capacity of a noiseless channel as the growth rate of the log of the number of allowed signal sequences, computed for telegraphy-like symbol durations.",
+      "key_ideas": [
+        "capacity C = lim log N(T)/T",
+        "symbol durations",
+        "finite-state constraints"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u03",
+      "session": "Section 2",
+      "title": "The discrete source of information",
+      "summary": "Models a message source as a stochastic process that picks symbols with probabilities, possibly depending on preceding symbols.",
+      "key_ideas": [
+        "stochastic source",
+        "transition probabilities"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u04",
+      "session": "Section 3",
+      "title": "The series of approximations to English",
+      "summary": "Generates artificial text from letter and word statistics of increasing order to show that statistical structure makes output look increasingly like English.",
+      "key_ideas": [
+        "zero to third-order letter approximations",
+        "word approximations"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u05",
+      "session": "Section 4",
+      "title": "Graphical representation of a Markoff process",
+      "summary": "Draws sources as state graphs whose edges are labelled with emitted letters and their probabilities.",
+      "key_ideas": [
+        "states",
+        "transitions labelled with letters and probabilities"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u06",
+      "session": "Section 5",
+      "title": "Ergodic and mixed sources",
+      "summary": "Restricts attention to ergodic sources, whose long sequences all show the same statistics, and treats mixed sources as combinations of ergodic ones.",
+      "key_ideas": [
+        "ergodicity",
+        "statistical homogeneity"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u07",
+      "session": "Section 6",
+      "title": "Choice, uncertainty and entropy",
+      "summary": "Asks for a measure of the uncertainty in a choice among outcomes with probabilities p_i, lists three natural requirements, and shows that the only measure meeting them is H = -K sum p_i log p_i, the entropy; illustrates its properties (maximal for equal choices, zero for certainty, additive for successive choices).",
+      "key_ideas": [
+        "H = -sum p log p",
+        "binary entropy curve",
+        "grouping property",
+        "joint and conditional entropy"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u08",
+      "session": "Section 7",
+      "title": "The entropy of an information source",
+      "summary": "Extends entropy to a source producing a sequence of symbols, as entropy per symbol, and shows that long typical sequences number about 2^(H N), each with probability about 2^(-H N).",
+      "key_ideas": [
+        "entropy per symbol",
+        "typical sequences",
+        "relative entropy and redundancy"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u09",
+      "session": "Section 8",
+      "title": "Representation of the encoding and decoding operations",
+      "summary": "Describes transmitters and receivers as finite-state transducers and shows that such encoding cannot increase entropy.",
+      "key_ideas": [
+        "transducers",
+        "reversible encoding"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u10",
+      "session": "Section 9",
+      "title": "The fundamental theorem for a noiseless channel",
+      "summary": "Proves that a source of entropy H can be sent over a channel of capacity C at any rate below C/H symbols per second and no faster, with a constructive coding argument that assigns shorter binary codes to likelier messages.",
+      "key_ideas": [
+        "source coding theorem",
+        "C/H bound",
+        "code lengths near -log2 p"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u11",
+      "session": "Section 10",
+      "title": "Discussion and examples",
+      "summary": "Works examples, including a four-letter source with probabilities 1/2, 1/4, 1/8, 1/8 whose entropy is 7/4 bits per symbol and a code (0, 10, 110, 111) that achieves that average exactly; discusses redundancy and matching a source to a channel.",
+      "key_ideas": [
+        "A, B, C, D example",
+        "7/4 bits per symbol",
+        "prefix code 0, 10, 110, 111"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u12",
+      "session": "Section 11",
+      "title": "Representation of a noisy discrete channel",
+      "summary": "Models noise as a probabilistic map from transmitted to received symbols, so received signals are random functions of what was sent.",
+      "key_ideas": [
+        "channel transition probabilities"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u13",
+      "session": "Section 12",
+      "title": "Equivocation and channel capacity",
+      "summary": "Defines equivocation H_y(x) as the receiver's remaining uncertainty about the message, the transmission rate as H(x) - H_y(x), and the capacity of a noisy channel as the maximum of this rate.",
+      "key_ideas": [
+        "equivocation",
+        "R = H(x) - H_y(x)",
+        "capacity as a maximum"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u14",
+      "session": "Section 13",
+      "title": "The fundamental theorem for a discrete channel with noise",
+      "summary": "Proves that below capacity there are codes with arbitrarily small error frequency, while above it the equivocation cannot be pushed below H - C.",
+      "key_ideas": [
+        "noisy channel coding theorem",
+        "random coding argument"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u15",
+      "session": "Section 14",
+      "title": "Discussion",
+      "summary": "Interprets the theorem: redundancy added in the right way lets messages be recovered despite noise, at the cost of delay.",
+      "key_ideas": [
+        "redundancy for error correction",
+        "delay"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u16",
+      "session": "Section 15",
+      "title": "Example of a discrete channel and its capacity",
+      "summary": "Computes the capacity of a three-symbol channel where the first symbol always arrives intact and the other two are swapped with probability q, by choosing the input probabilities that maximize the rate.",
+      "key_ideas": [
+        "worked capacity calculation"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u17",
+      "session": "Section 16",
+      "title": "The channel capacity in certain special cases",
+      "summary": "Derives capacity formulas for channels whose noise treats every input symbol alike (symmetric channels), including the binary symmetric channel with crossover probability p.",
+      "key_ideas": [
+        "symmetric channels",
+        "binary symmetric channel capacity"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u18",
+      "session": "Section 17",
+      "title": "An example of efficient coding",
+      "summary": "Shows a block code on seven binary symbols that corrects any single error, matching a noisy channel exactly.",
+      "key_ideas": [
+        "seven-bit block code",
+        "single-error correction"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part II: The discrete channel with noise"
+    },
+    {
+      "id": "u19",
+      "session": "Appendix 1",
+      "title": "Appendix 1: Growth of the number of blocks of symbols",
+      "summary": "Shows the number of allowed symbol blocks grows like the power of the largest root of a determinant equation, justifying the channel capacity formula.",
+      "key_ideas": [
+        "difference equations",
+        "largest root"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u20",
+      "session": "Appendix 2",
+      "title": "Appendix 2: Derivation of H = -sum p log p",
+      "summary": "Proves that the three requirements of Section 6 force the logarithmic form of entropy.",
+      "key_ideas": [
+        "uniqueness proof"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u21",
+      "session": "Appendix 3",
+      "title": "Appendix 3: Theorems on ergodic sources",
+      "summary": "Proves the typical-sequence results of Section 7 for ergodic sources by applying the law of large numbers to the paths taken through the source's state graph.",
+      "key_ideas": [
+        "law of large numbers on paths"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u22",
+      "session": "Appendix 4",
+      "title": "Appendix 4: Maximizing the rate for a system of constraints",
+      "summary": "Finds the transition probabilities that make a constrained source achieve the channel capacity.",
+      "key_ideas": [
+        "Lagrange-style maximization"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part I: Discrete noiseless systems"
+    },
+    {
+      "id": "u23",
+      "session": "Section 18",
+      "title": "Sets and ensembles of functions",
+      "summary": "Introduces ensembles of continuous functions with probability measures as the continuous analogue of sources.",
+      "key_ideas": [
+        "ensembles",
+        "ergodic ensembles"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u24",
+      "session": "Section 19",
+      "title": "Band limited ensembles of functions",
+      "summary": "Uses the sampling theorem to represent a band-limited signal by 2TW numbers.",
+      "key_ideas": [
+        "sampling theorem",
+        "2TW samples"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u25",
+      "session": "Section 20",
+      "title": "Entropy of a continuous distribution",
+      "summary": "Defines differential entropy, notes it depends on the coordinate system, and shows Gaussian distributions maximize it for a given variance.",
+      "key_ideas": [
+        "differential entropy",
+        "Gaussian maximizes entropy"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u26",
+      "session": "Section 21",
+      "title": "Entropy of an ensemble of functions",
+      "summary": "Defines entropy per degree of freedom and per second for continuous ensembles and introduces entropy power.",
+      "key_ideas": [
+        "entropy power"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u27",
+      "session": "Section 22",
+      "title": "Entropy loss in linear filters",
+      "summary": "Computes how a linear filter changes the entropy of an ensemble through the log of its gain.",
+      "key_ideas": [
+        "filter gain"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u28",
+      "session": "Section 23",
+      "title": "Entropy of a sum of two ensembles",
+      "summary": "Bounds the entropy power of the sum of two independent ensembles between the sum of their entropy powers and the sum of their average powers.",
+      "key_ideas": [
+        "entropy power inequality"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u29",
+      "session": "Section 24",
+      "title": "The capacity of a continuous channel",
+      "summary": "Defines the rate and capacity of a channel with continuous signals and noise.",
+      "key_ideas": [
+        "continuous capacity"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part IV: The continuous channel"
+    },
+    {
+      "id": "u30",
+      "session": "Section 25",
+      "title": "Channel capacity with an average power limitation",
+      "summary": "Derives C = W log((P + N)/N) for white Gaussian noise with average power limit P.",
+      "key_ideas": [
+        "C = W log(1 + P/N)"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part IV: The continuous channel"
+    },
+    {
+      "id": "u31",
+      "session": "Section 26",
+      "title": "The channel capacity with a peak power limitation",
+      "summary": "Bounds capacity when the transmitter has a peak rather than average power limit.",
+      "key_ideas": [
+        "peak power bounds"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part IV: The continuous channel"
+    },
+    {
+      "id": "u32",
+      "session": "Section 27",
+      "title": "Fidelity evaluation functions",
+      "summary": "Introduces a fidelity criterion to say how closely a continuous message must be reproduced.",
+      "key_ideas": [
+        "fidelity criterion",
+        "mean squared error"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part V: The rate for a continuous source"
+    },
+    {
+      "id": "u33",
+      "session": "Section 28",
+      "title": "The rate for a source relative to a fidelity evaluation",
+      "summary": "Defines the rate a continuous source needs for a given fidelity and proves it is achievable over a channel of at least that capacity.",
+      "key_ideas": [
+        "rate-distortion idea"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part V: The rate for a continuous source"
+    },
+    {
+      "id": "u34",
+      "session": "Section 29",
+      "title": "The calculation of rates",
+      "summary": "Computes the rate needed to reproduce a white-noise source within a mean-square error, showing it equals the bandwidth times the log of the ratio of signal power to allowed error.",
+      "key_ideas": [
+        "rate for Gaussian source"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part V: The rate for a continuous source"
+    },
+    {
+      "id": "u35",
+      "session": "Appendix 5",
+      "title": "Appendix 5: Entropy under transformations of ensembles",
+      "summary": "Proves how the entropy of an ensemble of functions changes when the ensemble passes through an invertible operation, the result used for linear filters.",
+      "key_ideas": [
+        "measure-preserving operations"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u36",
+      "session": "Appendix 6",
+      "title": "Appendix 6: Entropy power of a sum",
+      "summary": "Proves the upper and lower bounds on the entropy power of a sum of two ensembles stated in Section 23, using white noise as the maximum-entropy case.",
+      "key_ideas": [
+        "entropy power bounds"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part III: Mathematical preliminaries"
+    },
+    {
+      "id": "u37",
+      "session": "Appendix 7",
+      "title": "Appendix 7: A general definition of rate and capacity",
+      "summary": "Sketches a measure-theoretic definition of rate and capacity for general signal spaces.",
+      "key_ideas": [
+        "measure-theoretic rate"
+      ],
+      "sources": [
+        "sources/dbcb12-reprinted-with-corrections-from-the-bell-system-technical-jo.txt"
+      ],
+      "part": "Part V: The rate for a continuous source"
+    }
+  ]
+}

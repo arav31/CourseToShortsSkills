@@ -1,6 +1,6 @@
 ---
 name: course-to-shorts
-description: Turn a course (an MIT OpenCourseWare or other course website, a syllabus, lecture PDFs, or a folder of materials) into comprehensive LaTeX study notes plus a series of narrated, 3Blue1Brown-style vertical explainer videos for Instagram Reels, YouTube Shorts or TikTok. Use as the entry point whenever someone shares a course link or course files and wants notes, shorts, reels or explainer videos from it, or asks where a course run stands; it sequences course-plan, course-notes, course-video and course-reels and gates the result.
+description: Turn a course (an MIT OpenCourseWare or other course website, a syllabus, lecture PDFs, or a folder of materials) or a research paper (an arXiv link, a paper PDF or article) into comprehensive LaTeX study notes plus a series of narrated, 3Blue1Brown-style vertical explainer videos for Instagram Reels, YouTube Shorts or TikTok. Use as the entry point whenever someone shares a course link, course files or a paper and wants notes, shorts, reels or explainer videos from it, or asks where a course run stands; it sequences course-plan, course-notes, course-video and course-reels and gates the result.
 ---
 
 # Course to Shorts
@@ -60,7 +60,7 @@ $PY "$SKILL_DIR/scripts/run_status.py" runs/<course-slug> --gate   # exit 1 unti
 Publish-ready means: the plan check passes for the current plan; the notes compiled with a real
 TeX engine with no errors and every outline unit has a chapter; every planned short has a
 final render with no errors and an approval bound to that exact MP4. Stale reports count as
-missing. When the user asked for shorts only (no notes), gate with `--gate --shorts-only`:
+missing. When the user asked for shorts only (no notes), and for paper runs by default, gate with `--gate --shorts-only`:
 the notes stage is still reported but does not block. Report the gate result honestly; list any blockers you could not resolve.
 
 ## 5. Publish: course-reels (only when asked)
