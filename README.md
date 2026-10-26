@@ -1,11 +1,22 @@
-# Course → Shorts
+# Courses & Research Papers → Shorts
 
-**Paste a course link. Get complete study notes and a series of narrated, 3Blue1Brown-style explainer shorts.**
+**Paste a course link or a research paper. Get narrated, 3Blue1Brown-style explainer shorts, and complete study notes for courses.**
 
 [![tests](https://github.com/arav31/CourseToShortsSkills/actions/workflows/tests.yml/badge.svg)](https://github.com/arav31/CourseToShortsSkills/actions/workflows/tests.yml)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757)
 ![Codex plugin](https://img.shields.io/badge/Codex-plugin-10a37f)
 ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-5-6e56cf)
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="docs/media/paper-lemons.mp4"><img src="docs/media/paper-lemons.gif" width="170" alt="Why good used cars vanish"></a><br><sub><b>Why good used cars vanish</b></sub></td>
+<td align="center" width="25%"><a href="docs/media/paper-attention.mp4"><img src="docs/media/paper-attention.gif" width="170" alt="Attention is a weighted average"></a><br><sub><b>Attention is a weighted average</b></sub></td>
+<td align="center" width="25%"><a href="docs/media/paper-pagerank.mp4"><img src="docs/media/paper-pagerank.gif" width="170" alt="PageRank: the random surfer"></a><br><sub><b>PageRank: the random surfer</b></sub></td>
+<td align="center" width="25%"><a href="docs/media/paper-shannon.mp4"><img src="docs/media/paper-shannon.gif" width="170" alt="Entropy counts questions"></a><br><sub><b>Entropy counts questions</b></sub></td>
+</tr>
+</table>
+
+<p align="center"><sub>Research papers: one short each from Akerlof's <i>Market for Lemons</i>, <i>Attention Is All You Need</i>, Brin and Page's PageRank paper and Shannon's <i>Mathematical Theory of Communication</i> (<a href="examples/papers/">plans and scenes</a>; 70–80 s each).</sub></p>
 
 <table>
 <tr>
@@ -41,17 +52,6 @@
 </table>
 
 <p align="center"><sub>A second field: three shorts from <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/">MIT 6.006 Introduction to Algorithms</a>, planned from all 21 lectures (<a href="examples/mit-6.006/">plan and scenes</a>; about 70 s each).</sub></p>
-
-<table>
-<tr>
-<td align="center" width="25%"><a href="docs/media/paper-lemons.mp4"><img src="docs/media/paper-lemons.gif" width="170" alt="Why good used cars vanish"></a><br><sub><b>Why good used cars vanish</b></sub></td>
-<td align="center" width="25%"><a href="docs/media/paper-attention.mp4"><img src="docs/media/paper-attention.gif" width="170" alt="Attention is a weighted average"></a><br><sub><b>Attention is a weighted average</b></sub></td>
-<td align="center" width="25%"><a href="docs/media/paper-pagerank.mp4"><img src="docs/media/paper-pagerank.gif" width="170" alt="PageRank: the random surfer"></a><br><sub><b>PageRank: the random surfer</b></sub></td>
-<td align="center" width="25%"><a href="docs/media/paper-shannon.mp4"><img src="docs/media/paper-shannon.gif" width="170" alt="Entropy counts questions"></a><br><sub><b>Entropy counts questions</b></sub></td>
-</tr>
-</table>
-
-<p align="center"><sub>Research papers too: one short each from Akerlof's <i>Market for Lemons</i>, <i>Attention Is All You Need</i>, Brin and Page's PageRank paper and Shannon's <i>Mathematical Theory of Communication</i> (<a href="examples/papers/">plans and scenes</a>; 70–80 s each).</sub></p>
 
 A set of five [Agent Skills](https://agentskills.io) for Claude Code and Codex. Point your agent at a
 course (MIT OpenCourseWare or any course site, a syllabus, lecture PDFs, a folder of notes) or a

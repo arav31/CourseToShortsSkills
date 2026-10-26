@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Course → Shorts</title>
-<meta name="description" content="Agent Skills that turn a course link into complete LaTeX study notes and narrated 3Blue1Brown-style explainer shorts.">
+<title>Courses &amp; Research Papers → Shorts</title>
+<meta name="description" content="Agent Skills that turn a course or a research paper into narrated 3Blue1Brown-style explainer shorts, plus complete LaTeX study notes for courses.">
 <style>
   :root {
     --bg: #0e1118; --panel: #151a24; --line: #263042; --ink: #eceff4; --muted: #9aa4b2;
@@ -59,16 +59,42 @@
 <div class="wrap">
   <header>
     <div class="eyebrow">Agent Skills for Claude Code and Codex</div>
-    <h1>Course <span class="arrow">→</span> Shorts</h1>
-    <p class="lede">Paste a course link. Your agent reads the whole course, writes <b>complete LaTeX study notes</b>,
+    <h1>Courses &amp; Research Papers <span class="arrow">→</span> Shorts</h1>
+    <p class="lede">Paste a course link or a research paper. Your agent reads the whole thing, writes <b>complete LaTeX study notes</b> for courses,
       and makes a series of <b>narrated, 3Blue1Brown-style explainer shorts</b> for Reels, Shorts and TikTok,
       then looks at every frame and page before calling anything done.</p>
     <div class="cta">
       <a class="btn primary" href="https://github.com/arav31/CourseToShortsSkills">View on GitHub</a>
+      <a class="btn" href="#papers">Watch the research-paper shorts</a>
       <a class="btn" href="media/linear-algebra-notes.pdf">Read the example notes (PDF)</a>
       <a class="btn" href="#install">Install</a>
     </div>
   </header>
+
+  <section id="papers">
+    <h2>Research papers</h2>
+    <p class="sub">The same skills on four landmark papers from economics, AI, search and mathematics. Each run
+      ingested the paper itself (arXiv, the authors' or a university copy), outlined it section by section, and
+      built one short around a small worked example, checked by a script and credited to the paper on screen.</p>
+    <div class="shorts">
+      <div class="short">
+        <video src="media/paper-lemons.mp4" poster="media/paper-lemons.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Economics · Akerlof 1970</span><h3>Why good used cars vanish</h3><p>Buyers who can't see quality pay for the average car, so the best cars leave, the average falls, and only the lemon trades.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/paper-attention.mp4" poster="media/paper-attention.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">AI · Vaswani et al. 2017</span><h3>Attention is a weighted average</h3><p>Three words, real dot products and a softmax: “sat” attends mostly to “cat”, and its output is a weighted average of the values.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/paper-pagerank.mp4" poster="media/paper-pagerank.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Search · Brin &amp; Page 1998</span><h3>PageRank: the random surfer</h3><p>Four pages, one surfer who clicks forever. A page with a single link nearly ties the page with three, because that link comes from the busiest page.</p></div>
+      </div>
+      <div class="short">
+        <video src="media/paper-shannon.mp4" poster="media/paper-shannon.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag">Maths · Shannon 1948</span><h3>Entropy counts questions</h3><p>Guess a hidden letter with yes/no questions: the average number, 1.75, is the entropy, and the question tree is the shortest code.</p></div>
+      </div>
+    </div>
+  </section>
 
   <section>
     <h2>Linear Algebra · MIT 18.06</h2>
@@ -141,31 +167,6 @@
       <div class="short">
         <video src="media/6006-03-dp.mp4" poster="media/6006-03-dp.jpg" controls playsinline preload="none"></video>
         <div class="meta"><span class="tag">Lecture 15</span><h3>Recurse, but re-use</h3><p>Fifteen calls collapse into six subproblems: the Fibonacci call tree folds into a DAG.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Research papers</h2>
-    <p class="sub">The same skills on four landmark papers from economics, AI, search and mathematics. Each run
-      ingested the paper itself (arXiv, the authors' or a university copy), outlined it section by section, and
-      built one short around a small worked example, checked by a script and credited to the paper on screen.</p>
-    <div class="shorts">
-      <div class="short">
-        <video src="media/paper-lemons.mp4" poster="media/paper-lemons.jpg" controls playsinline preload="none"></video>
-        <div class="meta"><span class="tag">Economics · Akerlof 1970</span><h3>Why good used cars vanish</h3><p>Buyers who can't see quality pay for the average car, so the best cars leave, the average falls, and only the lemon trades.</p></div>
-      </div>
-      <div class="short">
-        <video src="media/paper-attention.mp4" poster="media/paper-attention.jpg" controls playsinline preload="none"></video>
-        <div class="meta"><span class="tag">AI · Vaswani et al. 2017</span><h3>Attention is a weighted average</h3><p>Three words, real dot products and a softmax: “sat” attends mostly to “cat”, and its output is a weighted average of the values.</p></div>
-      </div>
-      <div class="short">
-        <video src="media/paper-pagerank.mp4" poster="media/paper-pagerank.jpg" controls playsinline preload="none"></video>
-        <div class="meta"><span class="tag">Search · Brin &amp; Page 1998</span><h3>PageRank: the random surfer</h3><p>Four pages, one surfer who clicks forever. A page with a single link nearly ties the page with three, because that link comes from the busiest page.</p></div>
-      </div>
-      <div class="short">
-        <video src="media/paper-shannon.mp4" poster="media/paper-shannon.jpg" controls playsinline preload="none"></video>
-        <div class="meta"><span class="tag">Maths · Shannon 1948</span><h3>Entropy counts questions</h3><p>Guess a hidden letter with yes/no questions: the average number, 1.75, is the entropy, and the question tree is the shortest code.</p></div>
       </div>
     </div>
   </section>
