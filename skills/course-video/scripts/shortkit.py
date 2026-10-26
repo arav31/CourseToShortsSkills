@@ -618,14 +618,48 @@ def vec(plane: CoordinateSystem, coords, color: str = BLUE_K, start=(0, 0), widt
 
 def axis_numbers(axes: CoordinateSystem, x_values=(), y_values=(), size: float = Size.SMALL,
                  color: str = MUTED) -> VGroup:
-    """Tick numbers typeset with tex() (Manim's include_numbers needs a `latex` binary)."""
-    _compile_tex([_tex_body(_fmt(v), True) for v in list(x_values) + list(y_values)])
+    """Tick numbers typeset with tex() (Manim's include_numbers needs a `latex` binary).
+
+    Pass a dict instead of a list for custom labels, e.g. {0: "1B", 1: "10B"}; those use text().
+    Labels sit on the axis through the origin, or along the plane's lower/left edge when the
+    origin is outside the plotted range.
+    """
+    def anchor(rng) -> float:
+        lo, hi = rng[0], rng[1]
+        return 0 if lo <= 0 <= hi else lo
+
+    numeric = [v for vals in (x_values, y_values) if not isinstance(vals, dict) for v in vals]
+    if numeric:
+        _compile_tex([_tex_body(_fmt(v), True) for v in numeric])
+
+    def label(vals, v):
+        return text(str(vals[v]), size=size, color=color) if isinstance(vals, dict) else tex(_fmt(v), size=size, color=color)
+
+    y0, x0 = anchor(axes.y_range), anchor(axes.x_range)
     labels = VGroup()
     for v in x_values:
-        labels.add(tex(_fmt(v), size=size, color=color).next_to(axes.c2p(v, 0), DOWN, buff=0.12))
+        labels.add(label(x_values, v).next_to(axes.c2p(v, y0), DOWN, buff=0.12))
     for v in y_values:
-        labels.add(tex(_fmt(v), size=size, color=color).next_to(axes.c2p(0, v), LEFT, buff=0.12))
+        labels.add(label(y_values, v).next_to(axes.c2p(x0, v), LEFT, buff=0.12))
     return labels
+
+
+def log_plane(x_decades=(9, 12), y_decades=(10, 13), zone: Zone = STAGE, **kwargs) -> NumberPlane:
+    """A log-log plane: one grid square per power of ten, e.g. parameters 1e9..1e12 across.
+
+    Place points with log_point(plane, 4.7e9, 3.6e10); label ticks with
+    axis_numbers(plane, {0: "1B", 1: "10B", 2: "100B", 3: "1T"}, {...}).
+    """
+    plane = stage_plane((0, x_decades[1] - x_decades[0], 1), (0, y_decades[1] - y_decades[0], 1), zone, **kwargs)
+    plane._sk_log_origin = (x_decades[0], y_decades[0])
+    return plane
+
+
+def log_point(plane: NumberPlane, x: float, y: float) -> np.ndarray:
+    """Scene point of the value (x, y) on a log_plane()."""
+    import math
+    x0, y0 = plane._sk_log_origin
+    return plane.c2p(math.log10(x) - x0, math.log10(y) - y0)
 
 
 def background(mob: Mobject) -> Mobject:
@@ -825,8 +859,12 @@ class ShortScene(Scene):
         want = _re.sub(r"[^a-z0-9]", "", word.lower())
 
         def match(token: str) -> bool:
-            got = _re.sub(r"[^a-z0-9]", "", str(token).lower())
-            return got.startswith(want) if prefix else got == want
+            # "non-embedding" answers to cue("non"), cue("embedding") and cue("non-embedding")
+            parts = [str(token).lower()] + _re.split(r"[-–—/]", str(token).lower())
+            for got in (_re.sub(r"[^a-z0-9]", "", part) for part in parts):
+                if got and (got.startswith(want) if prefix else got == want):
+                    return True
+            return False
 
         timed = self._words.get(beat_id)
         if timed:

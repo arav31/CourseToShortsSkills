@@ -940,7 +940,7 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
         for r in pack["references"]:
             link = (f"arXiv:{r['arxiv']}" if r["arxiv"] else f"doi:{r['doi']}" if r["doi"] else r["url"] or "")
             fetched = fetched_files.get("cited as [" + r["key"] + "]", "")
-            index.append(f"| {r['key']} | {r['year'] or ''} | {r['text'][:90]} | {link} | {fetched} |")
+            index.append(f"| {r['key']} | {r['year'] or ''} | {r['text']} | {link} | {fetched} |")
     index += ["", "## Files", "", "| id | kind | title | context | chars | file |", "|---|---|---|---|---|---|"]
     index += [f"| {m['id']} | {m['kind']} | {m['title'][:70]} | {(m['context'] or '')[:50]} | {m['chars']:,} | {m['file']} |"
               for m in rows]

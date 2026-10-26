@@ -1,0 +1,44 @@
+{
+  "course_title": "Neural scaling laws, from power laws to compute-optimal training",
+  "series": {
+    "title": "Reviews you can see",
+    "audience": "curious beginners who know what a power law and a log scale are",
+    "hashtags": ["#scalinglaws", "#llm", "#machinelearning", "#manim", "#AI"],
+    "attribution": "Literature review 'Neural scaling laws, from power laws to compute-optimal training' (Course to Shorts example); results from Kaplan et al. (2020), Hoffmann et al. (2022) and Pearce & Song (2024)"
+  },
+  "shorts": [
+    {
+      "id": "s01",
+      "slug": "bigger-model-or-more-data",
+      "title": "Bigger model, or more data?",
+      "units": ["u02", "u03", "u04"],
+      "primary_unit": "u03",
+      "prerequisites": [],
+      "cites": ["kaplan2020", "hoffmann2022", "pearce2024"],
+      "hook": "You have a fixed compute budget: do you build a bigger model or feed it more data? The field's answer flipped.",
+      "claim": "With training cost C ≈ 6ND, Kaplan's rule (N ∝ C^0.73) pours extra compute into model size, while Hoffmann's (N ∝ C^0.5) grows parameters and tokens together; at Gopher's budget that is roughly 480B params on 200B tokens versus Chinchilla's 70B on 1.4T, and Chinchilla won.",
+      "worked_example": {
+        "setup": "Start from Hoffmann et al.'s head-to-head budget, 1e21 FLOPs, where Kaplan's fit picks 4.68B parameters and Hoffmann's Approach 1 picks 2.86B (the smaller one trained to lower loss). Use C ≈ 6ND for tokens and grow the budget to Gopher's 5.76e23 FLOPs (576x).",
+        "steps": [
+          "Per 10x compute: Kaplan grows the model 10^0.73 ≈ 5.4x and data 10^0.27 ≈ 1.9x; Hoffmann grows both 10^0.5 ≈ 3.2x.",
+          "At 1e21 FLOPs: Kaplan 4.68B params on 1e21/(6·4.68e9) ≈ 36B tokens; Hoffmann 2.86B on ≈ 58B tokens.",
+          "At 5.76e23 FLOPs: Kaplan's fit (N = 1.3e9·(C/2 in PF-days)^0.73) gives ≈ 485B params on ≈ 198B tokens (0.4 tokens per parameter); Hoffmann's gives ≈ 69B on ≈ 1.4T (Table 3: 67B on 1.5T).",
+          "Real models at that budget: Gopher 280B on 300B tokens (≈ 1 token per parameter), Chinchilla 70B on 1.4T (20 tokens per parameter); 6ND gives 5.0e23 and 5.9e23 FLOPs. Chinchilla outperformed Gopher.",
+          "Pearce & Song (2024): rerunning Chinchilla's analysis with non-embedding parameters at small scale gives an exponent of 0.78 (Kaplan: 0.73); with total parameters it gives 0.51 (Chinchilla: 0.50)."
+        ],
+        "result": "Same budget, opposite shapes: Kaplan's rule lands near 480B params / 200B tokens, Hoffmann's at ≈ 70B / 1.4T, which is Chinchilla, 20 tokens per parameter; most of the gap comes from what Kaplan counted as a parameter and how small its models were."
+      },
+      "visual": "One log-log plane: parameters N across, training tokens D up. A yellow budget line (C ≈ 6ND, slope -1) slides outward from 1e21 to Gopher's 5.76e23 FLOPs while an orange dot (Kaplan, 2020) and a blue dot (Hoffmann, 2022) ride it, each tracing its path; the orange path runs right, the blue up the diagonal. Gopher and Chinchilla drop in as labelled points on the final budget line; the 20-tokens-per-parameter diagonal is drawn; Pearce & Song's exponents appear in a corner panel.",
+      "misconception": "Chinchilla did not use more compute than Gopher; it spent about the same budget on a model 4x smaller trained on about 4.7x more tokens.",
+      "practice": {
+        "question": "Under Hoffmann's rule, how big should the model be for 100x Chinchilla's compute?",
+        "answer": "About 10x larger, roughly 700B parameters, on about 14T tokens (both grow as the square root of compute)."
+      },
+      "source_notes": "Numbers checked against the originals in sources/, not the review. Discrepancies: (1) the review says three methods 'agreed' on N ∝ C^0.5, but Hoffmann Table 2 gives 0.50, 0.49 and 0.46 (Approach 3 is the outlier Besiroglu et al. later corrected). (2) Hoffmann paraphrases Kaplan as '5.5x model, 1.8x data per 10x'; 10^0.73 = 5.37 and 10^0.27 = 1.86, and Kaplan itself says '5x' and '2x'. (3) The review's '5 to 500 billion tokens' matches Hoffmann's abstract but its introduction says '5B to over 400B'. (4) The review's Pearce & Song summary says correcting 'recovers coefficients close to Chinchilla's'; the paper's direct result is that simulating Chinchilla under Kaplan's conditions gives 0.78, close to Kaplan's 0.73 (and 0.51 with total parameters). (5) 'About 20 tokens per parameter' is not stated in Hoffmann et al.; it is 1.4T / 70B and the ratio implied by Table 3. (6) 'Same compute': Hoffmann counts Gopher at 5.76e23 FLOPs; the 6ND approximation gives 5.0e23 for Gopher and 5.9e23 for Chinchilla."
+    }
+  ],
+  "skipped_units": [
+    {"unit": "u01", "reason": "Background on power-law learning curves; the single requested short follows the compute-allocation thread instead."},
+    {"unit": "u05", "reason": "Inference-aware scaling is a later extension; out of scope for the one requested short (good follow-up)."}
+  ]
+}

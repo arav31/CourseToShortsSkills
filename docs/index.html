@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Courses &amp; Research Papers → Shorts</title>
-<meta name="description" content="Agent Skills that turn a course or a research paper into narrated 3Blue1Brown-style explainer shorts, plus complete LaTeX study notes for courses.">
+<meta name="description" content="Agent Skills that turn a course, a research paper or a literature review into narrated 3Blue1Brown-style explainer shorts, plus complete LaTeX study notes for courses.">
 <style>
   :root {
     --bg: #0e1118; --panel: #151a24; --line: #263042; --ink: #eceff4; --muted: #9aa4b2;
@@ -60,12 +60,13 @@
   <header>
     <div class="eyebrow">Agent Skills for Claude Code and Codex</div>
     <h1>Courses &amp; Research Papers <span class="arrow">→</span> Shorts</h1>
-    <p class="lede">Paste a course link or a research paper. Your agent reads the whole thing, writes <b>complete LaTeX study notes</b> for courses,
+    <p class="lede">Paste a course link, a research paper or a literature review in Markdown. Your agent reads the whole thing, writes <b>complete LaTeX study notes</b> for courses,
       and makes a series of <b>narrated, 3Blue1Brown-style explainer shorts</b> for Reels, Shorts and TikTok,
       then looks at every frame and page before calling anything done.</p>
     <div class="cta">
       <a class="btn primary" href="https://github.com/arav31/CourseToShortsSkills">View on GitHub</a>
       <a class="btn" href="#papers">Watch the research-paper shorts</a>
+      <a class="btn" href="#reviews">From a literature review</a>
       <a class="btn" href="media/linear-algebra-notes.pdf">Read the example notes (PDF)</a>
       <a class="btn" href="#install">Install</a>
     </div>
@@ -92,6 +93,20 @@
       <div class="short">
         <video src="media/paper-shannon.mp4" poster="media/paper-shannon.jpg" controls playsinline preload="none"></video>
         <div class="meta"><span class="tag">Maths · Shannon 1948</span><h3>Entropy counts questions</h3><p>Guess a hidden letter with yes/no questions: the average number, 1.75, is the entropy, and the question tree is the shortest code.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reviews">
+    <h2>Literature reviews</h2>
+    <p class="sub">Hand it a literature review in Markdown and the short follows a thread <em>across</em> the cited works.
+      From <a href="https://github.com/arav31/CourseToShortsSkills/blob/main/examples/reviews/scaling-laws/review.md">a short review of neural scaling laws</a>,
+      the agent fetched all seven cited papers, checked every number against the originals rather than the review
+      (and caught six places where the review paraphrased them loosely), then ran two papers' rules on the same compute budget.</p>
+    <div class="shorts">
+      <div class="short">
+        <video src="media/review-scaling-laws.mp4" poster="media/review-scaling-laws.jpg" controls playsinline preload="none"></video>
+        <div class="meta"><span class="tag alt">Review · 7 papers</span><h3>Bigger model, or more data?</h3><p>Kaplan 2020 and Hoffmann 2022 split the same compute budget: 485B parameters on 198B tokens, or Chinchilla's 70B on 1.4T. Pearce &amp; Song 2024 explain the gap.</p></div>
       </div>
     </div>
   </section>

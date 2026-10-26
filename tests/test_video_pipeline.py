@@ -167,3 +167,26 @@ def test_multi_word_tts_boundaries_are_split():
     assert [w for _, _, w in split] == ["So", "park", "drops", "from", "five"]
     assert split[0][0] == 0.0 and split[1][1] == 0.4 and split[1][0] == round(0.4 * 2 / 6, 3)
     assert beatlib.split_word_timings(None) is None
+
+
+@pytest.mark.skipif(not HAS_MANIM, reason="needs manim")
+def test_log_plane_places_powers_of_ten_on_grid_lines():
+    import shortkit
+
+    plane = shortkit.log_plane((9, 12), (10, 13))
+    assert shortkit.log_point(plane, 1e9, 1e10) == pytest.approx(plane.c2p(0, 0))
+    assert shortkit.log_point(plane, 1e11, 1e12) == pytest.approx(plane.c2p(2, 2))
+    labels = shortkit.axis_numbers(plane, {0: "1B", 3: "1T"}, {0: "10B"})
+    assert len(labels) == 3 and labels[0].get_top()[1] < plane.c2p(0, 0)[1]
+
+
+@pytest.mark.skipif(not HAS_MANIM, reason="needs manim")
+def test_cue_finds_parts_of_hyphenated_words():
+    import types
+
+    import shortkit
+
+    fake = types.SimpleNamespace(_words={"b": [[0.5, 0.9, "Kaplan"], [1.0, 1.6, "counted"], [1.7, 2.4, "non-embedding"]]})
+    find = shortkit.ShortScene._word_time
+    assert find(fake, "b", "non", 0) == 1.7 and find(fake, "b", "embedding", 0) == 1.7
+    assert find(fake, "b", "non-embedding", 0) == 1.7 and find(fake, "b", "count", 0) is None

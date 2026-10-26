@@ -237,6 +237,15 @@ def check_citations(run: Path, outline: dict, plan: dict, rep: Report) -> None:
     keys = {str(r.get("key")) for r in (pack.get("references") or []) if isinstance(r, dict)}
     if not keys:
         rep.warn("citations", "source_pack.json lists no cited works; re-run ingest.py on the review with --review")
+    fetched = {m.get("context", "")[len("cited as ["):-1]: m.get("file") for m in pack.get("materials") or []
+               if isinstance(m, dict) and str(m.get("context") or "").startswith("cited as [")}
+    units = {str(u.get("id")): u for u in outline.get("units") or [] if isinstance(u, dict)}
+    for uid, unit in units.items():
+        for key in unit.get("cites") or []:
+            if keys and str(key) not in keys:
+                rep.err(f"unit {uid}", f"cites [{key}], which is not in the review's reference list")
+        if not unit.get("cites"):
+            rep.warn(f"unit {uid}", "list the works this section draws on in 'cites'")
     for short in plan.get("shorts") or []:
         if not isinstance(short, dict):
             continue
@@ -244,9 +253,13 @@ def check_citations(run: Path, outline: dict, plan: dict, rep: Report) -> None:
         cites = short.get("cites") or []
         if not cites:
             rep.err(where, "list the works it explains in 'cites' (reference keys from sources/INDEX.md)")
+        read = {str(src) for u in short.get("units") or [] for src in (units.get(str(u)) or {}).get("sources") or []}
         for key in cites:
             if keys and str(key) not in keys:
                 rep.err(where, f"cites [{key}], which is not in the review's reference list")
+            elif fetched.get(str(key)) and fetched[str(key)] not in read:
+                rep.warn(where, f"cites [{key}] but none of its units lists {fetched[str(key)]} in 'sources'; "
+                                "check its numbers against the original, not the review")
 
 
 def main(argv: list[str] | None = None) -> int:

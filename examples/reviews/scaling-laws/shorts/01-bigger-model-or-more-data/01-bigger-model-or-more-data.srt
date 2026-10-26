@@ -1,0 +1,163 @@
+1
+00:00:00,163 --> 00:00:01,488
+Fixed compute budget:
+
+2
+00:00:01,488 --> 00:00:03,487
+bigger model, or more data?
+
+3
+00:00:03,487 --> 00:00:05,150
+The field's answer flipped.
+
+4
+00:00:05,733 --> 00:00:06,908
+Training costs about six
+
+5
+00:00:06,908 --> 00:00:08,983
+times parameters times tokens,
+
+6
+00:00:08,983 --> 00:00:10,633
+so a budget is a line:
+
+7
+00:00:10,995 --> 00:00:12,958
+double the model, halve the data.
+
+8
+00:00:14,108 --> 00:00:16,633
+Kaplan and colleagues, 2020:
+
+9
+00:00:16,633 --> 00:00:18,395
+per ten times more compute,
+
+10
+00:00:18,395 --> 00:00:20,121
+a model five times bigger,
+
+11
+00:00:20,121 --> 00:00:21,720
+data only twice.
+
+12
+00:00:22,333 --> 00:00:24,821
+Hoffmann and colleagues, 2022:
+
+13
+00:00:25,183 --> 00:00:26,558
+grow both equally,
+
+14
+00:00:26,558 --> 00:00:28,233
+about three times each.
+
+15
+00:00:28,820 --> 00:00:31,233
+On this budget, that's 4.7 versus
+
+16
+00:00:31,233 --> 00:00:33,696
+2.9 billion parameters.
+
+17
+00:00:33,696 --> 00:00:35,020
+Trained side by side,
+
+18
+00:00:35,020 --> 00:00:35,958
+the smaller won.
+
+19
+00:00:36,567 --> 00:00:37,455
+Now grow the budget
+
+20
+00:00:37,455 --> 00:00:39,380
+almost six hundred times,
+
+21
+00:00:39,380 --> 00:00:40,517
+to Gopher's compute.
+
+22
+00:00:41,167 --> 00:00:42,392
+Kaplan's rule:
+
+23
+00:00:42,392 --> 00:00:44,567
+480 billion parameters on
+
+24
+00:00:44,567 --> 00:00:46,530
+200 billion tokens.
+
+25
+00:00:46,530 --> 00:00:47,554
+Hoffmann's:
+
+26
+00:00:47,554 --> 00:00:50,054
+70 billion on 1.4 trillion.
+
+27
+00:00:50,633 --> 00:00:52,245
+Gopher went big,
+
+28
+00:00:52,245 --> 00:00:55,458
+280 billion on 300 billion tokens.
+
+29
+00:00:55,458 --> 00:00:57,808
+Chinchilla took Hoffmann's shape,
+
+30
+00:00:57,808 --> 00:00:59,621
+twenty tokens per parameter,
+
+31
+00:00:59,621 --> 00:01:00,333
+and beat it.
+
+32
+00:01:00,933 --> 00:01:01,871
+Why the gap?
+
+33
+00:01:01,871 --> 00:01:04,695
+Pearce and Song, 2024:
+
+34
+00:01:04,695 --> 00:01:05,820
+Kaplan counted only
+
+35
+00:01:05,820 --> 00:01:07,558
+non-embedding parameters,
+
+36
+00:01:07,558 --> 00:01:08,946
+in small models.
+
+37
+00:01:08,946 --> 00:01:10,683
+Do that to Chinchilla's data
+
+38
+00:01:10,683 --> 00:01:12,870
+and you get 0.78.
+
+39
+00:01:12,870 --> 00:01:15,721
+Count everything, and it's 0.51.
+
+40
+00:01:16,333 --> 00:01:17,570
+So grow the model
+
+41
+00:01:17,570 --> 00:01:18,771
+and its data together.

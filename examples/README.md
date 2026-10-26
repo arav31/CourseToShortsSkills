@@ -78,6 +78,27 @@ Each folder has the paper's `outline.json` (one unit per section), `short_plan.j
 ingested sources, which you recreate with `ingest.py <paper URL> --single`. The videos explain the
 papers in their own words, use their own small examples, and reproduce no figures or text.
 
+## Literature review (`reviews/scaling-laws/`)
+
+Request: *"Turn my literature review examples/reviews/scaling-laws/review.md into one 3Blue1Brown-style
+explainer short."* The review ([`review.md`](reviews/scaling-laws/review.md)) is a short Markdown survey of
+neural scaling laws citing seven papers (Hestness et al. 2017 to Pearce & Song 2024).
+
+| file | what it is |
+|---|---|
+| [`review.md`](reviews/scaling-laws/review.md) | the input: five sections and a reference list with arXiv ids |
+| [`outline.json`](reviews/scaling-laws/outline.json) | one unit per review section, each with the works it `cites` |
+| [`short_plan.json`](reviews/scaling-laws/short_plan.json) | one short citing Kaplan 2020, Hoffmann 2022 and Pearce & Song 2024, with `source_notes` where the review and the originals differ |
+| [`checks/examples.py`](reviews/scaling-laws/checks/examples.py) | recomputes every number on screen from values quoted from the original papers |
+| [`shorts/01-bigger-model-or-more-data/`](reviews/scaling-laws/shorts/01-bigger-model-or-more-data) | storyboard, scene and captions |
+
+How it was made: `ingest.py review.md --review --fetch-cited` split the review into sections, keyed its
+references and fetched all seven cited papers; one agent planned and made the short with `course-plan`
+and `course-video`. Both rules start from the 10²¹-FLOP comparison Hoffmann et al. report themselves
+(4.68B vs 2.86B parameters) and sweep out to Gopher's budget. Checking against the originals found six
+places where the review paraphrased loosely (for example, it had Pearce & Song's result backwards);
+the review in this folder has since been corrected, and the plan's `source_notes` record what was found.
+
 ## Licence
 
 The `mit-18.06sc/` notes and videos are derived from MIT OpenCourseWare 18.06SC, *Linear Algebra*

@@ -72,10 +72,15 @@ sections are the units, and the story is how the field's answer changed, or wher
 - **Shorts follow a thread across works.** Pick the two or three works whose results the field
   turned on, and build one worked example that runs all of them on the same numbers (one budget,
   one dataset, one market) so the change between them is visible. Name each work on screen as its
-  result appears (Author, year); every short lists its `cites`.
+  result appears (Author, year); every short lists its `cites`. Each work costs about 10 seconds
+  of narration, so two or three fit in a short under 85 seconds.
+- **Same numbers, same definitions.** Works often measure differently (one counts some parameters,
+  another all of them; one uses PF-days, another FLOPs). Convert to one set of definitions, or
+  anchor on a head-to-head comparison the papers themselves report, and reproduce that number in
+  `checks/examples.py` before building on it.
 - **The originals win.** Reviews paraphrase and sometimes mis-cite. Check every number, formula and
   claim that goes on screen against the cited paper in `sources/`; when they disagree, use the
-  original and note the discrepancy in the plan. A missing link: look for the arXiv or DOI version.
+  original and record the discrepancy in the short's `source_notes`. A missing link: look for the arXiv or DOI version.
 - Review runs are shorts-only unless notes were asked for.
 
 ## 2. Outline → `outline.json`

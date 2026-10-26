@@ -1,0 +1,38 @@
+{
+  "course": {
+    "title": "Neural scaling laws, from power laws to compute-optimal training",
+    "type": "review",
+    "authors": ["Course to Shorts example"],
+    "url": null,
+    "level": "curious beginner; assumes logarithms and the idea of a power law",
+    "license": "Example review shipped with the course-to-shorts repository (examples/reviews/scaling-laws/review.md); cited papers fetched from arXiv",
+    "parts": ["Power laws", "Compute-optimal training", "Revisions and extensions"]
+  },
+  "units": [
+    {"id": "u01", "session": "Section 1", "part": "Power laws", "title": "Error falls as a power law",
+     "summary": "Across translation, language modelling, image classification and speech, generalisation error falls as a power law in training-set size, so learning curves are straight lines on log-log axes and small runs predict large ones; Rosenfeld et al. fit one functional form in both model and data size.",
+     "key_ideas": ["power-law learning curves", "log-log straight lines", "extrapolating from small runs", "joint form in model and data size"],
+     "cites": ["hestness2017", "rosenfeld2019"],
+     "sources": ["sources/728bd4-neural-scaling-laws-from-power-laws-to-compute-optimal-train.txt", "sources/fd4d33-deep-learning-scaling-is-predictable-empirically.txt", "sources/ec22b8-a-constructive-prediction-of-the-generalization-error-across.txt"]},
+    {"id": "u02", "session": "Section 2", "part": "Compute-optimal training", "title": "Language models: bigger models, stopped early",
+     "summary": "Kaplan et al. find Transformer test loss follows power laws in non-embedding parameters (0.076), data (0.095) and compute (0.050); their compute-efficient allocation grows the model as C^0.73 and the data only as C^0.27, so large models should be stopped well before convergence.",
+     "key_ideas": ["L(N), L(D), L(C) power laws", "N_opt ~ C^0.73", "C ~ 6ND", "stop short of convergence"],
+     "cites": ["kaplan2020"],
+     "sources": ["sources/728bd4-neural-scaling-laws-from-power-laws-to-compute-optimal-train.txt", "sources/5d8915-scaling-laws-for-neural-language-models.txt"]},
+    {"id": "u03", "session": "Section 3", "part": "Compute-optimal training", "title": "Compute-optimal training: scale data with the model",
+     "summary": "Hoffmann et al. refit the allocation with over 400 models and three methods, finding parameters and tokens should grow about equally (N_opt ~ C^0.5); Chinchilla (70B params, 1.4T tokens) used Gopher's budget (280B, 300B) and beat it, about 20 tokens per parameter.",
+     "key_ideas": ["isoFLOP profiles", "N_opt ~ C^0.5, D_opt ~ C^0.5", "Chinchilla vs Gopher", "about 20 tokens per parameter"],
+     "cites": ["hoffmann2022"],
+     "sources": ["sources/728bd4-neural-scaling-laws-from-power-laws-to-compute-optimal-train.txt", "sources/dd3e4f-training-compute-optimal-large-language-models.txt"]},
+    {"id": "u04", "session": "Section 4", "part": "Revisions and extensions", "title": "Checking and reconciling the fits",
+     "summary": "Besiroglu et al. refit Hoffmann's third method and find the published fit inconsistent, with the corrected fit agreeing with equal scaling; Pearce and Song show that counting only non-embedding parameters at small scale biases the Chinchilla analysis to about 0.78, close to Kaplan's 0.73.",
+     "key_ideas": ["replication of Approach 3", "non-embedding vs total parameters", "small-scale bias", "0.78 vs 0.73, 0.51 vs 0.50"],
+     "cites": ["besiroglu2024", "pearce2024"],
+     "sources": ["sources/728bd4-neural-scaling-laws-from-power-laws-to-compute-optimal-train.txt", "sources/b6a91f-chinchilla-scaling-a-replication-attempt.txt", "sources/278750-reconciling-kaplan-and-chinchilla-scaling-laws.txt"]},
+    {"id": "u05", "session": "Section 5", "part": "Revisions and extensions", "title": "Beyond training compute",
+     "summary": "Sardana et al. add inference cost: when a model will serve many requests, a smaller model trained on more tokens than the Chinchilla ratio minimises total cost.",
+     "key_ideas": ["training plus inference cost", "over-training smaller models"],
+     "cites": ["sardana2023"],
+     "sources": ["sources/728bd4-neural-scaling-laws-from-power-laws-to-compute-optimal-train.txt", "sources/c940e2-beyond-chinchilla-optimal-accounting-for-inference-in-langua.txt"]}
+  ]
+}

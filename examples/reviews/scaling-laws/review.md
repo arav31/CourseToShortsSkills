@@ -30,12 +30,12 @@ The practical advice was to train very large models and stop well before converg
 
 Hoffmann et al. (2022) revisited the question with over 400 models, from 70 million to over 16
 billion parameters trained on 5 to 500 billion tokens, and with learning-rate schedules matched to
-each run's length. Three separate estimation methods agreed that parameters and training tokens
-should grow in equal proportion, N ∝ C^0.5 and D ∝ C^0.5, using the standard estimate C ≈ 6ND
-floating-point operations. They tested the prediction directly: Chinchilla, a 70-billion-parameter
-model trained on 1.4 trillion tokens, used about the same compute as the 280-billion-parameter
-Gopher trained on 300 billion tokens, and outperformed it. The ratio behind Chinchilla, about 20
-training tokens per parameter, became a common rule of thumb.
+each run's length. Their three estimation methods put the model-size exponent at 0.50, 0.49 and
+0.46: parameters and training tokens should grow in roughly equal proportion, N ∝ C^0.5 and
+D ∝ C^0.5, using the standard estimate C ≈ 6ND floating-point operations. They tested the prediction directly: Chinchilla, a 70-billion-parameter
+model trained on 1.4 trillion tokens, used the same compute budget as the 280-billion-parameter
+Gopher trained on 300 billion tokens, and outperformed it. Chinchilla's ratio, 1.4 trillion tokens
+for 70 billion parameters or 20 tokens per parameter, became a common rule of thumb.
 
 ## Checking and reconciling the fits
 
@@ -43,8 +43,9 @@ Besiroglu et al. (2024) re-fitted the third of Hoffmann et al.'s methods from da
 paper's figures and found the published fit inconsistent with the other two methods and its
 confidence intervals implausibly narrow; their corrected fit agrees with the equal-scaling result.
 Pearce and Song (2024) traced most of the gap between Kaplan's and Hoffmann's advice to Kaplan
-counting only non-embedding parameters and fitting at small scale; correcting for both recovers
-coefficients close to Chinchilla's.
+counting only non-embedding parameters and fitting at small scale. Analysing Chinchilla's setup
+under Kaplan's conditions gives a model-size exponent of about 0.78, close to Kaplan's 0.73, while
+counting total parameters gives about 0.51, close to Chinchilla's 0.50.
 
 ## Beyond training compute
 

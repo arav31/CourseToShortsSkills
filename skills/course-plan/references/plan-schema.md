@@ -60,10 +60,14 @@ biographies; an appendix is a unit only if a short or the notes use it.
 
 A review in Markdown is ingested with `ingest.py review.md --review` (add `--fetch-cited` to collect
 the cited papers). Course fields: `"type": "review"`, `"authors"` (the review's authors), and
-`"license"` if it is not the user's own text. Units are the review's sections (themes), and each
-unit lists the works it draws on: `"cites": ["kaplan2020", "hoffmann2022"]`, using the keys in
-`sources/INDEX.md` → *Cited works*. In `short_plan.json` every short has `"cites"` too (checked:
-each key must be in the review's reference list), and `series.attribution` names the review.
+`"license"` if it is not the user's own text. Units are the review's sections (themes). Each
+unit lists the works it draws on, `"cites": ["kaplan2020", "hoffmann2022"]` (keys from
+`sources/INDEX.md` → *Cited works*), and its `sources` are the review file plus the fetched files
+of those works. In `short_plan.json` every short has `"cites"` too (checked: each key must be in
+the review's reference list; a warning if a cited work was fetched but none of the short's units
+list its file), and `series.attribution` names the review. Where the review and an original
+disagree, record it on the short:
+`"source_notes": [{"claim": "...", "review": "...", "original": "...", "source": "sources/<file>"}]`.
 
 ## short_plan.json — the video series
 
@@ -125,4 +129,5 @@ Field rules (errors from `check_plan.py` unless marked advisory):
 | `misconception` | advisory: the trap this short defuses |
 | `practice` | advisory: one question with its answer (for captions/notes, not shown as a quiz in the video) |
 | `cites` | reviews only: the reference keys of the works this short explains (at least one; each must be in the review's reference list) |
+| `source_notes` | reviews (optional): where the review's paraphrase and the original differ, and which one the short follows |
 | `skipped_units` | every outline unit not covered by a short, each with a reason; only real unit ids |

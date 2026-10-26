@@ -70,6 +70,7 @@ class Short(ShortScene):       # any class name; it must subclass ShortScene
 | `highlight(mob, color=YELLOW_K)` | outline (not a filled sweep) |
 | `matrix_grid([[2, 1], [1, 2]], col_colors=[BLUE_K, ORANGE_K])` | matrix with `.entries[i][j]`, `.rows[i]`, `.cols[j]`, `.brackets` to point at or move |
 | `live_text(lambda: f"{t.get_value():.1f}", align="left")` | a number/label that updates every frame (counters, readouts) |
+| `log_plane((9, 12), (10, 13))`, `log_point(plane, 4.7e9, 3.6e10)` | log-log axes, one square per power of ten (scaling laws, power laws); label ticks with `axis_numbers(plane, {0: "1B", 1: "10B"}, ...)` |
 | `clipped_line(plane, (0, 0), (1, 2))` | the whole line through a point along a direction, clipped to the plane |
 | `ortho(yaw, pitch, scale, origin)` | 3D→2D orthographic projector for 3D ideas on 9:16 (use instead of ThreeDScene) |
 | `background(mob)` | mark scenery (translucent planes, shaded regions) so the checker ignores it |
@@ -127,8 +128,11 @@ assert spoken(FP) in BEATS[3][1].lower()    # "eighty-nine"; spoken() is lowerca
 - `Create`, `FadeIn`, `FadeOut`, `GrowArrow` and the transforms pause updaters while they run, so an
   `always_redraw` object built under old tracker values appears at a stale position and a fading
   label detaches from its target: call `obj.update()` right before animating it.
-- `FadeIn` of an `always_redraw` object can crash ("zip() argument 2 is shorter") if its glyph
-  count changed while hidden: call `obj.update()` first, or fade in a static copy.
+- `FadeIn` of an `always_redraw` object or a `live_text` can crash ("zip() argument 2 is shorter"
+  or "longer") if its glyph count changes during the fade: call `obj.update()` first, and never
+  fade a `live_text` in within the same `play()` that moves its tracker. Fade it in, then animate.
+- Bold credits such as "Hoffmann et al., 2022" side by side overflow half the stage and get shrunk
+  under the minimum size: use regular weight at `Size.SMALL`, or stack the two credits.
 - After animating slices into a target (`TransformFromCopy(rows[0][-1], coord[1])`), remove the
   temporary groups and the slices and re-add the whole target (`self.remove(frame, *coord);
   self.add(coord)`), as the check beat of `assets/example_scene.py` does.

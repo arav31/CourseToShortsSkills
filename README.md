@@ -1,6 +1,6 @@
 # Courses & Research Papers → Shorts
 
-**Paste a course link or a research paper. Get narrated, 3Blue1Brown-style explainer shorts, and complete study notes for courses.**
+**Paste a course link, a research paper or a literature review. Get narrated, 3Blue1Brown-style explainer shorts, and complete study notes for courses.**
 
 [![tests](https://github.com/arav31/CourseToShortsSkills/actions/workflows/tests.yml/badge.svg)](https://github.com/arav31/CourseToShortsSkills/actions/workflows/tests.yml)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757)
@@ -17,6 +17,13 @@
 </table>
 
 <p align="center"><sub>Research papers: one short each from Akerlof's <i>Market for Lemons</i>, <i>Attention Is All You Need</i>, Brin and Page's PageRank paper and Shannon's <i>Mathematical Theory of Communication</i> (<a href="examples/papers/">plans and scenes</a>; 70–80 s each).</sub></p>
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="docs/media/review-scaling-laws.mp4"><img src="docs/media/review-scaling-laws.gif" width="170" alt="Bigger model, or more data?"></a><br><sub><b>Bigger model, or more data?</b></sub></td>
+<td width="75%"><sub><b>From a literature review.</b> Given <a href="examples/reviews/scaling-laws/review.md">a Markdown review of neural scaling laws</a>, the agent fetched the seven cited papers, checked every number against the originals (catching six loose paraphrases in the review), and ran Kaplan et al. 2020 and Hoffmann et al. 2022 on the same compute budget: 485B parameters on 198B tokens, or Chinchilla's 70B on 1.4T. <a href="examples/reviews/scaling-laws/">Plan and scene</a>.</sub></td>
+</tr>
+</table>
 
 <table>
 <tr>
@@ -54,8 +61,9 @@
 <p align="center"><sub>A second field: three shorts from <a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/">MIT 6.006 Introduction to Algorithms</a>, planned from all 21 lectures (<a href="examples/mit-6.006/">plan and scenes</a>; about 70 s each).</sub></p>
 
 A set of five [Agent Skills](https://agentskills.io) for Claude Code and Codex. Point your agent at a
-course (MIT OpenCourseWare or any course site, a syllabus, lecture PDFs, a folder of notes) or a
-research paper (an arXiv link or a paper PDF) and it:
+course (MIT OpenCourseWare or any course site, a syllabus, lecture PDFs, a folder of notes), a
+research paper (an arXiv link or a paper PDF), or a literature review (a Markdown file with a
+reference list, whose cited papers it fetches and checks) and it:
 
 1. **reads the whole course** into plain-text sources and writes its outline,
 2. **plans a beginner-safe series of shorts**, each built around a concrete, verified worked example,
@@ -98,6 +106,8 @@ Just ask:
 ```text
 Turn https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/ into study notes and five explainer shorts.
 Make a narrated short showing why eigenvectors keep their direction.
+Turn https://arxiv.org/abs/1706.03762 into one explainer short.
+Turn my literature review lit-review.md into a short that follows how the field's answer changed.
 Write complete notes for the course in runs/mit-6006, then render the first three shorts.
 Where does runs/mit-18-06sc stand? Is it ready to post?
 ```
@@ -110,7 +120,7 @@ Everything for a course lands in `runs/<course>/`: `sources/`, `outline.json`, `
 | skill | what the agent does | what the scripts do |
 |---|---|---|
 | [`course-to-shorts`](skills/course-to-shorts/SKILL.md) | runs the whole pipeline, keeps you in the loop, fans out work to subagents | `doctor.py` (environment), `run_status.py` (status + publish gate) |
-| [`course-plan`](skills/course-plan/SKILL.md) | reads the course, writes the outline and the shorts plan with verified examples | `ingest.py` (crawl + PDF/HTML/transcript extraction, boilerplate removal), `check_plan.py` |
+| [`course-plan`](skills/course-plan/SKILL.md) | reads the course, writes the outline and the shorts plan with verified examples | `ingest.py` (crawl + PDF/HTML/transcript extraction, papers, Markdown literature reviews with cited works), `check_plan.py` |
 | [`course-notes`](skills/course-notes/SKILL.md) | writes every unit as real LaTeX notes and reviews the rendered pages | `build_notes.py` (compile, lint, page previews, parallel unit builds) |
 | [`course-video`](skills/course-video/SKILL.md) | storyboards, writes the Manim scene, reviews contact sheets, iterates, approves | `shortkit.py` (9:16 toolkit), `voice.py`, `render.py`, `audit.py` |
 | [`course-reels`](skills/course-reels/SKILL.md) | writes captions, builds the posting queue, publishes on request | `reels.py` (queue + Instagram Graph API) |
