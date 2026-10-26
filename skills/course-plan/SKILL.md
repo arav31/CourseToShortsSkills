@@ -1,6 +1,6 @@
 ---
 name: course-plan
-description: Ingest a course's materials (an MIT OpenCourseWare or other course website, syllabus, lecture PDFs, transcripts, or a local folder) or a single research paper (arXiv link, PDF, or article page) into readable text sources, then write the course outline and an ordered plan of short explainer videos, each with a concrete, verified worked example. Use when starting from a course link or files, or when someone wants a course outline, syllabus breakdown, curriculum, or list of shorts/reels for a course.
+description: Ingest a course's materials (an MIT OpenCourseWare or other course website, syllabus, lecture PDFs, transcripts, or a local folder) a single research paper (arXiv link, PDF, or article page), or a literature review written in Markdown into readable text sources, then write the course outline and an ordered plan of short explainer videos, each with a concrete, verified worked example. Use when starting from a course link or files, or when someone wants a course outline, syllabus breakdown, curriculum, or list of shorts/reels for a course.
 ---
 
 # Course Plan
@@ -57,6 +57,26 @@ A paper is a one-document course: its sections are the units.
 - **Credit and copying:** name the paper and its authors in the narration or on screen (set
   `series.attribution`), explain in your own words, and never reproduce the paper's figures or text.
 - Paper runs are usually shorts-only: gate them with `run_status.py --gate --shorts-only`.
+
+## Literature reviews
+
+A literature review (a Markdown file, the user's or someone else's) is a map of a field: its
+sections are the units, and the story is how the field's answer changed, or where works disagree.
+
+- **Ingest:** `$PY "$SKILL_DIR/scripts/ingest.py" review.md --review --fetch-cited --run runs/review-<slug>`.
+  `sources/INDEX.md` lists the sections with the works each one cites, and a *Cited works* table
+  with keys; `--fetch-cited` saves every cited paper that has an arXiv id or link. Any citation
+  style works: numbered `[1]`, `[@key]`, `[^key]` footnotes, or (Author, 2020).
+- **Outline:** one unit per section, each with `cites` (keys from *Cited works*); see
+  [references/plan-schema.md](references/plan-schema.md).
+- **Shorts follow a thread across works.** Pick the two or three works whose results the field
+  turned on, and build one worked example that runs all of them on the same numbers (one budget,
+  one dataset, one market) so the change between them is visible. Name each work on screen as its
+  result appears (Author, year); every short lists its `cites`.
+- **The originals win.** Reviews paraphrase and sometimes mis-cite. Check every number, formula and
+  claim that goes on screen against the cited paper in `sources/`; when they disagree, use the
+  original and note the discrepancy in the plan. A missing link: look for the arXiv or DOI version.
+- Review runs are shorts-only unless notes were asked for.
 
 ## 2. Outline → `outline.json`
 

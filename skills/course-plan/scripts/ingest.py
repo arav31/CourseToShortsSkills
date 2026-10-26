@@ -8,6 +8,15 @@ Sources may be a course website (crawled within its own path prefix, e.g. an
 MIT OpenCourseWare course root), single PDF/HTML URLs, local files, or local
 folders (PDF, TXT, MD, TEX, HTML, SRT/VTT).
 
+A literature review written in Markdown is read as one document:
+
+    python ingest.py review.md --review [--fetch-cited] --run runs/review-<slug>
+
+Its headings become the sections, its reference list the cited works, and each
+section records which works it cites ([1], [@key], [^key], (Author, 2020),
+Author et al. (2020)). --fetch-cited also collects the cited papers that have an
+arXiv id or a link, so claims can be checked against the originals.
+
 Writes, inside the run directory:
     sources/<id>-<slug>.txt  one file per page/PDF; <id> is stable across re-runs
     sources/INDEX.md         the course sequence (from the site's navigation) and
@@ -64,7 +73,7 @@ KIND_PATTERNS = [
                       r"\b(lecture notes|lecture summary|session summary|summary|slides|handouts?|notes)\b"),
     ("reading", r"\b(readings?|textbook|chapter)\b"),
 ]
-KIND_ORDER = ["paper", "syllabus", "calendar", "lecture-notes", "transcript", "recitation", "reading", "assignment",
+KIND_ORDER = ["lit-review", "paper", "syllabus", "calendar", "lecture-notes", "transcript", "recitation", "reading", "assignment",
               "solution", "review", "exam", "page", "overview"]
 LINK_HINTS = ("syllabus", "calendar", "unit", "session", "lecture", "notes", "reading", "resource", "problem",
               "assignment", "exam", "quiz", "transcript", "video", "recitation", "summary", "solution", "pages", ".pdf")
@@ -495,6 +504,190 @@ def ingest_single(url: str, col: Collector) -> str:
     return title
 
 
+# ---------------------------------------------------------------- literature reviews
+
+REF_HEADING = re.compile(r"^(references|bibliography|works cited|sources|cited works|literature cited)\b", re.I)
+SKIP_SECTION = re.compile(r"^(references|bibliography|works cited|sources|cited works|literature cited|"
+                          r"acknowledg|further reading|appendix)", re.I)
+ARXIV_ID = re.compile(r"(?:arxiv\.org/(?:abs|pdf)/|arXiv:\s*)(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
+DOI_RE = re.compile(r"\b(10\.\d{4,9}/[^\s\])>,;]+)")
+URL_RE = re.compile(r"https?://[^\s\])>]+")
+YEAR_RE = re.compile(r"\b(1[89]\d\d|20\d\d)[a-z]?\b")
+
+
+def _md_front_matter(text: str) -> tuple[dict, str]:
+    m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+    if not m:
+        return {}, text
+    meta = {}
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-")):
+            k, v = line.split(":", 1)
+            meta[k.strip().lower()] = v.strip().strip("\"'")
+    return meta, text[m.end():]
+
+
+def _md_headings(body: str) -> list[tuple[int, str, int]]:
+    """(level, text, offset) for ATX headings outside fenced code."""
+    out, fenced, pos = [], False, 0
+    for line in body.splitlines(keepends=True):
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+        m = None if fenced else re.match(r"^(#{1,6})\s+(.+?)\s*#*\s*$", line)
+        if m:
+            out.append((len(m.group(1)), re.sub(r"[*_`]", "", m.group(2)).strip(), pos))
+        pos += len(line)
+    return out
+
+
+def _surname(author: str) -> str:
+    author = author.strip()
+    if "," in author:  # "Kaplan, J."
+        return author.split(",")[0].strip()
+    parts = [w for w in re.split(r"\s+", author) if w and not re.fullmatch(r"[A-Z]\.?", w)]
+    return parts[-1] if parts else author
+
+
+def parse_references(block: str) -> list[dict]:
+    """Reference entries: list items, [n]/[^key]/[@key]-labelled lines, or blank-line separated paragraphs."""
+    lines = [ln.rstrip() for ln in block.splitlines()]
+    entries: list[tuple[str | None, str]] = []
+    for ln in lines:
+        s = ln.strip()
+        if not s:
+            entries.append((None, ""))
+            continue
+        m = (re.match(r"^\[\^([^\]]+)\]:\s*(.+)$", s) or re.match(r"^\[@?([\w:.-]+)\]:?\s+(.+)$", s)
+             or re.match(r"^(\d{1,3})[.)]\s+(.+)$", s))
+        if m:
+            entries.append((m.group(1), m.group(2)))
+        elif re.match(r"^[-*+]\s+", s):
+            entries.append(("", re.sub(r"^[-*+]\s+", "", s)))
+        elif entries and entries[-1][1]:
+            entries[-1] = (entries[-1][0], entries[-1][1] + " " + s)  # continuation line
+        else:
+            entries.append(("", s))
+    refs = []
+    for label, text in entries:
+        if not text:
+            continue
+        n = len(refs) + 1
+        year = YEAR_RE.search(text)
+        lead = re.split(r"\(\d{4}|\.\s|,\s*\d{4}", text, maxsplit=1)[0]
+        first_author = re.split(r",| and | & |;", re.sub(r"^\W+", "", lead))[0]
+        arxiv, doi, url = ARXIV_ID.search(text), DOI_RE.search(text), URL_RE.search(text)
+        key = label if label else (f"{slugify(_surname(first_author), 'ref').replace('-', '')}{year.group(1) if year else ''}"
+                                   or str(n))
+        refs.append({"key": key, "n": n, "text": re.sub(r"\s+", " ", text).strip(),
+                     "surname": _surname(first_author) if first_author else "", "year": year.group(1) if year else None,
+                     "arxiv": arxiv.group(1) if arxiv else None, "doi": doi.group(1).rstrip(".") if doi else None,
+                     "url": url.group(0).rstrip(".") if url else None})
+    keys = collections.Counter(r["key"] for r in refs)
+    for r in refs:  # two works by the same first author in one year: kaplan2020a, kaplan2020b
+        if keys[r["key"]] > 1:
+            same = [x for x in refs if x["key"] == r["key"]]
+            for i, x in enumerate(same):
+                x["key"] = f"{x['key']}{'abcdefgh'[i]}"
+    return refs
+
+
+def find_citations(text: str, refs: list[dict]) -> list[str]:
+    """Keys of the works a passage cites, in order of first mention."""
+    by_label = {r["key"]: r for r in refs}
+    by_n = {str(r["n"]): r for r in refs}
+    found: list[str] = []
+
+    def hit(r: dict | None) -> None:
+        if r and r["key"] not in found:
+            found.append(r["key"])
+
+    for m in re.finditer(r"\[\^([^\]]+)\]|\[@([\w:.-]+)\]|@([\w:-]+\d{4}\w*)", text):
+        hit(by_label.get(next(g for g in m.groups() if g)))
+    for m in re.finditer(r"\[(\d{1,3}(?:\s*[-–,]\s*\d{1,3})*)\](?!\()", text):
+        for part in re.split(r"\s*,\s*", m.group(1)):
+            a, b = (re.split(r"\s*[-–]\s*", part) + [part])[:2]  # "3" or "2-4"
+            for i in range(int(a), int(b) + 1):
+                hit(by_label.get(str(i)) or by_n.get(str(i)))
+    for m in re.finditer(r"([A-Z][A-Za-z'’-]+)(?:\s+et al\.?|\s+(?:and|&)\s+[A-Z][A-Za-z'’-]+)?,?\s*\(?((?:1[89]|20)\d\d)[a-z]?\)?",
+                         text):
+        name, year = m.group(1), m.group(2)
+        for r in refs:
+            if r["year"] == year and r["surname"] and r["surname"].lower() == name.lower():
+                hit(r)
+    return found
+
+
+def looks_like_review(path: Path) -> bool:
+    """A Markdown file with a reference list or footnote citations reads as a literature review."""
+    text = path.read_text(errors="replace")
+    return any(REF_HEADING.match(h) for _, h, _ in _md_headings(text)) or bool(re.search(r"^\[\^[^\]]+\]:", text, re.M))
+
+
+def ingest_review(path: Path, col: Collector, fetch_cited: bool = False, max_cited: int = 15) -> str:
+    """A literature review in Markdown: sections from its headings, cited works from its reference list."""
+    meta, body = _md_front_matter(path.read_text(errors="replace"))
+    heads = _md_headings(body)
+    title = meta.get("title") or next((h for lvl, h, _ in heads if lvl == 1), "") or path.stem.replace("-", " ").title()
+    ref_at = next(((i, off) for i, (lvl, h, off) in enumerate(heads) if REF_HEADING.match(h)), None)
+    refs: list[dict] = []
+    if ref_at:
+        i, off = ref_at
+        end = next((o for lvl, h, o in heads[i + 1:] if lvl <= heads[i][0]), len(body))
+        block = body[off:end].split("\n", 1)[1] if "\n" in body[off:end] else ""
+        refs = parse_references(block)
+    # footnote-style definitions anywhere also count as references
+    known = {r["key"] for r in refs}
+    for m in re.finditer(r"^\[\^([^\]]+)\]:\s*(.+)$", body, re.M):
+        if m.group(1) not in known:
+            refs += [dict(r, key=m.group(1), n=len(refs) + 1) for r in parse_references(m.group(2))]
+    body_levels = sorted({lvl for lvl, h, _ in heads if lvl > 1 and not SKIP_SECTION.match(h)})
+    level = body_levels[0] if body_levels else 1
+    sections = []
+    for j, (lvl, h, off) in enumerate(heads):
+        if lvl != level or SKIP_SECTION.match(h) or h == title:
+            continue
+        end = next((o for l2, _, o in heads[j + 1:] if l2 <= level), len(body))
+        sections.append({"title": h, "url": None, "cites": find_citations(body[off:end], refs)})
+    if not sections:
+        col.warnings.append("no section headings (## ...) found in the review; build the outline from its paragraphs")
+    if not refs:
+        col.warnings.append("no reference list found (a 'References' heading or [^key]: footnotes); "
+                            "shorts must still credit the works they explain")
+    cited_anywhere = {k for s in sections for k in s["cites"]}
+    unused = [r["key"] for r in refs if r["key"] not in cited_anywhere]
+    if refs and unused:
+        col.warnings.append(f"references never cited in the text: {', '.join(unused[:12])}")
+    col.items.append({"kind": "lit-review", "title": title, "url": str(path), "text": body.strip(), "pages": None,
+                      "html": False, "context": "", "link": str(path), "name": ""})
+    col.paper = {"type": "review", "authors": [a.strip() for a in re.split(r",| and ", meta.get("author", meta.get("authors", ""))) if a.strip()],
+                 "references": refs}
+    col.sequence = sections
+    if fetch_cited:
+        fetched = 0
+        for r in refs:
+            if fetched >= max_cited:
+                col.warnings.append(f"stopped after {max_cited} cited works (--max-cited)")
+                break
+            target = (f"https://arxiv.org/abs/{r['arxiv']}" if r["arxiv"] else r["url"])
+            if not target:
+                continue
+            fetched += 1
+            try:
+                arxiv = arxiv_meta(target)
+                raw, ctype, final = fetch(arxiv["pdf"] if arxiv else target)
+                if "pdf" in ctype.lower() or final.lower().endswith(".pdf") or arxiv:
+                    text, pages = pdf_text(raw)
+                    name = (arxiv or {}).get("title") or pdf_outline(raw)[0] or first_heading(text)
+                else:
+                    text, _, name, _ = parse_html(raw, ctype, final)
+                    pages = None
+                col.add("paper", name or r["text"][:80], final, text, pages, context=f"cited as [{r['key']}]")
+                r["fetched"] = True
+            except Exception as exc:  # paywalls, dead links: the review still stands on its own
+                col.warnings.append(f"could not fetch cited work [{r['key']}] {target}: {exc}")
+    return title
+
+
 def crawl(root: str, col: Collector, max_pages: int, max_pdfs: int, delay: float) -> str:
     arxiv = arxiv_meta(root)
     if arxiv:
@@ -706,7 +899,9 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
     total = sum(m["chars"] for m in materials)
     if not materials:
         col.warnings.append("nothing usable was collected")
-    if col.paper is not None:
+    if col.paper is not None and col.paper.get("type") == "review":
+        pass  # ingest_review already warned about missing sections/references
+    elif col.paper is not None:
         if not col.sequence:
             col.warnings.append("single paper, but no section headings were detected; build the outline from its text")
     elif not col.sequence and by_kind.get("syllabus", 0) + by_kind.get("calendar", 0) == 0:
@@ -716,11 +911,13 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
                             "(add PDFs/folders or raise limits)")
     pack = {
         "course": {"title": title or "Course", "url": first_url, "sources": sources,
-                   "type": "paper" if col.paper is not None else "course", **(col.paper or {}),
+                   "type": "paper" if col.paper is not None else "course",
+                   **{k: v for k, v in (col.paper or {}).items() if k != "references"},
                    "ingested_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")},
         "stats": {"materials": len(materials), "total_chars": total, "by_kind": dict(by_kind),
                   "boilerplate_lines_removed": removed},
         "sequence": col.sequence,
+        "references": (col.paper or {}).get("references", []),
         "materials": materials,
         "warnings": col.warnings,
     }
@@ -730,10 +927,20 @@ def write_sources(run: Path, col: Collector, title: str, first_url: str | None, 
     index = [f"# Sources for {pack['course']['title']}", "",
              f"{len(materials)} files, {total:,} characters."]
     if col.sequence:
-        heading = ("## Paper sections (detected, in order)" if col.paper is not None
+        is_review = (col.paper or {}).get("type") == "review"
+        heading = ("## Review sections (in order, with the works each cites)" if is_review
+                   else "## Paper sections (detected, in order)" if col.paper is not None
                    else "## Course sequence (from the site navigation, in order)")
         index += ["", heading, ""]
-        index += [f"{i}. {s['title']}" for i, s in enumerate(col.sequence, 1)]
+        index += [f"{i}. {s['title']}" + (f"  [{', '.join(s['cites'])}]" if s.get("cites") else "")
+                  for i, s in enumerate(col.sequence, 1)]
+    if pack["references"]:
+        fetched_files = {m["context"]: m["file"] for m in materials if m["context"]}
+        index += ["", "## Cited works", "", "| key | year | reference | link | fetched |", "|---|---|---|---|---|"]
+        for r in pack["references"]:
+            link = (f"arXiv:{r['arxiv']}" if r["arxiv"] else f"doi:{r['doi']}" if r["doi"] else r["url"] or "")
+            fetched = fetched_files.get("cited as [" + r["key"] + "]", "")
+            index.append(f"| {r['key']} | {r['year'] or ''} | {r['text'][:90]} | {link} | {fetched} |")
     index += ["", "## Files", "", "| id | kind | title | context | chars | file |", "|---|---|---|---|---|---|"]
     index += [f"| {m['id']} | {m['kind']} | {m['title'][:70]} | {(m['context'] or '')[:50]} | {m['chars']:,} | {m['file']} |"
               for m in rows]
@@ -758,6 +965,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--title", default=None)
     ap.add_argument("--single", action="store_true",
                     help="each URL is one document (a paper or article): fetch it, do not crawl its site")
+    ap.add_argument("--review", action="store_true",
+                    help="the source is a literature review in Markdown: sections plus cited works")
+    ap.add_argument("--fetch-cited", action="store_true",
+                    help="with --review: also collect the cited works that have an arXiv id or a link")
+    ap.add_argument("--max-cited", type=int, default=15)
     args = ap.parse_args(argv)
 
     run: Path = args.run
@@ -775,15 +987,21 @@ def main(argv: list[str] | None = None) -> int:
             if not path.exists():
                 print(f"error: {path} does not exist", file=sys.stderr)
                 return 1
-            ingest_local(path, col)
-            title = title or path.stem.replace("-", " ").title()
+            if args.review or (path.is_file() and path.suffix.lower() in {".md", ".markdown"}
+                               and len(args.sources) == 1 and looks_like_review(path)):
+                title = title or ingest_review(path, col, args.fetch_cited, args.max_cited)
+            else:
+                ingest_local(path, col)
+                title = title or path.stem.replace("-", " ").title()
     removed = strip_boilerplate(col.items)
     col.items = [it for it in col.items if len(it["text"]) >= (300 if it["html"] else 80)]
     pack = write_sources(run, col, title, first_url, args.sources, removed)
 
     order = {k: i for i, k in enumerate(KIND_ORDER)}
     print(f"{pack['course']['title']}: {pack['stats']['materials']} sources, {pack['stats']['total_chars']:,} chars, "
-          f"{len(pack['sequence'])} entries in the {'paper outline' if pack['course']['type'] == 'paper' else 'course sequence'}")
+          f"{len(pack['sequence'])} entries in the "
+          f"{ {'paper': 'paper outline', 'review': 'review outline'}.get(pack['course']['type'], 'course sequence')}"
+          + (f", {len(pack['references'])} cited works" if pack["references"] else ""))
     for kind, count in sorted(pack["stats"]["by_kind"].items(), key=lambda kv: order.get(kv[0], 99)):
         print(f"  {kind:<14} {count}")
     for w in col.warnings[:15]:

@@ -283,3 +283,80 @@ def test_single_html_document_mode(tmp_path, monkeypatch):
     assert pack["course"]["type"] == "paper" and pack["course"]["title"] == "The Anatomy of a Search Engine"
     assert [s["title"] for s in pack["sequence"]] == ["1. Introduction", "2. System Features", "References"]
     assert "10^100" in (run / pack["materials"][0]["file"]).read_text()
+
+
+REVIEW_MD = textwrap.dedent("""\
+    ---
+    title: How language models scale
+    author: A. Writer and B. Writer
+    ---
+    # How language models scale
+
+    ## Early evidence
+    Hestness et al. (2017) found power laws across domains [1]; see also [2-3].
+
+    ## Bigger models
+    Kaplan and colleagues argued for growing parameters faster [@kaplan2020].
+
+    ```
+    ## a heading inside code is not a section
+    ```
+
+    ## Compute-optimal training
+    The allocation was revised (Hoffmann et al., 2022)[^chin].
+
+    ## References
+    1. Hestness, J., Narang, S., et al. (2017). Deep Learning Scaling is Predictable, Empirically. arXiv:1712.00409
+    2. Smith, A. (2019). A related result. https://example.org/smith
+    3. Doe, J. (2018). Another one. doi:10.1000/xyz123.
+    [@kaplan2020] Kaplan, J., et al. (2020). Scaling Laws for Neural Language Models. https://arxiv.org/abs/2001.08361
+
+    [^chin]: Hoffmann, J., et al. (2022). Training Compute-Optimal Large Language Models. arXiv:2203.15556
+    """)
+
+
+def test_markdown_literature_review_sections_and_citations(tmp_path):
+    review = tmp_path / "review.md"
+    review.write_text(REVIEW_MD)
+    run = tmp_path / "run"
+    assert ingest.main([str(review), "--run", str(run)]) == 0  # detected as a review without --review
+    pack = json.loads((run / "source_pack.json").read_text())
+    assert pack["course"]["type"] == "review" and pack["course"]["title"] == "How language models scale"
+    assert pack["course"]["authors"] == ["A. Writer", "B. Writer"]
+    assert [s["title"] for s in pack["sequence"]] == ["Early evidence", "Bigger models", "Compute-optimal training"]
+    assert [s["cites"] for s in pack["sequence"]] == [["1", "2", "3"], ["kaplan2020"], ["chin"]]
+    refs = {r["key"]: r for r in pack["references"]}
+    assert refs["1"]["arxiv"] == "1712.00409" and refs["3"]["doi"] == "10.1000/xyz123"
+    assert refs["kaplan2020"]["arxiv"] == "2001.08361" and refs["chin"]["year"] == "2022"
+    index = (run / "sources" / "INDEX.md").read_text()
+    assert "## Review sections" in index and "## Cited works" in index and "Bigger models  [kaplan2020]" in index
+
+
+def test_author_year_citations_get_keys():
+    refs = ingest.parse_references("- Kaplan, J. et al. (2020). Scaling Laws. arXiv:2001.08361\n"
+                                   "- Hoffmann, J. et al. (2022). Compute-Optimal. arXiv:2203.15556\n")
+    assert [r["key"] for r in refs] == ["kaplan2020", "hoffmann2022"]
+    text = "Loss follows a power law (Kaplan et al., 2020); Hoffmann et al. (2022) changed the allocation."
+    assert ingest.find_citations(text, refs) == ["kaplan2020", "hoffmann2022"]
+
+
+def test_review_shorts_must_cite_known_works(plan_run):
+    import check_plan
+
+    outline = json.loads((plan_run / "outline.json").read_text())
+    outline["course"]["type"] = "review"
+    write_json(plan_run / "outline.json", outline)
+    write_json(plan_run / "source_pack.json", {"references": [{"key": "kaplan2020"}, {"key": "hoffmann2022"}]})
+    assert check_plan.main([str(plan_run)]) == 1
+    errors = json.loads((plan_run / "plan_check.json").read_text())["errors"]
+    assert any("'cites'" in e for e in errors)
+    plan = json.loads((plan_run / "short_plan.json").read_text())
+    plan["shorts"][0]["cites"] = ["kaplan2020", "hoffmann2022"]
+    plan["shorts"][1]["cites"] = ["chinchilla"]
+    write_json(plan_run / "short_plan.json", plan)
+    assert check_plan.main([str(plan_run)]) == 1
+    errors = json.loads((plan_run / "plan_check.json").read_text())["errors"]
+    assert errors == ["short s02: cites [chinchilla], which is not in the review's reference list"]
+    plan["shorts"][1]["cites"] = ["hoffmann2022"]
+    write_json(plan_run / "short_plan.json", plan)
+    assert check_plan.main([str(plan_run)]) == 0

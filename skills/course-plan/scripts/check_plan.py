@@ -5,8 +5,9 @@
 
 Catches the mistakes that are expensive to discover after rendering:
 missing fields, placeholder or vague worked examples, examples reused across
-shorts, prerequisites that point forward, units nobody covers, and shorts that
-reference sources which do not exist. Writes plan_check.json next to the plan
+shorts, prerequisites that point forward, units nobody covers, shorts that
+reference sources which do not exist, and (for a literature review) shorts that
+do not say which cited works they explain. Writes plan_check.json next to the plan
 (the course-to-shorts status/gate reads it). Exit code 1 means fix the plan.
 See references/plan-schema.md for the format.
 """
@@ -226,6 +227,28 @@ def check_plan(plan: dict, unit_ids: list[str], rep: Report) -> None:
         rep.err("coverage", f"units neither covered by a short nor listed in skipped_units: {', '.join(missing)}")
 
 
+def check_citations(run: Path, outline: dict, plan: dict, rep: Report) -> None:
+    """A short made from a literature review must name the works it explains, by their keys in the review."""
+    course = outline.get("course", {}) if isinstance(outline, dict) else {}
+    if not isinstance(course, dict) or course.get("type") != "review" or not isinstance(plan, dict):
+        return
+    pack_path = run / "source_pack.json"
+    pack = load(pack_path) if pack_path.exists() else {}
+    keys = {str(r.get("key")) for r in (pack.get("references") or []) if isinstance(r, dict)}
+    if not keys:
+        rep.warn("citations", "source_pack.json lists no cited works; re-run ingest.py on the review with --review")
+    for short in plan.get("shorts") or []:
+        if not isinstance(short, dict):
+            continue
+        where = f"short {short.get('id', '?')}"
+        cites = short.get("cites") or []
+        if not cites:
+            rep.err(where, "list the works it explains in 'cites' (reference keys from sources/INDEX.md)")
+        for key in cites:
+            if keys and str(key) not in keys:
+                rep.err(where, f"cites [{key}], which is not in the review's reference list")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run", type=Path)
@@ -237,6 +260,7 @@ def main(argv: list[str] | None = None) -> int:
     plan = load(plan_path)
     unit_ids = check_outline(args.run, outline, rep)
     check_plan(plan, unit_ids, rep)
+    check_citations(args.run, outline, plan, rep)
     errors = rep.errors + (rep.warnings if args.strict else [])
     result = {
         "status": "pass" if not errors else "fail",

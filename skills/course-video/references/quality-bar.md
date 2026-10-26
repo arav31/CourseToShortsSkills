@@ -60,6 +60,8 @@ A short is done when every item holds.
 
 21a. **Credit what you explain.** For a paper, name it and its authors on screen or in narration;
     explain in your own words and redraw everything rather than reproducing the paper's figures.
+    For a literature review, credit each cited work (Author, year) on screen when its result
+    appears, and check those numbers against the original paper, not the review's paraphrase.
 
 ## Narration
 

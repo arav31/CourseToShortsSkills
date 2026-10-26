@@ -1,6 +1,6 @@
 ---
 name: course-video
-description: Design, code, narrate, render and visually review a vertical (9:16) 3Blue1Brown-style Manim explainer short, with synced voiceover and burned-in captions, for one math, science, CS or economics idea. Use for any request to make or fix an explainer video, short, reel or animation of a concept, whether it comes from a course plan, a research paper's plan (short_plan.json) or stands alone.
+description: Design, code, narrate, render and visually review a vertical (9:16) 3Blue1Brown-style Manim explainer short, with synced voiceover and burned-in captions, for one math, science, CS or economics idea. Use for any request to make or fix an explainer video, short, reel or animation of a concept, whether it comes from a course plan, a research paper's or literature review's plan (short_plan.json) or stands alone.
 ---
 
 # Course Video
