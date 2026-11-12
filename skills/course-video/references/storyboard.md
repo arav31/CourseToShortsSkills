@@ -41,11 +41,12 @@ from this vocabulary. Every beat should apply at least one verb to an existing o
 
 - 5–9 beats is typical. Each beat = one line of narration (1–2 sentences) + the motion
   that shows it. Beat ids are short (`hook`, `columns`, `scale`, `sum`, `check`, `takeaway`).
-- The hook beat shows the real object immediately and asks the question.
+- The hook beat shows the real object immediately, already moving, and lands the surprising
+  fact or stakes in ≤ ~12 words before asking why. Something must change on screen within the first second.
 - Put the motion *inside* the beat whose words describe it. The beat waits for the
   narration to finish; keep the animations a little shorter than the line so the
   picture finishes as the sentence does.
-- A typical beat: 1–3 animations of 0.8–1.6 s each, then a short hold while the voice ends.
+- A typical beat: 1–3 animations of 0.4–1 s each, then a short hold while the voice ends.
 - End with the reveal beat: the general statement, now earned.
 
 ## Visual vocabulary by field (starting points, not templates)

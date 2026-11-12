@@ -52,3 +52,17 @@ needed, a 3x3 grid DP filled in cell by cell, a 2-state Markov chain iterated th
   a subset; for a quick demo pick 3–5 shorts that show the course's arc.
 - Hooks are questions or tensions in plain words ("Why does every rotation have a
   fixed axis?"), not titles ("Euler's rotation theorem").
+- Hooks must stop the scroll in under 2 seconds: at most ~12 spoken words, concrete,
+  surprising, about something the viewer already cares about. Lead with the surprising
+  result or the stakes, then ask why. "Two fair dice, and seven comes up six times as often
+  as two. Why?" beats "Each face of a die is equally likely. So why...". Good patterns: a
+  counter-intuitive fact ("A 3% raise can make you poorer"), a challenge ("You can't fold paper
+  more than 7 times. Or can you?"), a familiar thing seen strangely ("Your phone's GPS is
+  doing relativity"), a number that sounds wrong. Avoid warm-ups ("Let's talk about..."),
+  definitions, and textbook phrasing.
+- Trend shorts: about one short in every three or four uses something people are already
+  talking about (a viral meme, a big sports or awards result, a new AI model, a game or
+  film release, prices, dating apps, a stat everyone argues over) as the example or hook,
+  with the real concept underneath. The maths/science must still be correct and the trend only
+  the doorway. Prefer topics broad audiences enjoy over culture-war bait that floods the
+  comments with fights. Mark these with `"trend": "<what's trending, and why now>"` in the plan.
