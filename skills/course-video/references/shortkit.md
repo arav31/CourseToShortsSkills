@@ -81,7 +81,7 @@ Colour inside LaTeX: `\cB{..}` blue (input), `\cY{..}` yellow (rule), `\cG{..}` 
 `\cR{..}` red (contrast), `\cP{..}` purple, `\cO{..}` orange, `\cM{..}` muted.
 Unmarked glyphs are white. Example: `tex(r"\cB{x_1}\,a_1 + \cB{x_2}\,a_2 = \cG{b}")`.
 
-Palette constants: `BG, INK, MUTED, GRID, BLUE_K, YELLOW_K, GREEN_K, RED_K, PURPLE_K, ORANGE_K`
+Palette constants: `BG, INK, MUTED, GRID, BLUE_K, YELLOW_K, GREEN_K, RED_K, PURPLE_K, ORANGE_K, PINK_K, TEAL_K`, plus `RAINBOW` (list) for many equal items. `self.title()` uses a yellow→pink gradient (`TITLE_GRADIENT`) unless `color=` is given; the background has soft colour glows (`GLOW`). Both are on by default.
 and the semantic aliases `INPUT, RULE, RESULT, ALERT`.
 
 ## Two panels at different scales

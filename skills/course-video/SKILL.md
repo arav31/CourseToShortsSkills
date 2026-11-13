@@ -30,8 +30,9 @@ Write `scene.py` with shortkit. Read [references/shortkit.md](references/shortki
 - The diagram fills `STAGE`; the caption band stays empty.
 
 Narration is spoken English for the ear ("A times x", "x sub one", "two by two"), 1–2
-sentences per beat, and the first line poses the question. Total length follows the
-idea; 30–75 s is typical. Real voices are slower than you expect (lists of numbers especially),
+sentences per beat, and the first line is a scroll-stopping hook (surprising fact or stakes, ≤ ~12 words).
+Keep it tight: 30–55 s is the target. Make it vivid: filled, saturated shapes, not dim outlines
+(quality bar 15b). Real voices are slower than you expect (lists of numbers especially),
 so synthesize first and check the length before animating:
 
 ```bash

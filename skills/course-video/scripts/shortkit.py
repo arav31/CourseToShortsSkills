@@ -83,16 +83,23 @@ config.frame_width = 9.0
 # Palette: dark canvas, colour carries meaning
 # --------------------------------------------------------------------------
 
-BG = "#0E1118"
-INK = "#ECEFF4"        # primary text
-MUTED = "#9AA4B2"      # secondary text, axes, scaffolding
-GRID = "#263042"       # background grid lines
-BLUE_K = "#58C4DD"     # given objects / inputs
-YELLOW_K = "#F4D35E"   # the operation or rule being applied
-GREEN_K = "#83C167"    # results and conclusions
-RED_K = "#FC6255"      # contrast, counterexamples, errors
-PURPLE_K = "#B28DFF"
-ORANGE_K = "#FF9F43"
+BG = "#0B0E16"
+INK = "#F4F6FB"        # primary text
+MUTED = "#A7B1C2"      # secondary text, axes, scaffolding
+GRID = "#2A3550"       # background grid lines
+# Vivid on purpose: shorts are watched on phones in feeds, so colours are saturated and
+# shapes are filled (fill_opacity 0.55-0.9), not outlined ghosts at 0.1.
+BLUE_K = "#3DB8FF"     # given objects / inputs
+YELLOW_K = "#FFD43B"   # the operation or rule being applied
+GREEN_K = "#4ADE80"    # results and conclusions
+RED_K = "#FF4D6D"      # contrast, counterexamples, errors
+PURPLE_K = "#B47CFF"
+ORANGE_K = "#FF922B"
+PINK_K = "#FF5FC8"
+TEAL_K = "#2EE6C5"
+TITLE_GRADIENT = ["#FFD43B", "#FF922B", "#FF5FC8"]   # default title colours (pass color= to override)
+GLOW = [("#7B3FE4", (0.15, 0.30), 0.55, 0.28), ("#0EA5E9", (0.85, 0.72), 0.60, 0.22)]  # (colour, centre, radius, strength)
+RAINBOW = [RED_K, ORANGE_K, YELLOW_K, GREEN_K, TEAL_K, BLUE_K, PURPLE_K, PINK_K]  # for many equal items
 INPUT, RULE, RESULT, ALERT = BLUE_K, YELLOW_K, GREEN_K, RED_K
 
 config.background_color = BG
@@ -746,12 +753,13 @@ class ShortScene(Scene):
     """Base class for one vertical short. See module docstring for the contract."""
 
     captions = True        # reserve CAPTION_ZONE for burned-in narration captions
-    tail_seconds = 0.6     # calm hold on the final frame
+    tail_seconds = 0.4     # short hold on the final frame
 
     # ---- lifecycle -------------------------------------------------------
 
     def setup(self):
         super().setup()
+        self._paint_background()
         module = _sys.modules[type(self).__module__]
         self._beats = _beatlib.normalize_beats(getattr(module, "BEATS", None),
                                                f"{type(self).__name__}.BEATS")
@@ -771,6 +779,23 @@ class ShortScene(Scene):
             self._issue("warning", "timing", timing_issue)
         self._check_shadowing(module)
         self._prefetch_tex(module)
+
+    def _paint_background(self):
+        """Soft colour glows painted into the camera background (not mobjects, so nothing fades them)."""
+        import numpy as _np
+        cam = self.camera
+        h, w = cam.pixel_height, cam.pixel_width
+        yy, xx = _np.mgrid[0:h, 0:w].astype(_np.float32)
+        xx /= w; yy /= h
+        base = _np.array(ManimColor(BG).to_rgb(), dtype=_np.float32)
+        img = _np.broadcast_to(base, (h, w, 3)).copy()
+        for col, (cx, cy), r, k in GLOW:
+            d = _np.sqrt(((xx - cx) * w / h) ** 2 + (yy - cy) ** 2) / r
+            a = (k * _np.clip(1 - d, 0, 1) ** 2)[..., None]
+            img = img * (1 - a) + _np.array(ManimColor(col).to_rgb(), dtype=_np.float32) * a
+        rgba = _np.concatenate([img, _np.ones((h, w, 1), _np.float32)], axis=2)
+        cam.background = (rgba * 255).round().astype(_np.uint8)
+        cam.reset()
 
     def tear_down(self):
         missing = [b for b in self._beat_ids if b not in self._used]
@@ -880,7 +905,7 @@ class ShortScene(Scene):
 
     # ---- conveniences --------------------------------------------------------
 
-    def title(self, s: str, *also: Animation, size: float = Size.TITLE, color: str = INK,
+    def title(self, s: str, *also: Animation, size: float = Size.TITLE, color: str | None = None,
               run_time: float = 0.6, play: bool = True) -> Mobject:
         """Set (or swap) the compact title in TITLE_ZONE.
 
@@ -889,7 +914,9 @@ class ShortScene(Scene):
         title is only registered and returned; animate it yourself (e.g. inside a bigger play).
         """
         for trial in (size, size - 4, size - 8):  # a slightly smaller title beats a wrapped one
-            mob = text(s, size=trial, color=color, weight=BOLD, width=TITLE_ZONE.width - 0.2)
+            mob = text(s, size=trial, color=color or INK, weight=BOLD, width=TITLE_ZONE.width - 0.2)
+            if color is None:
+                mob.set_color_by_gradient(*TITLE_GRADIENT)
             if "\n" not in getattr(mob, "text", "") and mob.height <= TITLE_ZONE.height:
                 break
         else:

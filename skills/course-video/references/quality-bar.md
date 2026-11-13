@@ -6,8 +6,10 @@ A short is done when every item holds.
 
 ## The explanation
 
-1. **Opens on the real object.** The first 2–3 seconds show the actual mathematical
-   object and the question. No generic "elements → operation → structure" opener, no title card.
+1. **Opens on the real object, with a hook that stops the scroll.** The first 1–2 seconds show
+   the actual object *already doing something* (moving, filling, colliding) and the narration
+   states the surprising fact or stakes in ≤ ~12 words. No warm-up, no definition first,
+   no generic "elements → operation → structure" opener, no title card.
 2. **One persistent scene, not slides.** The same objects are carried and transformed
    through setup → operation → consequence. Replacing everything between beats is a slideshow.
 3. **Every motion means something.** Each animation performs an operation, comparison,
@@ -39,6 +41,11 @@ A short is done when every item holds.
     On-screen prose is at most one short line at a time.
 15. **Colour carries meaning.** Inputs blue, the rule/operation yellow, results green, contrast red,
     used consistently across the series.
+15b. **Vivid, not dim.** These compete in a phone feed: the frame should look colourful at a glance.
+    Fill shapes (fill_opacity 0.55–0.9) rather than drawing thin outlines at 0.1–0.3; give many
+    equal items distinct colours (`RAINBOW`, `PINK_K`, `TEAL_K`); avoid muddy in-between colours
+    from interpolating red→green. Keep text readable on fills. The title gradient and background
+    glow come from shortkit automatically; leave them on.
 
 ## Time
 
@@ -46,8 +53,9 @@ A short is done when every item holds.
     `render.py` flags beats whose animation runs much longer than the narration (silent gaps).
 17. **No dead zones.** Nothing longer than ~4 s without a meaningful change, except a deliberate
     reading hold. The automatic scan flags 6 s as a warning and 10 s as an error.
-18. **Length follows the idea.** Usually 30–75 s; a dense idea (the four subspaces) can reach ~90 s.
-    Do not pad a small idea or cram a big one; past ~90 s, split it into two shorts.
+18. **Fast and tight.** Aim for 30–55 s; dense ideas up to ~65 s, and past that split into two shorts.
+    Narration runs at +15% by default; cut filler words and repeated setups, keep beats to one
+    sentence where possible, and keep animations brisk (0.4–1 s) so something changes every 1–2 s.
 
 ## Transitions
 

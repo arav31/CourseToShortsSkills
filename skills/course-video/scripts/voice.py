@@ -41,7 +41,7 @@ DEFAULT_VOICES = {
     "openai": "alloy",
     "none": "",
 }
-BREATH_SECONDS = 0.3
+BREATH_SECONDS = 0.15
 PIPER_MODELS = {
     "en_US-lessac-medium": "en/en_US/lessac/medium",
     "en_US-ryan-high": "en/en_US/ryan/high",
@@ -75,7 +75,7 @@ def synth_edge(text: str, voice: str, rate: str, out: Path) -> list[list]:
     except ImportError as exc:
         raise VoiceError("edge-tts is not installed (pip install edge-tts)") from exc
 
-    async def run() -> list[list]:
+    async def run(rate: str) -> list[list]:
         words: list[list] = []
         comm = edge_tts.Communicate(text, voice, rate=rate, boundary="WordBoundary")
         with out.open("wb") as fh:
@@ -87,11 +87,21 @@ def synth_edge(text: str, voice: str, rate: str, out: Path) -> list[list]:
                     words.append([round(start, 3), round(start + chunk["duration"] / 1e7, 3), chunk["text"]])
         return words
 
-    try:
-        return asyncio.run(run())
-    except Exception as exc:  # network errors, bad voice names
-        out.unlink(missing_ok=True)
-        raise VoiceError(f"edge-tts failed ({exc}); check network access or pick --engine piper/say/none") from exc
+    import re, time
+    # The service drops requests now and then, and some text/rate pairs fail every time
+    # ("No audio was received"), so retry, nudging the rate by 1% after the first failure.
+    pct = int(re.fullmatch(r"([+-]?\d+)%", rate).group(1)) if re.fullmatch(r"[+-]?\d+%", rate) else None
+    rates = [rate] if pct is None else [rate] + [f"{pct + d:+d}%" for d in (-1, 1, -2)]
+    for attempt in range(4):
+        try:
+            return asyncio.run(run(rates[min(attempt, len(rates) - 1)]))
+        except Exception as exc:  # network errors, bad voice names
+            out.unlink(missing_ok=True)
+            if attempt < 3:
+                time.sleep(2 * (attempt + 1))
+                continue
+            raise VoiceError(f"edge-tts failed ({exc}); check network access or pick --engine piper/say/none") from exc
+    return []
 
 
 def piper_model(voice: str) -> Path:
@@ -148,7 +158,7 @@ def synth_openai(text: str, voice: str, out: Path) -> None:
 
 
 def synthesize(short_dir: Path, engine: str = "edge-tts", voice: str | None = None,
-               rate: str = "+0%", quiet: bool = False) -> dict:
+               rate: str = "+15%", quiet: bool = False) -> dict:
     scene = short_dir / "scene.py"
     beats = beatlib.read_beats(scene)
     if not quiet:
@@ -208,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("short_dir", type=Path)
     ap.add_argument("--engine", default="edge-tts", choices=sorted(DEFAULT_VOICES))
     ap.add_argument("--voice", default=None, help="voice name for the engine")
-    ap.add_argument("--rate", default="+0%", help="edge-tts speaking rate, e.g. +8%%")
+    ap.add_argument("--rate", default="+15%", help="edge-tts speaking rate, e.g. +8%%")
     args = ap.parse_args(argv)
     try:
         timing = synthesize(args.short_dir, args.engine, args.voice, args.rate)

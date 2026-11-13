@@ -57,7 +57,7 @@ def ensure_timing(short_dir: Path, engine: str | None, voice: str | None, rate: 
     if engine is None and timing_path.exists():
         timing = json.loads(timing_path.read_text())
         texts = [b.get("text") for b in timing.get("beats", [])]
-        if texts == [b["text"] for b in beats] and all(
+        if texts == [b["text"] for b in beats] and timing.get("rate", "+0%") == rate and all(
             not b.get("audio") or (short_dir / b["audio"]).exists() for b in timing["beats"]
         ):
             return timing
@@ -329,7 +329,7 @@ def encode(raw: Path, out: Path, quality: str, trace: dict, timing: dict, short_
 
 
 def render(short_dir: Path, quality: str = "preview", engine: str | None = None, voice: str | None = None,
-           rate: str = "+0%", captions: bool = True) -> dict:
+           rate: str = "+15%", captions: bool = True) -> dict:
     short_dir = short_dir.resolve()
     if not (short_dir / "scene.py").exists():
         raise RenderError(f"{short_dir}/scene.py not found")
@@ -415,7 +415,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--voice", dest="engine", default=None, choices=sorted(voicelib.DEFAULT_VOICES),
                     help="narration engine (default: reuse timing.json, else edge-tts, else silent)")
     ap.add_argument("--voice-name", default=None)
-    ap.add_argument("--rate", default="+0%")
+    ap.add_argument("--rate", default="+15%")
     ap.add_argument("--no-captions", action="store_true", help="do not burn captions into the video")
     args = ap.parse_args(argv)
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):

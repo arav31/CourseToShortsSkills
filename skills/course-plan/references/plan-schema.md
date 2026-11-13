@@ -122,7 +122,8 @@ Field rules (errors from `check_plan.py` unless marked advisory):
 | `title` | ≤ 60 characters; the on-screen title band holds about 26 bold characters at full size, so keep the shown title near that |
 | `units` | outline unit ids this short teaches; optional `primary_unit` names the one whose notes carry the full worked example (default: the first) |
 | `prerequisites` | ids of *earlier* shorts only |
-| `hook` | 5–30 words; the question or tension, landing within ~3 seconds |
+| `hook` | ≤ ~12 spoken words; a surprising fact, stakes or challenge the viewer cares about, landing within 2 seconds (see worked-examples.md) |
+| `trend` | optional; what's trending that this short uses as its doorway, and why now (about one short in three or four) |
 | `claim` | the one sentence the video makes obvious |
 | `worked_example` | `setup`, ≥ 2 `steps`, `result`; concrete numbers or objects; computed correctly; not reused from another short |
 | `visual` | names the persistent on-screen objects and the motion that carries the argument |
